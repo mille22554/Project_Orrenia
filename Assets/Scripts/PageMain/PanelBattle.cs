@@ -19,6 +19,7 @@ public class PanelBattle : MonoBehaviour
 
     private readonly List<ItemEnemy> enemyList = new();
     private ItemEnemy selectedEnemy;
+    private const int tpCost = 10000;
 
     private void Start()
     {
@@ -72,6 +73,13 @@ public class PanelBattle : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void OnDisable()
+    {
+        foreach (var enemy in enemyList)
+            Destroy(enemy.gameObject);
+        enemyList.Clear();
     }
 
     private void OnDestroy()
@@ -139,15 +147,10 @@ public class PanelBattle : MonoBehaviour
 
     private async void OnAttack()
     {
-        GameData.NowPlayerData.currentTp -= 100;
+        if (GameData.NowPlayerData.currentTp < tpCost) return;
+
+        GameData.NowPlayerData.currentTp -= tpCost;
         await RunPlayerAttack();
-        if (enemyList.Count == 0)
-        {
-            await SetLog("戰鬥結束");
-            GameData.NowPlayerData.currentTp = 0;
-            btnGo.gameObject.SetActive(true);
-            btnAttack.gameObject.SetActive(false);
-        }
 
         PublicFunc.SaveData();
         RunSpeed().Forget();
@@ -326,7 +329,7 @@ public class PanelBattle : MonoBehaviour
         Instantiate(itemLog, log.content).text = message;
         await UniTask.Yield();
         log.verticalNormalizedPosition = 0;
-        await UniTask.WaitForSeconds(0.5f);
+        await UniTask.WaitForSeconds(0.1f);
         block.SetActive(false);
     }
 
@@ -337,18 +340,26 @@ public class PanelBattle : MonoBehaviour
             var fastestEnemy = enemyList
                 .Aggregate((max, next) => next.info.currentTp > max.info.currentTp ? next : max);
 
-            if (GameData.NowPlayerData.currentTp > fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp >= 100) return;
-            else if (fastestEnemy.info.currentTp >= 100)
+            if (GameData.NowPlayerData.currentTp > fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp >= tpCost)
             {
-                fastestEnemy.info.currentTp -= 100;
+                PublicFunc.SaveData();
+                return;
+            }
+            else if (fastestEnemy.info.currentTp >= tpCost)
+            {
+                fastestEnemy.info.currentTp -= tpCost;
                 await RunEnemyAttack(fastestEnemy);
                 continue;
             }
 
             GameData.NowPlayerData.currentTp += GameData.NowPlayerData.ability.SPD;
-            Debug.Log(GameData.NowPlayerData.name + " 速度 " + GameData.NowPlayerData.ability.SPD + " TP " + GameData.NowPlayerData.currentTp);
             enemyList.ForEach(x => x.info.currentTp += x.info.ability.SPD);
-            enemyList.ForEach(x => Debug.Log(x.info.name + " 速度 " + x.info.ability.SPD + " TP " + x.info.currentTp));
         }
+        await SetLog("戰鬥結束");
+        GameData.NowPlayerData.currentTp = 0;
+        btnGo.gameObject.SetActive(true);
+        btnAttack.gameObject.SetActive(false);
+
+        PublicFunc.SaveData();
     }
 }

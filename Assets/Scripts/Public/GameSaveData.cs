@@ -4,12 +4,32 @@ public class GameSaveData
 {
     public string version;
     public Datas datas;
+
+    public GameSaveData()
+    {
+        version = GameData.version;
+        datas = new();
+    }
 }
 
 public class Datas
 {
     public PlayerData playerData;
     public EnemyData enemyData;
+    public BagData bagData;
+
+    public Datas()
+    {
+        playerData = new();
+        enemyData = new()
+        {
+            enemies = new List<MobData>()
+        };
+        bagData = new()
+        {
+            items = new List<ItemData>()
+        };
+    }
 }
 
 public class PlayerData
@@ -131,3 +151,21 @@ public class MobData
 
     public AbilityBase ability;
 }
+
+public class BagData
+{
+    public List<ItemData> items;
+}
+
+public class ItemData
+{
+    public int id;
+    public string name;
+    public string type;
+    public string description;
+    public int count;
+    public AbilityBase ability;
+    public int price;
+    public int durability;
+}
+

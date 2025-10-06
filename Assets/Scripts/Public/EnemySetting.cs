@@ -7,6 +7,8 @@ using Random = UnityEngine.Random;
 
 public static class EnemySetting
 {
+    private const float falloff = 10f; // 權重衰減因子，數值越大，距離中心越遠的數值權重衰減越快
+
     public static List<MobData> SetEnemy(string area, int deep)
     {
         List<MobData> enemies = new();
@@ -127,7 +129,7 @@ public static class EnemySetting
         {
             int xVal = min + i;
             int dist = Mathf.Abs(xVal - Mathf.RoundToInt(center));
-            weights[i] = 1f / (dist + 1); // 距離越近，權重越大
+            weights[i] = Mathf.Pow(1f / (dist + 1), falloff);
         }
 
         // 計算累積機率

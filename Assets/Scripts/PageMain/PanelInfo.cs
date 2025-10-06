@@ -25,7 +25,7 @@ public class PanelInfo : MonoBehaviour
         RefreshInfo();
     }
 
-    private void RefreshInfo()
+    public void RefreshInfo()
     {
         if (GameData.gameData != null && GameData.NowPlayerData != null)
         {

@@ -16,18 +16,8 @@ public class PublicFunc
     public static GameSaveData UpdateSaveData(GameSaveData oldData)
     {
         Debug.Log("更新存檔資料結構");
-        var newData = new GameSaveData
-        {
-            version = GameData.version,
-            datas = new()
-            {
-                playerData = new()
-                {
-                    name = oldData.datas.playerData.name
-                },
-                enemyData = new()
-            }
-        };
+        var newData = new GameSaveData();
+        newData.datas.playerData.name = oldData.datas.playerData.name;
 
         CopyNonDefaultValues(oldData.datas, newData.datas);
         return newData;

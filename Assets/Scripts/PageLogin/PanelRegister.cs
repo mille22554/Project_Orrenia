@@ -18,18 +18,8 @@ public class PanelRegister : MonoBehaviour
 
     private void OnRegister()
     {
-        GameData.gameData = new()
-        {
-            version = GameData.version,
-            datas = new()
-            {
-                playerData = new()
-                {
-                    name = inputUsername.text
-                },
-                enemyData = new()
-            }
-        };
+        GameData.gameData = new();
+        GameData.NowPlayerData.name = inputUsername.text;
         PublicFunc.SaveData();
         EventMng.EmitEvent(EventName.SwitchPage, PageName.Main);
     }
