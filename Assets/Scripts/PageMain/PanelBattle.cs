@@ -59,9 +59,11 @@ public class PanelBattle : MonoBehaviour
                     {
                         var obj = Instantiate(itemEnemy, enemies.transform);
                         obj.toggle.group = enemies;
+                        obj.toggle.isOn = true;
                         obj.SetData(enemy);
                         enemyList.Add(obj);
                     }
+                    enemyList[0].toggle.isOn = true;
                     btnGo.gameObject.SetActive(false);
                     btnAttack.gameObject.SetActive(true);
                     RunSpeed().Forget();
@@ -110,10 +112,10 @@ public class PanelBattle : MonoBehaviour
         {
             var obj = Instantiate(itemEnemy, enemies.transform);
             obj.toggle.group = enemies;
-            obj.toggle.isOn = false;
+            obj.toggle.isOn = true;
             obj.SetData(enemy);
             enemyList.Add(obj);
-            await SetLog(enemy.name + " 出現了！");
+            SetLog(enemy.name + " 出現了！").Forget();
         }
         enemyList[0].toggle.isOn = true;
         btnGo.gameObject.SetActive(false);
@@ -193,7 +195,7 @@ public class PanelBattle : MonoBehaviour
         {
             damageMulti = 2;
             defenceMulti = 0;
-            await SetLog($"{GameData.NowPlayerData.name}命中了要害!");
+            await SetLog($"{GameData.NowPlayerData.name}命中了要害!", Color.yellow);
         }
         #endregion
 
@@ -213,7 +215,7 @@ public class PanelBattle : MonoBehaviour
         #region 迴避判定
         if (!(Dice(GameData.NowPlayerData.ability.EVA) < Dice(enemy.info.ability.ACC, 40)))
         {
-            await SetLog($"{GameData.NowPlayerData.name}閃避了{enemy.info.name}的攻擊!");
+            await SetLog($"{GameData.NowPlayerData.name}閃避了{enemy.info.name}的攻擊!", Color.gray);
             return;
         }
         #endregion
@@ -225,14 +227,14 @@ public class PanelBattle : MonoBehaviour
         {
             damageMulti = 2;
             defenceMulti = 0;
-            await SetLog($"{enemy.info.name}命中了要害!");
+            await SetLog($"{enemy.info.name}命中了要害!", Color.yellow);
         }
         #endregion
 
         var damage = Dice(enemy.info.ability.ATK) * damageMulti - Dice(GameData.NowPlayerData.ability.DEF) * defenceMulti;
         if (damage <= 0) damage = 1;
 
-        await SetLog($"{enemy.info.name}對{GameData.NowPlayerData.name}造成了{damage}點傷害!");
+        await SetLog($"{enemy.info.name}對{GameData.NowPlayerData.name}造成了{damage}點傷害!", Color.gray);
         if (await PlayerGetDamage(damage)) return;
     }
 
@@ -249,7 +251,7 @@ public class PanelBattle : MonoBehaviour
 
         int luckLevel = 0; // 0~3
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 3; i++)
         {
             if (Dice(attackerLUK, 20 / (luckLevel + 1)) > Dice(defenderLUK, (int)(20f * (luckLevel * 0.5f + 1f)))) luckLevel++;
             else break; // 只要輸掉就結束
@@ -262,16 +264,12 @@ public class PanelBattle : MonoBehaviour
             switch (luckLevel)
             {
                 case 2:
-                    damage = Mathf.Max(Dice(attackerLUK), 1) * 2;
-                    await SetLog($"{hitter}突然抽筋了!\n受到了{damage}點傷害!");
+                    damage = Mathf.Max(Dice(attackerLUK), 1 * 5 - Dice(defenderLUK));
+                    await SetLog($"{hitter}突然抽筋了!\n受到了{damage}點傷害!", Color.magenta);
                     break;
                 case 3:
-                    damage = Mathf.Max(Dice(attackerLUK), 1) * 5;
-                    await SetLog($"天外飛來一箭，射中了{hitter}!\n受到了{damage}點傷害!");
-                    break;
-                case 4:
-                    damage = Mathf.Max(Dice(attackerLUK), 1) * 10;
-                    await SetLog($"一輛大卡車疾駛而來，撞飛了{hitter}!\n受到了{damage}點傷害!");
+                    damage = Mathf.Max(Dice(attackerLUK), 1 * 10 - Dice(defenderLUK));
+                    await SetLog($"一輛大卡車疾駛而來，撞飛了{hitter}!\n受到了{damage}點傷害!", Color.red);
                     break;
             }
 
@@ -322,10 +320,14 @@ public class PanelBattle : MonoBehaviour
         else return false;
     }
 
-    private async UniTask SetLog(string message)
+    private async UniTask SetLog(string message) => await SetLog(message, Color.white);
+    private async UniTask SetLog(string message, Color color)
     {
         block.SetActive(true);
-        Instantiate(itemLog, log.content).text = message;
+        var textLog = Instantiate(itemLog, log.content);
+        textLog.text = message;
+        textLog.color = color;
+
         await UniTask.Yield();
         log.verticalNormalizedPosition = 0;
         await UniTask.WaitForSeconds(0.1f);

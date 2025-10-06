@@ -41,6 +41,7 @@ public static class EnemySetting
                             enemy.ability = SetAbility(enemy.ability);
                             enemy.currentHp = enemy.ability.HP;
                             enemy.currentMp = enemy.ability.MP;
+                            enemy.currentTp = 0;
                             enemies.Add(enemy);
                             break;
                         case GameEnemy.Floor1.mob2:
@@ -53,6 +54,7 @@ public static class EnemySetting
                             enemy.ability = SetAbility(enemy.ability);
                             enemy.currentHp = enemy.ability.HP;
                             enemy.currentMp = enemy.ability.MP;
+                            enemy.currentTp = 0;
                             enemies.Add(enemy);
                             break;
                         case GameEnemy.Floor1.mob3:
@@ -65,6 +67,7 @@ public static class EnemySetting
                             enemy.ability = SetAbility(enemy.ability);
                             enemy.currentHp = enemy.ability.HP;
                             enemy.currentMp = enemy.ability.MP;
+                            enemy.currentTp = 0;
                             enemies.Add(enemy);
                             break;
                     }
