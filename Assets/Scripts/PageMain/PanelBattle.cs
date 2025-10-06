@@ -249,10 +249,9 @@ public class PanelBattle : MonoBehaviour
 
         int luckLevel = 0; // 0~3
 
-        // 最多三次比較，只要輸掉就結束
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
-            if (Dice(attackerLUK) > Dice(defenderLUK)) luckLevel++;
+            if (Dice(attackerLUK, 20 / (luckLevel + 1)) > Dice(defenderLUK, (int)(20f * (luckLevel * 0.5f + 1f)))) luckLevel++;
             else break; // 只要輸掉就結束
         }
 
@@ -262,15 +261,15 @@ public class PanelBattle : MonoBehaviour
             var hitter = playerAttacks ? enemy.info.name : GameData.NowPlayerData.name;
             switch (luckLevel)
             {
-                case 1:
+                case 2:
                     damage = Mathf.Max(Dice(attackerLUK), 1) * 2;
                     await SetLog($"{hitter}突然抽筋了!\n受到了{damage}點傷害!");
                     break;
-                case 2:
+                case 3:
                     damage = Mathf.Max(Dice(attackerLUK), 1) * 5;
                     await SetLog($"天外飛來一箭，射中了{hitter}!\n受到了{damage}點傷害!");
                     break;
-                case 3:
+                case 4:
                     damage = Mathf.Max(Dice(attackerLUK), 1) * 10;
                     await SetLog($"一輛大卡車疾駛而來，撞飛了{hitter}!\n受到了{damage}點傷害!");
                     break;
