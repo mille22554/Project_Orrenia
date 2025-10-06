@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 public static class GameData
 {
-    public static string version = "0.0.2";
+    public static string version = "0.0.3";
     public static GameSaveData gameData;
     
     public static PlayerData NowPlayerData => gameData.datas.playerData;

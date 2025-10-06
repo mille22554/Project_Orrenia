@@ -26,7 +26,8 @@ public class PanelRegister : MonoBehaviour
                 playerData = new()
                 {
                     name = inputUsername.text
-                }
+                },
+                enemyData = new()
             }
         };
         PublicFunc.SaveData();
