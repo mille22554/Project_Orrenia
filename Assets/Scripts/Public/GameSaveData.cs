@@ -54,6 +54,15 @@ public class PlayerData
     public int gold;
 
     public int abilityPoint;
+    public int AbilityPoint
+    {
+        get { return abilityPoint; }
+        set
+        {
+            abilityPoint = value;
+            EventMng.EmitEvent(EventName.RefreshAbilityPoint);
+        }
+    }
     public AbilityBase ability;
 
     public int skillPoint;
@@ -71,7 +80,7 @@ public class PlayerData
         deep = 0;
         gold = 0;
 
-        abilityPoint = 0;
+        AbilityPoint = 0;
         ability = new()
         {
             STR = 1,
@@ -81,7 +90,7 @@ public class PlayerData
             AGI = 1,
             LUK = 1
         };
-        ability = PublicFunc.SetAbility(ability);
+        ability = PublicFunc.SetPlayerAbility(ability);
 
         skillPoint = 0;
     }

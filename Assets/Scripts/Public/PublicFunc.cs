@@ -69,7 +69,7 @@ public class PublicFunc
         return newData;
     }
 
-    public static AbilityBase SetAbility(AbilityBase data)
+    public static AbilityBase SetPlayerAbility(AbilityBase data)
     {
         data.HP = data.VIT * 10 + data.STR * 5 + 85;
         data.MP = data.INT * 10 + data.VIT * 5 + 35;

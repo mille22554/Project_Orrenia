@@ -51,5 +51,6 @@ public enum EventName
     Login_Start_Switch_To_Register,
     SwitchPage,
     Switch_Main_Panel,
-    RefreshPlayerInfo
+    RefreshPlayerInfo,
+    RefreshAbilityPoint
 }

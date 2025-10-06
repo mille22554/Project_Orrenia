@@ -307,7 +307,7 @@ public class PanelBattle : MonoBehaviour
                 GameData.NowPlayerData.level += 1;
                 GameData.NowPlayerData.CurrentExp -= GameData.NowPlayerData.maxExp;
                 GameData.NowPlayerData.maxExp = (1 << (GameData.NowPlayerData.level - 1)) * 100;
-                GameData.NowPlayerData.abilityPoint += 6;
+                GameData.NowPlayerData.AbilityPoint += 6;
                 GameData.NowPlayerData.skillPoint += 1;
                 GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
                 GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
