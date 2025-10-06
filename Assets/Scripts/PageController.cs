@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 public class PageController : MonoBehaviour
 {
-    public List<PageBase> pages;
+    public List<MonoBehaviour> pages;
     [NonSerialized] public int currentPageIndex = 0;
 
     private void Awake()
@@ -19,6 +18,11 @@ public class PageController : MonoBehaviour
         SwitchPage(PageName.Login);
 
         EventMng.SetEvent(EventName.SwitchPage, (Action<PageName>)SwitchPage);
+    }
+
+    private void OnDestroy()
+    {
+        EventMng.DelEvent(EventName.SwitchPage, (Action<PageName>)SwitchPage);
     }
 
     public void SwitchPage(PageName pageName)

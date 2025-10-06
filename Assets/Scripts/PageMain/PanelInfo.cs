@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,15 +10,30 @@ public class PanelInfo : MonoBehaviour
     public Text playerLv;
     public Text playerExp;
 
+    private void Start()
+    {
+        EventMng.SetEvent(EventName.RefreshPlayerInfo, (Action)RefreshInfo);
+    }
+
+    private void OnDestroy()
+    {
+        EventMng.DelEvent(EventName.RefreshPlayerInfo, (Action)RefreshInfo);
+    }
+
     private void OnEnable()
     {
-        if (GameData.gameData != null && GameData.gameData.datas.playerData != null)
+        RefreshInfo();
+    }
+
+    private void RefreshInfo()
+    {
+        if (GameData.gameData != null && GameData.NowPlayerData != null)
         {
-            playerName.text = GameData.gameData.datas.playerData.name;
-            playerHp.text = $"HP {GameData.gameData.datas.playerData.currentHp}/{GameData.gameData.datas.playerData.maxHp}";
-            playerMp.text = $"MP {GameData.gameData.datas.playerData.currentMp}/{GameData.gameData.datas.playerData.maxMp}";
-            playerLv.text = $"Lv {GameData.gameData.datas.playerData.level}";
-            playerExp.text = $"ExP {GameData.gameData.datas.playerData.currentExp}/{GameData.gameData.datas.playerData.maxExp}";
+            playerName.text = GameData.NowPlayerData.name;
+            playerHp.text = $"HP {GameData.NowPlayerData.CurrentHp}/{GameData.NowPlayerData.ability.HP}";
+            playerMp.text = $"MP {GameData.NowPlayerData.CurrentMp}/{GameData.NowPlayerData.ability.MP}";
+            playerLv.text = $"Lv {GameData.NowPlayerData.level}";
+            playerExp.text = $"ExP {GameData.NowPlayerData.CurrentExp}/{GameData.NowPlayerData.maxExp}";
         }
     }
 }

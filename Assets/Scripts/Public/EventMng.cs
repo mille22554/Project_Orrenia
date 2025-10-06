@@ -49,5 +49,7 @@ public class EventInfo
 public enum EventName
 {
     Login_Start_Switch_To_Register,
-    SwitchPage
+    SwitchPage,
+    Switch_Main_Panel,
+    RefreshPlayerInfo
 }

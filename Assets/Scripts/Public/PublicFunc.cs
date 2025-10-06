@@ -24,7 +24,8 @@ public class PublicFunc
                 playerData = new()
                 {
                     name = oldData.datas.playerData.name
-                }
+                },
+                enemyData = new()
             }
         };
 
@@ -66,5 +67,21 @@ public class PublicFunc
         }
 
         return newData;
+    }
+
+    public static AbilityBase SetAbility(AbilityBase data)
+    {
+        data.HP = data.VIT * 10 + data.STR * 5 + 85;
+        data.MP = data.INT * 10 + data.VIT * 5 + 35;
+        data.ATK = data.STR * 2 + data.VIT;
+        data.MATK = data.INT * 2 + data.VIT;
+        data.DEF = data.VIT * 2 + data.STR;
+        data.MDEF = data.VIT * 2 + data.INT;
+        data.ACC = data.AGI * 3 + data.DEX * 2 + data.LUK;
+        data.EVA = data.DEX * 3 + data.AGI * 2 + data.LUK;
+        data.CRIT = data.AGI * 2 + data.LUK;
+        data.SPD = data.DEX;
+
+        return data;
     }
 }

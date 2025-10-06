@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class PageLogin : PageBase
+public class PageLogin : MonoBehaviour
 {
     public PanelStart panelStart;
     public PanelRegister panelRegister;

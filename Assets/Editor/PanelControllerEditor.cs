@@ -3,19 +3,19 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
-[CustomEditor(typeof(PageController))]
-public class PageControllerEditor : Editor
+[CustomEditor(typeof(PanelController))]
+public class PanelControllerEditor : Editor
 {
     private ReorderableList list;
     private string[] enumNames;
 
     private void OnEnable()
     {
-        enumNames = Enum.GetNames(typeof(PageName));
+        enumNames = Enum.GetNames(typeof(PanelName));
 
-        list = new(serializedObject, serializedObject.FindProperty("pages"), true, true, true, true)
+        list = new(serializedObject, serializedObject.FindProperty("panels"), true, true, true, true)
         {
-            drawHeaderCallback = rect => EditorGUI.LabelField(rect, "pages")
+            drawHeaderCallback = rect => EditorGUI.LabelField(rect, "panels")
         };
 
         list.drawElementCallback = (rect, index, isActive, isFocused) =>
@@ -35,8 +35,8 @@ public class PageControllerEditor : Editor
     {
         serializedObject.Update();
 
-        // 讓 pages 數量自動等於 enum 長度
-        var listProp = serializedObject.FindProperty("pages");
+        // 讓 panels 數量自動等於 enum 長度
+        var listProp = serializedObject.FindProperty("panels");
         int targetCount = enumNames.Length;
         while (listProp.arraySize < targetCount)
             listProp.InsertArrayElementAtIndex(listProp.arraySize);

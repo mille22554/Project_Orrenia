@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PageMain : PageBase
+public class PageMain : MonoBehaviour
 {
     
 }
