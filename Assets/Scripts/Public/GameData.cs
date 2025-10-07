@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 public static class GameData
 {
@@ -7,6 +9,7 @@ public static class GameData
 
     public static PlayerData NowPlayerData => gameData.datas.playerData;
     public static EnemyData NowEnemyData => gameData.datas.enemyData;
+    public static BagData NowBagData => gameData.datas.bagData;
 }
 
 public static class GameArea
@@ -36,7 +39,7 @@ public static class GameItem
             type = EquipType.One_Hand_Weapon,
             description = "新手冒險者的標配，感覺拿著就能受到一點保佑。",
             price = 500,
-            ability = new AbilityBase
+            ability = new()
             {
                 ATK = 10,
                 LUK = 10
@@ -55,7 +58,7 @@ public static class GameItem
             type = UseType.Use,
             description = "恢復少量生命。",
             price = 50,
-            ability = new AbilityBase
+            ability = new()
             {
                 HP = 50
             },
@@ -69,7 +72,7 @@ public static class GameItem
             type = UseType.Use,
             description = "恢復少量魔力。",
             price = 30,
-            ability = new AbilityBase
+            ability = new()
             {
                 MP = 15
             },
@@ -86,7 +89,7 @@ public static class GameItem
             type = MaterialType.Material,
             description = "史萊姆的一部分，軟軟的帶點彈力。",
             price = 10,
-            ability = new AbilityBase
+            ability = new()
             {
                 VIT = 1
             },
@@ -100,7 +103,7 @@ public static class GameItem
             type = MaterialType.Material,
             description = "白兔的毛皮，感受到些微的庇護。",
             price = 10,
-            ability = new AbilityBase
+            ability = new()
             {
                 LUK = 1
             },
@@ -114,7 +117,7 @@ public static class GameItem
             type = MaterialType.Material,
             description = "麻雀的羽毛，輕巧的可以隨風飛翔。",
             price = 10,
-            ability = new AbilityBase
+            ability = new()
             {
                 SPD = 1
             },
@@ -123,7 +126,7 @@ public static class GameItem
     }
 }
 
-public class EquipType
+public static class EquipType
 {
     public const string One_Hand_Weapon = "單手武器";
     public const string Shield = "盾牌";
@@ -138,12 +141,58 @@ public class EquipType
     public const string Pendant = "項鍊";
 }
 
-public class UseType
+public static class UseType
 {
     public const string Use = "消耗品";
 }
 
-public class MaterialType
+public static class MaterialType
 {
     public const string Material = "素材";
+}
+
+public static class ItemTypeCheck
+{
+    private static readonly HashSet<string> allEquipTypes;
+    private static readonly HashSet<string> allUseTypes;
+    private static readonly HashSet<string> allMaterialTypes;
+
+    static ItemTypeCheck()
+    {
+        allEquipTypes = typeof(EquipType)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => f.GetValue(null)?.ToString())
+            .Where(v => v != null)
+            .ToHashSet();
+
+        allUseTypes = typeof(UseType)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => f.GetValue(null)?.ToString())
+            .Where(v => v != null)
+            .ToHashSet();
+            
+        allMaterialTypes = typeof(MaterialType)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => f.GetValue(null)?.ToString())
+            .Where(v => v != null)
+            .ToHashSet();
+    }
+
+    public static bool IsEquipType(string type)
+    {
+        return allEquipTypes.Contains(type);
+    }
+
+    public static bool IsUseType(string type)
+    {
+        return allUseTypes.Contains(type);
+    }
+
+    public static bool IsMaterialType(string type)
+    {
+        return allMaterialTypes.Contains(type);
+    }
 }

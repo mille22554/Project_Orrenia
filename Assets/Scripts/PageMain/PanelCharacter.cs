@@ -14,31 +14,29 @@ public class PanelCharacter : MonoBehaviour
 
     private void Start()
     {
-        EventMng.SetEvent(EventName.RefreshAbilityPoint, (Action)RefreshPoint);
+        EventMng.SetEvent(EventName.RefreshAbilityPoint, (Action)RefreshInfo);
     }
 
     private void OnDestroy()
     {
-        EventMng.DelEvent(EventName.RefreshAbilityPoint, (Action)RefreshPoint);
+        EventMng.DelEvent(EventName.RefreshAbilityPoint, (Action)RefreshInfo);
     }
 
     private void OnEnable()
     {
         if (GameData.gameData != null && GameData.NowPlayerData != null)
-        {
-            STR.SetInfo(GameData.NowPlayerData.ability.STR);
-            VIT.SetInfo(GameData.NowPlayerData.ability.VIT);
-            DEX.SetInfo(GameData.NowPlayerData.ability.DEX);
-            INT.SetInfo(GameData.NowPlayerData.ability.INT);
-            AGI.SetInfo(GameData.NowPlayerData.ability.AGI);
-            LUK.SetInfo(GameData.NowPlayerData.ability.LUK);
-
-            abilityPoint.text = GameData.NowPlayerData.AbilityPoint.ToString();
-        }
+            RefreshInfo();
     }
 
-    public void RefreshPoint()
+    public void RefreshInfo()
     {
+        STR.SetInfo(GameData.NowPlayerData.ability.STR);
+        VIT.SetInfo(GameData.NowPlayerData.ability.VIT);
+        DEX.SetInfo(GameData.NowPlayerData.ability.DEX);
+        INT.SetInfo(GameData.NowPlayerData.ability.INT);
+        AGI.SetInfo(GameData.NowPlayerData.ability.AGI);
+        LUK.SetInfo(GameData.NowPlayerData.ability.LUK);
+
         abilityPoint.text = GameData.NowPlayerData.AbilityPoint.ToString();
     }
 }

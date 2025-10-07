@@ -42,6 +42,16 @@ public static class EnemySetting
                             enemy.currentHp = enemy.ability.HP;
                             enemy.currentMp = enemy.ability.MP;
                             enemy.currentTp = 0;
+
+                            enemy.dropItems = new()
+                            {
+                                new()
+                                {
+                                    item=GameItem.Material.SlimeGel,
+                                    prop=80
+                                }
+                            };
+
                             enemies.Add(enemy);
                             break;
                         case GameEnemy.Floor1.mob2:
@@ -55,6 +65,16 @@ public static class EnemySetting
                             enemy.currentHp = enemy.ability.HP;
                             enemy.currentMp = enemy.ability.MP;
                             enemy.currentTp = 0;
+
+                            enemy.dropItems = new()
+                            {
+                                new()
+                                {
+                                    item=GameItem.Material.WhiteRabbitFur,
+                                    prop=80
+                                }
+                            };
+
                             enemies.Add(enemy);
                             break;
                         case GameEnemy.Floor1.mob3:
@@ -68,6 +88,16 @@ public static class EnemySetting
                             enemy.currentHp = enemy.ability.HP;
                             enemy.currentMp = enemy.ability.MP;
                             enemy.currentTp = 0;
+
+                            enemy.dropItems = new()
+                            {
+                                new()
+                                {
+                                    item=GameItem.Material.SparrowFeather,
+                                    prop=80
+                                }
+                            };
+
                             enemies.Add(enemy);
                             break;
                     }
@@ -163,5 +193,10 @@ public static class EnemySetting
         data.SPD = data.DEX;
 
         return data;
+    }
+
+    public static void DropItem()
+    {
+
     }
 }

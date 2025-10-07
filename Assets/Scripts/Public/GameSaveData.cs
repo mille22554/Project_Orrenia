@@ -21,14 +21,8 @@ public class Datas
     public Datas()
     {
         playerData = new();
-        enemyData = new()
-        {
-            enemies = new List<MobData>()
-        };
-        bagData = new()
-        {
-            items = new List<ItemData>()
-        };
+        enemyData = new();
+        bagData = new();
     }
 }
 
@@ -139,6 +133,11 @@ public class AbilityBase
 public class EnemyData
 {
     public List<MobData> enemies;
+
+    public EnemyData()
+    {
+        enemies = new();
+    }
 }
 
 public class MobData
@@ -150,11 +149,30 @@ public class MobData
     public int currentTp;
 
     public AbilityBase ability;
+
+    public List<DropItem> dropItems;
+
+    public MobData()
+    {
+        ability = new();
+        dropItems = new();
+    }
+}
+
+public class DropItem
+{
+    public ItemData item;
+    public int prop;
 }
 
 public class BagData
 {
     public List<ItemData> items;
+
+    public BagData()
+    {
+        items = new();
+    }
 }
 
 public class ItemData
@@ -167,5 +185,10 @@ public class ItemData
     public AbilityBase ability;
     public int price;
     public int durability;
+
+    public ItemData()
+    {
+        ability = new();
+    }
 }
 

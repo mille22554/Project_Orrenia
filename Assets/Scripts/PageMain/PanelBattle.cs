@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using Random = UnityEngine.Random;
 
 public class PanelBattle : MonoBehaviour
 {
@@ -300,6 +301,7 @@ public class PanelBattle : MonoBehaviour
         if (enemy.info.currentHp <= 0)
         {
             await SetLog($"{enemy.info.name}倒下了!");
+
             GameData.NowPlayerData.CurrentExp += 1 << (enemy.info.level - 1);
             if (GameData.NowPlayerData.CurrentExp >= GameData.NowPlayerData.maxExp)
             {
@@ -312,6 +314,22 @@ public class PanelBattle : MonoBehaviour
                 GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
                 GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
             }
+
+            foreach (var drop in enemy.info.dropItems)
+            {
+                if (Dice(drop.prop) <= 0) continue;
+
+                var existing = GameData.NowBagData.items.Find(item => item.id == drop.item.id);
+
+                if (ItemTypeCheck.IsEquipType(drop.item.type) || existing == null)
+                {
+                    GameData.NowBagData.items.Add(drop.item);
+                    await SetLog($"{GameData.NowPlayerData.name}獲得了{drop.item.name}!");
+                    continue;
+                }
+                else existing.count++;
+            }
+
             Destroy(enemy.gameObject);
             enemyList.Remove(enemy);
             GameData.NowEnemyData.enemies.Remove(enemy.info);

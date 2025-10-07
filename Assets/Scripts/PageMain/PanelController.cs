@@ -36,5 +36,6 @@ public class PanelController : MonoBehaviour
 public enum PanelName
 {
     Battle,
-    Character
+    Character,
+    Bag,
 }
