@@ -359,12 +359,12 @@ public class PanelBattle : MonoBehaviour
             var fastestEnemy = enemyList
                 .Aggregate((max, next) => next.info.currentTp > max.info.currentTp ? next : max);
 
-            if (GameData.NowPlayerData.currentTp > fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp >= tpCost)
+            if (GameData.NowPlayerData.currentTp >= fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp > tpCost)
             {
                 PublicFunc.SaveData();
                 return;
             }
-            else if (fastestEnemy.info.currentTp >= tpCost)
+            else if (fastestEnemy.info.currentTp > tpCost)
             {
                 fastestEnemy.info.currentTp -= tpCost;
                 await RunEnemyAttack(fastestEnemy);
