@@ -97,7 +97,7 @@ public class PanelBattle : MonoBehaviour
 
     private void OnShop()
     {
-        
+
     }
 
     private async void OnGo()
@@ -262,7 +262,7 @@ public class PanelBattle : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            if (Dice(attackerLUK, 20 / (luckLevel + 1)) > Dice(defenderLUK, (int)(20f * (luckLevel * 0.5f + 1f)))) luckLevel++;
+            if (Dice(attackerLUK) > Dice(defenderLUK * (luckLevel * 2 + 1) * 10)) luckLevel++;
             else break; // 只要輸掉就結束
         }
 
