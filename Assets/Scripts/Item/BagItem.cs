@@ -8,6 +8,7 @@ public class BagItem : MonoBehaviour
     public Text itemName;
     public Text count;
     public Toggle toggle;
+    public Action<ItemData> refreshBagInfo;
     [NonSerialized] public ItemData info;
 
     private void Start()
@@ -26,11 +27,15 @@ public class BagItem : MonoBehaviour
     {
         info = data;
         itemName.text = data.name;
-        count.text = data.count.ToString();
+        if (ItemTypeCheck.IsEquipType(data.type))
+            count.text = data.durability.ToString();
+        else
+            count.text = data.count.ToString();
     }
 
     private void OnToggleValueChange(bool isOn)
     {
         iconPick.SetActive(isOn);
+        refreshBagInfo.Invoke(info);
     }
 }

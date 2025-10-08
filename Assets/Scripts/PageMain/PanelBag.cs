@@ -1,9 +1,14 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PanelBag : MonoBehaviour
 {
+    public Text itemName;
+    public Text type;
+    public Text description;
+    public Text ability;
     public Text gold;
     public ScrollRect itemList;
     public BagItem bagItem;
@@ -40,23 +45,25 @@ public class PanelBag : MonoBehaviour
     {
         if (GameData.gameData != null && GameData.NowPlayerData != null)
         {
+            ResetBagInfo();
             gold.text = GameData.NowPlayerData.gold.ToString();
+
             foreach (var itemInfo in GameData.NowBagData.items)
             {
                 var item = Instantiate(bagItem, itemList.content);
                 item.SetInfo(itemInfo);
+                item.refreshBagInfo = RefreshBagInfo;
                 item.toggle.group = toggleItems;
                 item.toggle.isOn = true;
+                item.toggle.isOn = false;
                 bagItems.Add(item);
                 if (toggleEquip.isOn)
                     item.gameObject.SetActive(ItemTypeCheck.IsEquipType(item.info.type));
-                else if(toggleUse.isOn)
+                else if (toggleUse.isOn)
                     item.gameObject.SetActive(ItemTypeCheck.IsUseType(item.info.type));
-                else if(toggleMaterial.isOn)
+                else if (toggleMaterial.isOn)
                     item.gameObject.SetActive(ItemTypeCheck.IsMaterialType(item.info.type));
             }
-            if (bagItems.Count != 0)
-                bagItems[^1].toggle.isOn = false;
         }
     }
 
@@ -69,25 +76,63 @@ public class PanelBag : MonoBehaviour
 
     private void SwitchToEquip(bool isOn)
     {
+        ResetBagInfo();
         foreach (var item in bagItems)
         {
-            item.gameObject.SetActive(ItemTypeCheck.IsEquipType(item.info.type));
+            if (ItemTypeCheck.IsEquipType(item.info.type))
+            {
+                item.gameObject.SetActive(true);
+                if (item.toggle.isOn) RefreshBagInfo(item.info);
+            }
+            else
+                item.gameObject.SetActive(false);
         }
     }
 
     private void SwitchToUse(bool isOn)
     {
+        ResetBagInfo();
         foreach (var item in bagItems)
         {
-            item.gameObject.SetActive(ItemTypeCheck.IsUseType(item.info.type));
+            if (ItemTypeCheck.IsUseType(item.info.type))
+            {
+                item.gameObject.SetActive(true);
+                if (item.toggle.isOn) RefreshBagInfo(item.info);
+            }
+            else
+                item.gameObject.SetActive(false);
         }
     }
 
     private void SwitchToMaterial(bool isOn)
     {
+        ResetBagInfo();
         foreach (var item in bagItems)
         {
-            item.gameObject.SetActive(ItemTypeCheck.IsMaterialType(item.info.type));
+            if (ItemTypeCheck.IsMaterialType(item.info.type))
+            {
+                item.gameObject.SetActive(true);
+                if (item.toggle.isOn) RefreshBagInfo(item.info);
+            }
+            else
+                item.gameObject.SetActive(false);
         }
+    }
+
+    private void RefreshBagInfo(ItemData data)
+    {
+        itemName.text = data.name;
+        type.text = data.type;
+        description.text = data.description;
+        if (ItemTypeCheck.IsEquipType(data.type))
+            ability.text = data.GetAbilityString();
+    }
+
+    private void ResetBagInfo()
+    {
+        itemName.text = "";
+        type.text = "";
+        description.text = "";
+        ability.text = "";
     }
 }

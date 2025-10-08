@@ -12,6 +12,7 @@ public class PanelBattle : MonoBehaviour
     public Button btnGo;
     public Button btnAttack;
     public Button btnLeave;
+    public Button btnShop;
     public ToggleGroup enemies;
     public ScrollRect log;
     public ItemEnemy itemEnemy;
@@ -27,6 +28,7 @@ public class PanelBattle : MonoBehaviour
         btnGo.onClick.AddListener(OnGo);
         btnAttack.onClick.AddListener(OnAttack);
         btnLeave.onClick.AddListener(OnLeave);
+        btnShop.onClick.AddListener(OnShop);
 
         block.SetActive(false);
         foreach (Transform enemy in enemies.transform)
@@ -90,6 +92,12 @@ public class PanelBattle : MonoBehaviour
         btnGo.onClick.RemoveListener(OnGo);
         btnAttack.onClick.RemoveListener(OnAttack);
         btnLeave.onClick.RemoveListener(OnLeave);
+        btnShop.onClick.RemoveListener(OnShop);
+    }
+
+    private void OnShop()
+    {
+        
     }
 
     private async void OnGo()

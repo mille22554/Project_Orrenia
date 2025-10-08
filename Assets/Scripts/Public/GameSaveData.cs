@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 
 public class GameSaveData
 {
@@ -189,6 +190,26 @@ public class ItemData
     public ItemData()
     {
         ability = new();
+    }
+    
+    public string GetAbilityString()
+    {
+        if (ability == null) return "";
+
+        List<string> parts = new();
+
+        // 用反射抓 AbilityBase 的欄位
+        foreach (var field in typeof(AbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        {
+            int value = (int)field.GetValue(ability);
+            if (value != 0)
+            {
+                string sign = value > 0 ? "+" : "";
+                parts.Add($"{field.Name}{sign}{value}");
+            }
+        }
+
+        return string.Join(", ", parts);
     }
 }
 
