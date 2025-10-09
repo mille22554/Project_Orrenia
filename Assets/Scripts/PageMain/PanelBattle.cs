@@ -263,6 +263,7 @@ public class PanelBattle : MonoBehaviour
         {
             area.text = GameData.NowPlayerData.area = GameArea.Floor1;
             btnLeave.gameObject.SetActive(true);
+            btnShop.gameObject.SetActive(false);
             log.gameObject.SetActive(true);
             await SetLog("進入 " + area.text);
         }
