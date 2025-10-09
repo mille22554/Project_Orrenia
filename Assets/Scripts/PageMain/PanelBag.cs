@@ -19,12 +19,15 @@ public class PanelBag : MonoBehaviour
     private ToggleGroup toggleItems;
     private readonly List<BagItem> bagItems = new();
 
-    private void Start()
+    private void Awake()
     {
         toggleItems = itemList.content.GetComponent<ToggleGroup>();
         foreach (Transform child in itemList.content)
             Destroy(child.gameObject);
+    }
 
+    private void Start()
+    {
         toggleMaterial.isOn = true;
         toggleUse.isOn = true;
         toggleEquip.isOn = true;
@@ -56,6 +59,7 @@ public class PanelBag : MonoBehaviour
                 item.toggle.group = toggleItems;
                 item.toggle.isOn = true;
                 item.toggle.isOn = false;
+                Debug.Log(item.itemName.text);
                 bagItems.Add(item);
                 if (toggleEquip.isOn)
                     item.gameObject.SetActive(ItemTypeCheck.IsEquipType(item.info.type));

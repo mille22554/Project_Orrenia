@@ -179,6 +179,7 @@ public class BagData
 public class ItemData
 {
     public int id;
+    public long uid;
     public string name;
     public string type;
     public string description;

@@ -4,7 +4,7 @@ using System.Reflection;
 
 public static class GameData
 {
-    public static string version = "0.0.5";
+    public static string version = "0.0.10";
     public static GameSaveData gameData;
 
     public static PlayerData NowPlayerData => gameData.datas.playerData;
@@ -43,6 +43,96 @@ public static class GameItem
             {
                 ATK = 10,
                 LUK = 10
+            },
+            durability = 500,
+            count = 1
+        };
+
+        public static ItemData WoodenSword = new()
+        {
+            name = "木製長劍",
+            id = 2,
+            type = EquipType.One_Hand_Weapon,
+            description = "訓練用的木劍，比空手好一點。",
+            price = 500,
+            ability = new()
+            {
+                ATK = 1,
+            },
+            durability = 500,
+            count = 1
+        };
+
+        public static ItemData WoodenShield = new()
+        {
+            name = "木盾",
+            id = 3,
+            type = EquipType.Shield,
+            description = "訓練用的木盾，盾反甚麼的別想了。",
+            price = 500,
+            ability = new()
+            {
+                DEF = 1,
+            },
+            durability = 500,
+            count = 1
+        };
+
+        public static ItemData WoodenHelmet = new()
+        {
+            name = "木製頭盔",
+            id = 4,
+            type = EquipType.Helmet,
+            description = "訓練用的木盔，戴起來沒有很舒服。",
+            price = 500,
+            ability = new()
+            {
+                DEF = 1,
+            },
+            durability = 500,
+            count = 1
+        };
+
+        public static ItemData ClothArmor = new()
+        {
+            name = "布製護甲",
+            id = 5,
+            type = EquipType.Armor,
+            description = "訓練用的布甲，木劍程度的傷害還是可以防住的。",
+            price = 500,
+            ability = new()
+            {
+                DEF = 1,
+            },
+            durability = 500,
+            count = 1
+        };
+
+        public static ItemData ClothGreaves = new()
+        {
+            name = "布製護腿",
+            id = 6,
+            type = EquipType.Greaves,
+            description = "訓練用的護腿，不用怕打到小腿。",
+            price = 500,
+            ability = new()
+            {
+                DEF = 1,
+            },
+            durability = 500,
+            count = 1
+        };
+
+        public static ItemData ClothBoots = new()
+        {
+            name = "布靴",
+            id = 7,
+            type = EquipType.Shoes,
+            description = "訓練用的布靴，比赤腳好一點。",
+            price = 500,
+            ability = new()
+            {
+                SPD = 1,
             },
             durability = 500,
             count = 1
@@ -124,6 +214,15 @@ public static class GameItem
             count = 1
         };
     }
+
+    public static void CopyFields<T>(T source, T target)
+    {
+        var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var field in fields)
+        {
+            field.SetValue(target, field.GetValue(source));
+        }
+    }
 }
 
 public static class EquipType
@@ -131,7 +230,7 @@ public static class EquipType
     public const string One_Hand_Weapon = "單手武器";
     public const string Shield = "盾牌";
     public const string Two_Hand_Weapon = "雙手武器";
-    public const string Head = "頭盔";
+    public const string Helmet = "頭盔";
     public const string Armor = "護胸";
     public const string Greaves = "護腿";
     public const string Shoes = "鞋子";
@@ -172,7 +271,7 @@ public static class ItemTypeCheck
             .Select(f => f.GetValue(null)?.ToString())
             .Where(v => v != null)
             .ToHashSet();
-            
+
         allMaterialTypes = typeof(MaterialType)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(f => f.IsLiteral && !f.IsInitOnly)
@@ -195,4 +294,18 @@ public static class ItemTypeCheck
     {
         return allMaterialTypes.Contains(type);
     }
+}
+
+public static class GameShopItem
+{
+    public static List<ItemData> list = new()
+    {
+        GameItem.Equip.WoodenSword,
+        GameItem.Equip.WoodenShield,
+        GameItem.Equip.WoodenHelmet,
+        GameItem.Equip.ClothArmor,
+        GameItem.Equip.ClothGreaves,
+        GameItem.Equip.ClothBoots,
+        GameItem.Use.SmallHpPotion
+    };
 }
