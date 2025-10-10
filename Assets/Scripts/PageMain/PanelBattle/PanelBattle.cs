@@ -93,6 +93,8 @@ public class PanelBattle : MonoBehaviour
         foreach (var enemy in enemyList)
             Destroy(enemy.gameObject);
         enemyList.Clear();
+        foreach (Transform child in log.content)
+            Destroy(child.gameObject);
     }
 
     private void OnDestroy()
@@ -163,7 +165,7 @@ public class PanelBattle : MonoBehaviour
 
     private async void OnAttack()
     {
-        SaveLog();
+        // SaveLog();
         if (GameData.NowPlayerData.currentTp < tpCost) return;
 
         GameData.NowPlayerData.currentTp -= tpCost;
@@ -362,6 +364,7 @@ public class PanelBattle : MonoBehaviour
         var textLog = Instantiate(itemLog, log.content);
         textLog.text = message;
         textLog.color = color;
+        if (log.content.childCount > 100) Destroy(log.content.GetChild(0).gameObject);
 
         await UniTask.Yield();
         log.verticalNormalizedPosition = 0;
@@ -371,6 +374,7 @@ public class PanelBattle : MonoBehaviour
 
     private async UniTask RunSpeed()
     {
+        // Debug.Log("跑");
         while (enemyList.Count > 0)
         {
             var fastestEnemy = enemyList
@@ -379,6 +383,10 @@ public class PanelBattle : MonoBehaviour
             if (GameData.NowPlayerData.currentTp >= fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp > tpCost)
             {
                 PublicFunc.SaveData();
+// #if UNITY_EDITOR
+//                 await UniTask.NextFrame();
+//                 OnAttack();
+// #endif
                 return;
             }
             else if (fastestEnemy.info.currentTp > tpCost)
@@ -398,6 +406,10 @@ public class PanelBattle : MonoBehaviour
 
         PublicFunc.SaveData();
         LogList.Clear();
+// #if UNITY_EDITOR
+//         await UniTask.NextFrame();
+//         OnGo();
+// #endif
     }
 
     private void SaveLog()
@@ -408,12 +420,14 @@ public class PanelBattle : MonoBehaviour
         var message = "玩家: " + GameData.NowPlayerData.currentTp;
         string logContent = $"[{DateTime.Now}] {message}\n";
         LogList.Add(logContent);
+        Debug.Log(logContent);
 
         foreach (var enemy in enemyList)
         {
             message = enemy.info.name + ": " + enemy.info.currentTp;
             logContent = $"[{DateTime.Now}] {message}\n";
             LogList.Add(logContent);
+            Debug.Log(logContent);
         }
         File.WriteAllLines(logPath, LogList);
     }
