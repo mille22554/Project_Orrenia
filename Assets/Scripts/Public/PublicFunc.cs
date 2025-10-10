@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
@@ -40,14 +41,32 @@ public class PublicFunc
             // 判斷是否為自訂 class
             if (!fieldType.IsPrimitive && fieldType != typeof(string))
             {
-                // 自訂類別就遞迴處理
-                object newChild = newField.GetValue(newData);
-                if (newChild == null)
+                if (typeof(IList).IsAssignableFrom(fieldType))
                 {
-                    newChild = Activator.CreateInstance(fieldType);
-                    newField.SetValue(newData, newChild);
+                    var oldList = oldValue as IList;
+
+                    if (newField.GetValue(newData) is not IList newList)
+                    {
+                        newList = Activator.CreateInstance(fieldType) as IList;
+                        newField.SetValue(newData, newList);
+                    }
+
+                    newList.Clear();
+                    foreach (var item in oldList)
+                    {
+                        newList.Add(item);
+                    }
                 }
-                CopyNonDefaultValues(oldValue, newChild);
+                else
+                {
+                    object newChild = newField.GetValue(newData);
+                    if (newChild == null)
+                    {
+                        newChild = Activator.CreateInstance(fieldType);
+                        newField.SetValue(newData, newChild);
+                    }
+                    CopyNonDefaultValues(oldValue, newChild);
+                }
             }
             else
             {
@@ -59,8 +78,15 @@ public class PublicFunc
         return newData;
     }
 
-    public static AbilityBase SetPlayerAbility(AbilityBase data)
+    public static void SetPlayerAbility() => SetPlayerAbility(GameData.NowPlayerData.ability, GameData.NowPlayerData.equips);
+    public static void SetPlayerAbility(AbilityBase data, EquipBase equips)
     {
+        data.STR = data.STR_Point;
+        data.VIT = data.VIT_Point;
+        data.DEX = data.DEX_Point;
+        data.INT = data.INT_Point;
+        data.AGI = data.AGI_Point;
+        data.LUK = data.LUK_Point;
         data.HP = data.VIT * 10 + data.STR * 5 + 85;
         data.MP = data.INT * 10 + data.VIT * 5 + 35;
         data.ATK = data.STR * 2 + data.VIT;
@@ -72,6 +98,49 @@ public class PublicFunc
         data.CRIT = data.AGI * 2 + data.LUK;
         data.SPD = data.DEX;
 
-        return data;
+        ReSetEquipAbility(equips);
+        EventMng.EmitEvent(EventName.RefreshPlayerInfo);
+    }
+
+    public static ItemData GetItem(ItemData source)
+    {
+        var target = CopyFields(source);
+        target.uid = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        return target;
+    }
+
+    private static T CopyFields<T>(T source)
+    {
+        return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(source));
+    }
+
+
+    public static void ReSetEquipAbility(EquipBase equips)
+    {
+        var fields = typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var field in fields)
+        {
+            long uid = (long)field.GetValue(equips);
+            if (uid != 0)
+            {
+                var item = GameData.NowBagData.items.Find(x => x.uid == uid);
+                SetEquipAbility(item.ability);
+            }
+        }
+    }
+
+    public static void SetEquipAbility(AbilityBase ability) => SetEquipAbility(ability, false);
+    public static void SetEquipAbility(AbilityBase ability, bool isUnload)
+    {
+        var fields = typeof(AbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var field in fields)
+        {
+            int valueB = (int)field.GetValue(ability);
+            if (valueB != 0)
+            {
+                int valueA = (int)field.GetValue(GameData.NowPlayerData.ability);
+                field.SetValue(GameData.NowPlayerData.ability, valueA + (isUnload ? valueB * (-1) : valueB));
+            }
+        }
     }
 }

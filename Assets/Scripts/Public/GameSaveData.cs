@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 
 public class GameSaveData
 {
@@ -31,7 +32,7 @@ public class PlayerData
 {
     public string name;
     public int level;
-    public int currentExp;
+    private int currentExp;
     public int CurrentExp
     {
         get { return currentExp; }
@@ -42,23 +43,25 @@ public class PlayerData
         }
     }
     public int maxExp;
-    public int currentHp;
+    private int currentHp;
     public int CurrentHp
     {
         get { return currentHp; }
         set
         {
             currentHp = value;
+            if (currentHp > ability?.HP) currentHp = ability.HP;
             EventMng.EmitEvent(EventName.RefreshPlayerInfo);
         }
     }
-    public int currentMp;
+    private int currentMp;
     public int CurrentMp
     {
         get { return currentMp; }
         set
         {
             currentMp = value;
+            if (currentMp > ability?.MP) currentMp = ability.MP;
             EventMng.EmitEvent(EventName.RefreshPlayerInfo);
         }
     }
@@ -68,7 +71,7 @@ public class PlayerData
     public int deep;
     public int gold;
 
-    public int abilityPoint;
+    private int abilityPoint;
     public int AbilityPoint
     {
         get { return abilityPoint; }
@@ -80,7 +83,11 @@ public class PlayerData
     }
     public AbilityBase ability;
 
+    public EquipBase equips;
+
     public int skillPoint;
+
+    public bool isGetBasicDagger;
 
     public PlayerData()
     {
@@ -98,20 +105,32 @@ public class PlayerData
         AbilityPoint = 0;
         ability = new()
         {
-            STR = 1,
-            DEX = 1,
-            INT = 1,
-            VIT = 1,
-            AGI = 1,
-            LUK = 1
+            STR_Point = 1,
+            DEX_Point = 1,
+            INT_Point = 1,
+            VIT_Point = 1,
+            AGI_Point = 1,
+            LUK_Point = 1
         };
-        ability = PublicFunc.SetPlayerAbility(ability);
+        equips = new();
+        PublicFunc.SetPlayerAbility(ability, equips);
+
 
         skillPoint = 0;
+
+        isGetBasicDagger = true;
     }
 }
+
 public class AbilityBase
 {
+    public int STR_Point;
+    public int DEX_Point;
+    public int INT_Point;
+    public int VIT_Point;
+    public int AGI_Point;
+    public int LUK_Point;
+
     public int STR;
     public int DEX;
     public int INT;
@@ -129,6 +148,20 @@ public class AbilityBase
     public int EVA;
     public int CRIT;
     public int SPD;
+}
+
+public class EquipBase
+{
+    public long Right_Hand;
+    public long Left_Hand;
+    public long Helmet;
+    public long Armor;
+    public long Greaves;
+    public long Shoes;
+    public long Gloves;
+    public long Cape;
+    public long Ring;
+    public long Pendant;
 }
 
 public class EnemyData
@@ -192,7 +225,7 @@ public class ItemData
     {
         ability = new();
     }
-    
+
     public string GetAbilityString()
     {
         if (ability == null) return "";

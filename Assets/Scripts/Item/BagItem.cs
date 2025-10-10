@@ -8,7 +8,7 @@ public class BagItem : MonoBehaviour
     public Text itemName;
     public Text count;
     public Toggle toggle;
-    public Action<ItemData> refreshBagInfo;
+    public Action<BagItem> refreshBagInfo;
     [NonSerialized] public ItemData info;
 
     private void Start()
@@ -36,6 +36,6 @@ public class BagItem : MonoBehaviour
     private void OnToggleValueChange(bool isOn)
     {
         iconPick.SetActive(isOn);
-        refreshBagInfo.Invoke(info);
+        refreshBagInfo.Invoke(this);
     }
 }

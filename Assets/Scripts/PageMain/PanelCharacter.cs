@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,15 +12,18 @@ public class PanelCharacter : MonoBehaviour
     public ItemAbility AGI;
     public ItemAbility LUK;
     public Text abilityPoint;
+    public Button btnReset;
 
     private void Start()
     {
         EventMng.SetEvent(EventName.RefreshAbilityPoint, (Action)RefreshInfo);
+        btnReset.onClick.AddListener(OnReset);
     }
 
     private void OnDestroy()
     {
         EventMng.DelEvent(EventName.RefreshAbilityPoint, (Action)RefreshInfo);
+        btnReset.onClick.RemoveListener(OnReset);
     }
 
     private void OnEnable()
@@ -38,5 +42,27 @@ public class PanelCharacter : MonoBehaviour
         LUK.SetInfo(GameData.NowPlayerData.ability.LUK);
 
         abilityPoint.text = GameData.NowPlayerData.AbilityPoint.ToString();
+    }
+
+    private void OnReset()
+    {
+        GameData.NowPlayerData.AbilityPoint = (GameData.NowPlayerData.level - 1) * 6;
+        GameData.NowPlayerData.ability = new()
+        {
+            STR_Point = 1,
+            DEX_Point = 1,
+            INT_Point = 1,
+            VIT_Point = 1,
+            AGI_Point = 1,
+            LUK_Point = 1
+        };
+        PublicFunc.SetPlayerAbility();
+        if (GameData.NowPlayerData.CurrentHp > GameData.NowPlayerData.ability?.HP)
+            GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
+        if (GameData.NowPlayerData.CurrentMp > GameData.NowPlayerData.ability?.MP)
+            GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
+
+        RefreshInfo();
+        PublicFunc.SaveData();
     }
 }

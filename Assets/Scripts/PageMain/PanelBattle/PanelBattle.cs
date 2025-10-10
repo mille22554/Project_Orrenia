@@ -21,23 +21,8 @@ public class PanelBattle : MonoBehaviour
     public Text itemLog;
     public GameObject block;
 
-    public Button shop;
-    public Toggle toggleBuy;
-    public Toggle toggleSell;
-    public Text itemName;
-    public Text type;
-    public Text price;
-    public Text description;
-    public Text ability;
-    public Text gold;
-    public Button btnTrade;
-    public Text textTrade;
-    public ScrollRect itemList;
-    public ShopItem shopItem;
+    public PanelShop panelShop;
 
-    private ToggleGroup toggleItems;
-    private readonly List<ShopItem> shopItemList = new();
-    private ShopItem selectedShopItem;
     private readonly List<ItemEnemy> enemyList = new();
     private ItemEnemy selectedEnemy;
     private const int tpCost = 10000;
@@ -45,15 +30,10 @@ public class PanelBattle : MonoBehaviour
 
     private void Start()
     {
-        toggleItems = itemList.content.GetComponent<ToggleGroup>();
         btnGo.onClick.AddListener(OnGo);
         btnAttack.onClick.AddListener(OnAttack);
         btnLeave.onClick.AddListener(OnLeave);
-        btnShop.onClick.AddListener(OnShop);
-        shop.onClick.AddListener(OnShop);
-        toggleBuy.onValueChanged.AddListener(OnSwitchBuy);
-        toggleSell.onValueChanged.AddListener(OnSwitchSell);
-        btnTrade.onClick.AddListener(OnTrade);
+        btnShop.onClick.AddListener(panelShop.OnShop);
 
         block.SetActive(false);
         foreach (Transform enemy in enemies.transform)
@@ -66,12 +46,8 @@ public class PanelBattle : MonoBehaviour
     {
         if (GameData.gameData != null && GameData.NowPlayerData != null)
         {
-            shop.gameObject.SetActive(false);
+            panelShop.gameObject.SetActive(false);
             area.text = GameData.NowPlayerData.area;
-            toggleSell.isOn = true;
-            toggleSell.isOn = false;
-            toggleBuy.isOn = true;
-            toggleBuy.isOn = false;
             if (GameData.NowPlayerData.deep == 0)
             {
                 deep.text = "";
@@ -124,137 +100,7 @@ public class PanelBattle : MonoBehaviour
         btnGo.onClick.RemoveListener(OnGo);
         btnAttack.onClick.RemoveListener(OnAttack);
         btnLeave.onClick.RemoveListener(OnLeave);
-        btnShop.onClick.RemoveListener(OnShop);
-        shop.onClick.RemoveListener(OnShop);
-        toggleBuy.onValueChanged.RemoveListener(OnSwitchBuy);
-        toggleSell.onValueChanged.RemoveListener(OnSwitchSell);
-        btnTrade.onClick.RemoveListener(OnTrade);
-    }
-
-    private void OnShop()
-    {
-        if (shop.gameObject.activeSelf)
-        {
-            shop.gameObject.SetActive(false);
-        }
-        else
-        {
-            ResetBagInfo();
-            gold.text = GameData.NowPlayerData.gold.ToString();
-            toggleBuy.isOn = true;
-            shop.gameObject.SetActive(true);
-        }
-    }
-
-    private void OnSwitchBuy(bool isOn)
-    {
-        if (!isOn) return;
-
-        ResetBagInfo();
-        textTrade.text = "購買";
-        foreach (var item in shopItemList)
-            Destroy(item.gameObject);
-        shopItemList.Clear();
-
-        foreach (var itemInfo in GameShopItem.list)
-        {
-            var item = Instantiate(shopItem, itemList.content);
-            item.SetInfo(itemInfo);
-            item.refreshBagInfo = RefreshBagInfo;
-            item.toggle.group = toggleItems;
-            item.toggle.isOn = true;
-            item.toggle.isOn = false;
-            shopItemList.Add(item);
-        }
-    }
-
-    private void OnSwitchSell(bool isOn)
-    {
-        if (!isOn) return;
-
-        ResetBagInfo();
-        textTrade.text = "販賣";
-        foreach (var item in shopItemList)
-            Destroy(item.gameObject);
-        shopItemList.Clear();
-
-        foreach (var itemInfo in GameData.NowBagData.items)
-        {
-            var item = Instantiate(shopItem, itemList.content);
-            item.SetInfo(itemInfo);
-            item.refreshBagInfo = RefreshBagInfo;
-            item.toggle.group = toggleItems;
-            item.toggle.isOn = true;
-            item.toggle.isOn = false;
-            shopItemList.Add(item);
-        }
-    }
-
-    private void OnTrade()
-    {
-        if (selectedShopItem == null) return;
-
-        if (toggleBuy.isOn)
-        {
-            if (GameData.NowPlayerData.gold > selectedShopItem.info.price)
-            {
-                GameData.NowPlayerData.gold -= selectedShopItem.info.price;
-
-                var existing = GameData.NowBagData.items.Find(item => item.id == selectedShopItem.info.id);
-                if (ItemTypeCheck.IsEquipType(selectedShopItem.info.type) || existing == null)
-                {
-                    ItemData newItem = new();
-                    GameItem.CopyFields(selectedShopItem.info, newItem);
-                    newItem.uid = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    GameData.NowBagData.items.Add(newItem);
-                }
-                else existing.count++;
-            }
-        }
-        else
-        {
-            GameData.NowPlayerData.gold += selectedShopItem.info.price / 2;
-
-            var existing = GameData.NowBagData.items.Find(item => item.id == selectedShopItem.info.id);
-            if (existing != null)
-            {
-                existing.count--;
-            }
-            if (ItemTypeCheck.IsEquipType(selectedShopItem.info.type) || existing?.count == 0)
-            {
-                GameData.NowBagData.items.Remove(selectedShopItem.info);
-                shopItemList.Remove(selectedShopItem);
-                Destroy(selectedShopItem.gameObject);
-            }
-            else
-                selectedShopItem.SetInfo(existing);
-        }
-        gold.text = GameData.NowPlayerData.gold.ToString();
-
-        PublicFunc.SaveData();
-    }
-
-    private void RefreshBagInfo(ShopItem item)
-    {
-        selectedShopItem = item;
-        itemName.text = item.info.name;
-        type.text = item.info.type;
-        price.transform.parent.gameObject.SetActive(true);
-        var itemPrice = toggleBuy.isOn ? item.info.price : item.info.price / 2;
-        price.text = $"{itemPrice}";
-        description.text = item.info.description;
-        if (ItemTypeCheck.IsEquipType(item.info.type))
-            ability.text = item.info.GetAbilityString();
-    }
-
-    private void ResetBagInfo()
-    {
-        itemName.text = "";
-        type.text = "";
-        price.transform.parent.gameObject.SetActive(false);
-        price.text = "";
-        description.text = "";
-        ability.text = "";
+        btnShop.onClick.RemoveListener(panelShop.OnShop);
     }
 
     private async void OnGo()
@@ -491,12 +337,8 @@ public class PanelBattle : MonoBehaviour
 
                 if (ItemTypeCheck.IsEquipType(drop.item.type) || existing == null)
                 {
-                    ItemData newItem = new();
-                    GameItem.CopyFields(drop.item, newItem);
-                    newItem.uid = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    GameData.NowBagData.items.Add(newItem);
+                    GameData.NowBagData.items.Add(PublicFunc.GetItem(drop.item));
                     await SetLog($"{GameData.NowPlayerData.name}獲得了{drop.item.name}!");
-                    continue;
                 }
                 else
                 {
@@ -505,8 +347,8 @@ public class PanelBattle : MonoBehaviour
                 }
             }
 
-            Destroy(enemy.gameObject);
             enemyList.Remove(enemy);
+            Destroy(enemy.gameObject);
             GameData.NowEnemyData.enemies.Remove(enemy.info);
             return true;
         }

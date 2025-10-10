@@ -34,6 +34,13 @@ public class PanelStart : MonoBehaviour
             }
             else GameData.gameData = data;
 
+            if (!GameData.NowPlayerData.isGetBasicDagger)
+            {
+                GameData.NowBagData.items.Add(PublicFunc.GetItem(GameItem.Equip.BasicDagger));
+                GameData.NowPlayerData.isGetBasicDagger = true;
+                PublicFunc.SaveData();
+            }
+
             EventMng.EmitEvent(EventName.SwitchPage, PageName.Main);
         }
         else
