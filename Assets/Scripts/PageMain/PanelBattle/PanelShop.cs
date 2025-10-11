@@ -27,15 +27,13 @@ public class PanelShop : MonoBehaviour
     {
         shop = GetComponent<Button>();
         toggleItems = itemList.content.GetComponent<ToggleGroup>();
-
-        toggleSell.isOn = true;
-        toggleSell.isOn = false;
-        toggleBuy.isOn = true;
-        toggleBuy.isOn = false;
     }
 
     private void Start()
     {
+        toggleBuy.isOn = true;
+        toggleSell.isOn = true;
+
         shop.onClick.AddListener(OnShop);
         toggleBuy.onValueChanged.AddListener(OnSwitchBuy);
         toggleSell.onValueChanged.AddListener(OnSwitchSell);
@@ -60,8 +58,8 @@ public class PanelShop : MonoBehaviour
         {
             ResetBagInfo();
             gold.text = GameData.NowPlayerData.gold.ToString();
-            toggleBuy.isOn = true;
             shop.gameObject.SetActive(true);
+            toggleBuy.isOn = true;
         }
     }
 
