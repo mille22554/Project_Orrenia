@@ -143,4 +143,12 @@ public class PublicFunc
             }
         }
     }
+    
+
+    public static void UnloadEquip(long uid)
+    {
+        var item = GameData.NowBagData.items.Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(x.type));
+        if (item != null)
+            SetEquipAbility(item.ability, true);
+    }
 }

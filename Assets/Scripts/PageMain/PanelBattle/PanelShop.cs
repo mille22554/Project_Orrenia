@@ -115,7 +115,7 @@ public class PanelShop : MonoBehaviour
 
         if (toggleBuy.isOn)
         {
-            if (GameData.NowPlayerData.gold > selectedShopItem.info.price)
+            if (GameData.NowPlayerData.gold >= selectedShopItem.info.price)
             {
                 GameData.NowPlayerData.gold -= selectedShopItem.info.price;
 
@@ -155,8 +155,10 @@ public class PanelShop : MonoBehaviour
         var itemPrice = toggleBuy.isOn ? item.info.price : item.info.price / 2;
         price.text = $"{itemPrice}";
         description.text = item.info.description;
-        if (!(toggleSell.isOn && !ItemTypeCheck.IsEquipType(item.info.type)))
+
+        if (!ItemTypeCheck.IsMaterialType(item.info.type))
             ability.text = item.info.GetAbilityString();
+        else ability.text = "";
     }
 
     private void ResetBagInfo()

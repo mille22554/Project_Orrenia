@@ -6,6 +6,7 @@ using System.Linq;
 using Random = UnityEngine.Random;
 using System;
 using System.IO;
+using System.Reflection;
 
 public class PanelBattle : MonoBehaviour
 {
@@ -219,6 +220,8 @@ public class PanelBattle : MonoBehaviour
         var damage = Dice(GameData.NowPlayerData.ability.ATK) * damageMulti - Dice(selectedEnemy.info.ability.DEF) * defenceMulti;
         if (damage <= 0) damage = 1;
 
+        RunDurability(true);
+
         await SetLog($"{GameData.NowPlayerData.name}對{selectedEnemy.info.name}造成了{damage}點傷害!");
         if (await EnemyCheckDead(selectedEnemy, damage)) return;
     }
@@ -298,6 +301,7 @@ public class PanelBattle : MonoBehaviour
 
     private async UniTask<bool> PlayerGetDamage(int damage)
     {
+        RunDurability(false);
         GameData.NowPlayerData.CurrentHp -= damage;
 
         if (GameData.NowPlayerData.CurrentHp <= 0)
@@ -357,6 +361,48 @@ public class PanelBattle : MonoBehaviour
         else return false;
     }
 
+    private void RunDurability(bool isAttack)
+    {
+        // 1️⃣ 建立武器清單（只需一次）
+        var weapons = typeof(EquipType.One_Hand_Weapon)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Concat(typeof(EquipType.Two_Hand_Weapon)
+                .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+            .Select(f => f.GetValue(null)?.ToString())
+            .Where(v => v != null)
+            .ToHashSet();
+
+        List<ItemData> items = new();
+
+        // 2️⃣ 掃描所有裝備欄位
+        foreach (var field in typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        {
+            long uid = (long)field.GetValue(GameData.NowPlayerData.equips);
+            if (uid == 0) continue;
+
+            var item = GameData.NowBagData.items
+                .Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(x.type));
+            if (item == null) continue;
+
+            // 攻擊時扣武器耐久、防禦時扣防具耐久
+            bool isWeapon = weapons.Contains(item.type);
+            if ((isAttack && isWeapon) || (!isAttack && !isWeapon))
+                items.Add(item);
+        }
+
+        // 3️⃣ 處理耐久度扣減與移除
+        foreach (var _item in items.ToList()) // ToList 避免修改集合時出錯
+        {
+            _item.durability--;
+            if (_item.durability <= 0)
+            {
+                PublicFunc.UnloadEquip(_item.uid);
+                GameData.NowBagData.items.Remove(_item);
+            }
+        }
+    }
+
+
     private async UniTask SetLog(string message) => await SetLog(message, Color.white);
     private async UniTask SetLog(string message, Color color)
     {
@@ -383,10 +429,10 @@ public class PanelBattle : MonoBehaviour
             if (GameData.NowPlayerData.currentTp >= fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp > tpCost)
             {
                 PublicFunc.SaveData();
-// #if UNITY_EDITOR
-//                 await UniTask.NextFrame();
-//                 OnAttack();
-// #endif
+                // #if UNITY_EDITOR
+                //                 await UniTask.NextFrame();
+                //                 OnAttack();
+                // #endif
                 return;
             }
             else if (fastestEnemy.info.currentTp > tpCost)
@@ -406,10 +452,10 @@ public class PanelBattle : MonoBehaviour
 
         PublicFunc.SaveData();
         LogList.Clear();
-// #if UNITY_EDITOR
-//         await UniTask.NextFrame();
-//         OnGo();
-// #endif
+        // #if UNITY_EDITOR
+        //         await UniTask.NextFrame();
+        //         OnGo();
+        // #endif
     }
 
     private void SaveLog()

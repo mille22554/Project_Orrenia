@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -87,7 +88,7 @@ public class PlayerData
 
     public int skillPoint;
 
-    public bool isGetBasicDagger;
+    public bool isGetBasicDagger2;
 
     public PlayerData()
     {
@@ -118,7 +119,7 @@ public class PlayerData
 
         skillPoint = 0;
 
-        isGetBasicDagger = true;
+        isGetBasicDagger2 = false;
     }
 }
 
@@ -247,3 +248,16 @@ public class ItemData
     }
 }
 
+public class SkillData
+{
+    public string name;
+    public string description;
+    public Func<AbilityBase, int> damage;
+    public string damageType;
+    public string effect;
+    public Action special;
+    public string weaponType;
+    public int cost;
+    public int cooldown;
+
+}

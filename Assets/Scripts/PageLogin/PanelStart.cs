@@ -34,10 +34,10 @@ public class PanelStart : MonoBehaviour
             }
             else GameData.gameData = data;
 
-            if (!GameData.NowPlayerData.isGetBasicDagger)
+            if (!GameData.NowPlayerData.isGetBasicDagger2)
             {
                 GameData.NowBagData.items.Add(PublicFunc.GetItem(GameItem.Equip.BasicDagger));
-                GameData.NowPlayerData.isGetBasicDagger = true;
+                GameData.NowPlayerData.isGetBasicDagger2 = true;
                 PublicFunc.SaveData();
             }
 

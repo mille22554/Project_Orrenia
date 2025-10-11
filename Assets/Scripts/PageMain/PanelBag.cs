@@ -151,6 +151,7 @@ public class PanelBag : MonoBehaviour
                 textUse.text = "使用";
             btnUse.gameObject.SetActive(true);
         }
+        else ability.text = "";
     }
 
     private void ResetBagInfo()
@@ -188,8 +189,9 @@ public class PanelBag : MonoBehaviour
     {
         return item.type switch
         {
-            EquipType.One_Hand_Weapon => GameData.NowPlayerData.equips.Right_Hand == item.uid,
-            EquipType.Two_Hand_Weapon => GameData.NowPlayerData.equips.Right_Hand == item.uid && GameData.NowPlayerData.equips.Left_Hand == -1,
+            EquipType.One_Hand_Weapon.Sword or
+            EquipType.One_Hand_Weapon.Dagger => GameData.NowPlayerData.equips.Right_Hand == item.uid,
+            // EquipType.Two_Hand_Weapon => GameData.NowPlayerData.equips.Right_Hand == item.uid && GameData.NowPlayerData.equips.Left_Hand == -1,
             EquipType.Shield => GameData.NowPlayerData.equips.Left_Hand == item.uid,
             EquipType.Helmet => GameData.NowPlayerData.equips.Helmet == item.uid,
             EquipType.Armor => GameData.NowPlayerData.equips.Armor == item.uid,
@@ -208,49 +210,50 @@ public class PanelBag : MonoBehaviour
         var isEquipped = CheckIsPlayerEquip(item);
         switch (item.type)
         {
-            case EquipType.One_Hand_Weapon:
-                UnloadEquip(GameData.NowPlayerData.equips.Right_Hand);
+            case EquipType.One_Hand_Weapon.Sword:
+            case EquipType.One_Hand_Weapon.Dagger:
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Right_Hand);
                 GameData.NowPlayerData.equips.Right_Hand = isEquipped ? 0 : item.uid;
                 break;
-            case EquipType.Two_Hand_Weapon:
-                GameData.NowPlayerData.equips.Right_Hand = isEquipped ? 0 : item.uid;
-                UnloadEquip(GameData.NowPlayerData.equips.Right_Hand);
-                GameData.NowPlayerData.equips.Left_Hand = isEquipped ? 0 : -1;
-                break;
+            // case EquipType.Two_Hand_Weapon:
+            //     GameData.NowPlayerData.equips.Right_Hand = isEquipped ? 0 : item.uid;
+            //     PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Right_Hand);
+            //     GameData.NowPlayerData.equips.Left_Hand = isEquipped ? 0 : -1;
+            //     break;
             case EquipType.Shield:
-                UnloadEquip(GameData.NowPlayerData.equips.Left_Hand);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Left_Hand);
                 GameData.NowPlayerData.equips.Left_Hand = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Helmet:
-                UnloadEquip(GameData.NowPlayerData.equips.Helmet);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Helmet);
                 GameData.NowPlayerData.equips.Helmet = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Armor:
-                UnloadEquip(GameData.NowPlayerData.equips.Armor);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Armor);
                 GameData.NowPlayerData.equips.Armor = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Greaves:
-                UnloadEquip(GameData.NowPlayerData.equips.Greaves);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Greaves);
                 GameData.NowPlayerData.equips.Greaves = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Shoes:
-                UnloadEquip(GameData.NowPlayerData.equips.Shoes);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Shoes);
                 GameData.NowPlayerData.equips.Shoes = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Gloves:
-                UnloadEquip(GameData.NowPlayerData.equips.Gloves);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Gloves);
                 GameData.NowPlayerData.equips.Gloves = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Cape:
-                UnloadEquip(GameData.NowPlayerData.equips.Cape);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Cape);
                 GameData.NowPlayerData.equips.Cape = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Ring:
-                UnloadEquip(GameData.NowPlayerData.equips.Ring);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Ring);
                 GameData.NowPlayerData.equips.Ring = isEquipped ? 0 : item.uid;
                 break;
             case EquipType.Pendant:
-                UnloadEquip(GameData.NowPlayerData.equips.Pendant);
+                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Pendant);
                 GameData.NowPlayerData.equips.Pendant = isEquipped ? 0 : item.uid;
                 break;
         }
@@ -262,12 +265,5 @@ public class PanelBag : MonoBehaviour
         }
         else
             textUse.text = "裝備";
-    }
-
-    private void UnloadEquip(long uid)
-    {
-        var item = GameData.NowBagData.items.Find(x => x.uid == uid);
-        if (item != null)
-            PublicFunc.SetEquipAbility(item.ability, true);
     }
 }
