@@ -13,6 +13,7 @@ public class PanelShop : MonoBehaviour
     public Text description;
     public Text ability;
     public Text gold;
+    public InputField inputTradeNum;
     public Button btnTrade;
     public Text textTrade;
     public ScrollRect itemList;
@@ -37,6 +38,7 @@ public class PanelShop : MonoBehaviour
         shop.onClick.AddListener(OnShop);
         toggleBuy.onValueChanged.AddListener(OnSwitchBuy);
         toggleSell.onValueChanged.AddListener(OnSwitchSell);
+        inputTradeNum.onEndEdit.AddListener(OnInputEnd);
         btnTrade.onClick.AddListener(OnTrade);
     }
 
@@ -45,6 +47,7 @@ public class PanelShop : MonoBehaviour
         shop.onClick.RemoveListener(OnShop);
         toggleBuy.onValueChanged.RemoveListener(OnSwitchBuy);
         toggleSell.onValueChanged.RemoveListener(OnSwitchSell);
+        inputTradeNum.onEndEdit.RemoveListener(OnInputEnd);
         btnTrade.onClick.RemoveListener(OnTrade);
     }
 
@@ -109,26 +112,33 @@ public class PanelShop : MonoBehaviour
 
     private void OnTrade()
     {
-        if (selectedShopItem == null) return;
+        if (selectedShopItem == null || !int.TryParse(inputTradeNum.text, out var itemNum) || itemNum == 0) return;
 
         if (toggleBuy.isOn)
         {
-            if (GameData.NowPlayerData.gold >= selectedShopItem.info.price)
+            if (GameData.NowPlayerData.gold >= selectedShopItem.info.price * itemNum)
             {
-                GameData.NowPlayerData.gold -= selectedShopItem.info.price;
+                GameData.NowPlayerData.gold -= selectedShopItem.info.price * itemNum;
 
                 var existing = GameData.NowBagData.items.Find(item => item.id == selectedShopItem.info.id);
-                if (ItemTypeCheck.IsEquipType(selectedShopItem.info.type) || existing == null)
-                    GameData.NowBagData.items.Add(PublicFunc.GetItem(selectedShopItem.info));
-                else existing.count++;
+                if (ItemTypeCheck.IsEquipType(selectedShopItem.info.type))
+                    for (int i = 0; i < itemNum; i++)
+                        GameData.NowBagData.items.Add(PublicFunc.GetItem(selectedShopItem.info));
+                else if (existing == null)
+                {
+                    var buyItem = PublicFunc.GetItem(selectedShopItem.info);
+                    buyItem.count = itemNum;
+                    GameData.NowBagData.items.Add(buyItem);
+                }
+                else existing.count += itemNum;
             }
         }
         else
         {
-            GameData.NowPlayerData.gold += selectedShopItem.info.price / 2;
+            GameData.NowPlayerData.gold += selectedShopItem.info.price / 2 * itemNum;
 
             var existing = GameData.NowBagData.items.Find(item => item.id == selectedShopItem.info.id);
-            if (existing != null) existing.count--;
+            if (existing != null) existing.count -= itemNum;
 
             if (ItemTypeCheck.IsEquipType(selectedShopItem.info.type) || existing?.count == 0)
             {
@@ -153,6 +163,7 @@ public class PanelShop : MonoBehaviour
         var itemPrice = toggleBuy.isOn ? item.info.price : item.info.price / 2;
         price.text = $"{itemPrice}";
         description.text = item.info.description;
+        inputTradeNum.text = "";
 
         if (!ItemTypeCheck.IsMaterialType(item.info.type))
             ability.text = item.info.GetAbilityString();
@@ -167,5 +178,20 @@ public class PanelShop : MonoBehaviour
         price.text = "";
         description.text = "";
         ability.text = "";
+        inputTradeNum.text = "";
+    }
+
+    private void OnInputEnd(string str)
+    {
+        if (selectedShopItem == null || !int.TryParse(inputTradeNum.text, out var itemNum)) return;
+
+        if (toggleBuy.isOn && selectedShopItem.info.price * itemNum > GameData.NowPlayerData.gold)
+            inputTradeNum.text = (GameData.NowPlayerData.gold / selectedShopItem.info.price).ToString();
+        else if (toggleSell.isOn)
+        {
+            var haveNum = GameData.NowBagData.items.Find(x => x.uid == selectedShopItem.info.uid).count;
+            if (itemNum > haveNum)
+                inputTradeNum.text = haveNum.ToString();
+        }
     }
 }
