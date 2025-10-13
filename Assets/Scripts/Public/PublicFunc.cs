@@ -10,13 +10,13 @@ public class PublicFunc
     public static void SaveData()
     {
         var path = Path.Combine(Application.persistentDataPath, "savedata.json");
-        Debug.Log($"儲存遊戲資料到 {path}");
+        // Debug.Log($"儲存遊戲資料到 {path}");
         File.WriteAllText(path, JsonConvert.SerializeObject(GameData.gameData));
     }
 
     public static GameSaveData UpdateSaveData(GameSaveData oldData)
     {
-        Debug.Log("更新存檔資料結構");
+        // Debug.Log("更新存檔資料結構");
         var newData = new GameSaveData();
         newData.datas.playerData.name = oldData.datas.playerData.name;
 

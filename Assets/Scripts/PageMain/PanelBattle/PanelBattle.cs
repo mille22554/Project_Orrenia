@@ -166,7 +166,6 @@ public class PanelBattle : MonoBehaviour
 
     private async void OnAttack()
     {
-        // SaveLog();
         if (GameData.NowPlayerData.currentTp < tpCost) return;
 
         GameData.NowPlayerData.currentTp -= tpCost;
@@ -193,6 +192,11 @@ public class PanelBattle : MonoBehaviour
     private async UniTask RunPlayerAttack()
     {
         selectedEnemy = enemyList.Find(x => x.toggle.isOn);
+        if (selectedEnemy == null && enemyList.Count > 0)
+        {
+            selectedEnemy = enemyList[0];
+            selectedEnemy.toggle.isOn = true;
+        }
 
         #region 幸運事件
         if (await LuckyEventCheck(selectedEnemy)) return;
@@ -279,7 +283,7 @@ public class PanelBattle : MonoBehaviour
 
         if (luckLevel > 0)
         {
-            int damage = 0;
+            int damage;
             var hitter = playerAttacks ? enemy.info.name : GameData.NowPlayerData.name;
             switch (luckLevel)
             {
@@ -291,6 +295,8 @@ public class PanelBattle : MonoBehaviour
                     damage = Mathf.Max(Dice(attackerLUK), 1 * 10 - Dice(defenderLUK));
                     await SetLog($"一輛大卡車疾駛而來，撞飛了{hitter}!\n受到了{damage}點傷害!", Color.red);
                     break;
+                default:
+                    return false;
             }
 
             if (playerAttacks) { if (await EnemyCheckDead(enemy, damage)) return true; }
@@ -393,6 +399,7 @@ public class PanelBattle : MonoBehaviour
         // 3️⃣ 處理耐久度扣減與移除
         foreach (var _item in items.ToList()) // ToList 避免修改集合時出錯
         {
+            Debug.Log(_item.name);
             _item.durability--;
             if (_item.durability <= 0)
             {

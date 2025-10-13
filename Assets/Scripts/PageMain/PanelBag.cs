@@ -66,7 +66,6 @@ public class PanelBag : MonoBehaviour
                 item.toggle.group = toggleItems;
                 item.toggle.isOn = true;
                 item.toggle.isOn = false;
-                Debug.Log(item.itemName.text);
                 bagItems.Add(item);
                 if (toggleEquip.isOn)
                     item.gameObject.SetActive(ItemTypeCheck.IsEquipType(item.info.type));
