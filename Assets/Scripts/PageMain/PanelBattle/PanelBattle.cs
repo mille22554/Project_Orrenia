@@ -288,11 +288,11 @@ public class PanelBattle : MonoBehaviour
             switch (luckLevel)
             {
                 case 2:
-                    damage = Mathf.Max(Dice(attackerLUK), 1 * 5 - Dice(defenderLUK));
+                    damage = Mathf.Max(Dice(attackerLUK), 1 * 10 - Dice(defenderLUK));
                     await SetLog($"{hitter}突然抽筋了!\n受到了{damage}點傷害!", Color.magenta);
                     break;
                 case 3:
-                    damage = Mathf.Max(Dice(attackerLUK), 1 * 10 - Dice(defenderLUK));
+                    damage = Mathf.Max(Dice(attackerLUK), 1 * 50 - Dice(defenderLUK));
                     await SetLog($"一輛大卡車疾駛而來，撞飛了{hitter}!\n受到了{damage}點傷害!", Color.red);
                     break;
                 default:

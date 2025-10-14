@@ -185,6 +185,12 @@ public class PanelShop : MonoBehaviour
     {
         if (selectedShopItem == null || !int.TryParse(inputTradeNum.text, out var itemNum)) return;
 
+        if (itemNum < 0)
+        {
+            inputTradeNum.text = "0";
+            return;
+        }
+
         if (toggleBuy.isOn && selectedShopItem.info.price * itemNum > GameData.NowPlayerData.gold)
             inputTradeNum.text = (GameData.NowPlayerData.gold / selectedShopItem.info.price).ToString();
         else if (toggleSell.isOn)
