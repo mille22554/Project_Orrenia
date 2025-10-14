@@ -34,12 +34,12 @@ public class PanelCharacter : MonoBehaviour
 
     public void RefreshInfo()
     {
-        STR.SetInfo(GameData.NowPlayerData.ability.STR);
-        VIT.SetInfo(GameData.NowPlayerData.ability.VIT);
-        DEX.SetInfo(GameData.NowPlayerData.ability.DEX);
-        INT.SetInfo(GameData.NowPlayerData.ability.INT);
-        AGI.SetInfo(GameData.NowPlayerData.ability.AGI);
-        LUK.SetInfo(GameData.NowPlayerData.ability.LUK);
+        STR.SetInfo(GameData.NowPlayerData.ability.STR_Point);
+        VIT.SetInfo(GameData.NowPlayerData.ability.VIT_Point);
+        DEX.SetInfo(GameData.NowPlayerData.ability.DEX_Point);
+        INT.SetInfo(GameData.NowPlayerData.ability.INT_Point);
+        AGI.SetInfo(GameData.NowPlayerData.ability.AGI_Point);
+        LUK.SetInfo(GameData.NowPlayerData.ability.LUK_Point);
 
         abilityPoint.text = GameData.NowPlayerData.AbilityPoint.ToString();
     }

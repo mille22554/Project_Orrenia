@@ -399,7 +399,7 @@ public class PanelBattle : MonoBehaviour
         // 3️⃣ 處理耐久度扣減與移除
         foreach (var _item in items.ToList()) // ToList 避免修改集合時出錯
         {
-            Debug.Log(_item.name);
+            // Debug.Log(_item.name);
             _item.durability--;
             if (_item.durability <= 0)
             {

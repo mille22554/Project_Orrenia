@@ -5,7 +5,7 @@ using System.Reflection;
 
 public static class GameData
 {
-    public static string version = "0.0.12";
+    public static string version = "0.0.14";
     public static GameSaveData gameData;
 
     public static PlayerData NowPlayerData => gameData.datas.playerData;

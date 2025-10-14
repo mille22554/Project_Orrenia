@@ -143,12 +143,31 @@ public class PublicFunc
             }
         }
     }
-    
+
 
     public static void UnloadEquip(long uid)
     {
+        SwitchEquipSlot(uid);
         var item = GameData.NowBagData.items.Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(x.type));
         if (item != null)
             SetEquipAbility(item.ability, true);
     }
+
+    public static void SwitchEquipSlot(long uid)
+    {
+        // 取得所有公開實例欄位
+        var fields = typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var field in fields)
+        {
+            long value = (long)field.GetValue(GameData.NowPlayerData.equips);
+
+            if (value == uid && uid != 0)
+            {
+                field.SetValue(GameData.NowPlayerData.equips, 0L);
+                Debug.Log($"已清空欄位：{field.Name}");
+            }
+        }
+    }
+
 }

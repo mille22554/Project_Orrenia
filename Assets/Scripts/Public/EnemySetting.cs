@@ -121,7 +121,7 @@ public static class EnemySetting
         }
         else if (deep > 500)
         {
-            float t2 = (deep - 500) / 500f;
+            float t2 = Mathf.Clamp01((deep - 500) / 500f);
             p1 = Mathf.Lerp(0.72f, 0.44f, t2);
             p2 = Mathf.Lerp(0.18f, 0.36f, t2);
         }
@@ -153,8 +153,14 @@ public static class EnemySetting
         float center = deep / 100f;
 
         // 範圍
-        int min = Mathf.Max(1, Mathf.FloorToInt(center) - 2);
-        int max = Mathf.Min(10, Mathf.CeilToInt(center) + 2);
+        int min = Mathf.Clamp(Mathf.FloorToInt(center) - 2, 1, 10);
+        int max = Mathf.Clamp(Mathf.CeilToInt(center) + 2, 1, 10);
+
+        if (min > max)
+        {
+            int safe = Mathf.Clamp(Mathf.RoundToInt(center), 1, 10);
+            return safe;
+        }
 
         // 計算權重（距離中心越近越高）
         float[] weights = new float[max - min + 1];
@@ -176,7 +182,7 @@ public static class EnemySetting
                 return min + i;
         }
 
-        return min; // 保險回傳
+        return max;
     }
 
     public static AbilityBase SetAbility(AbilityBase data)
