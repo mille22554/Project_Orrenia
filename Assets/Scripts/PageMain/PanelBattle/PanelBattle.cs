@@ -417,7 +417,7 @@ public class PanelBattle : MonoBehaviour
         var textLog = Instantiate(itemLog, log.content);
         textLog.text = message;
         textLog.color = color;
-        if (log.content.childCount > 100) Destroy(log.content.GetChild(0).gameObject);
+        if (log.content.childCount > 30) Destroy(log.content.GetChild(0).gameObject);
 
         await UniTask.Yield();
         log.verticalNormalizedPosition = 0;

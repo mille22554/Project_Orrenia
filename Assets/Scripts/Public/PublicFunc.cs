@@ -105,7 +105,7 @@ public class PublicFunc
     public static ItemData GetItem(ItemData source)
     {
         var target = CopyFields(source);
-        target.uid = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        target.uid = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0));
         return target;
     }
 
@@ -170,4 +170,23 @@ public class PublicFunc
         }
     }
 
+    public static bool CheckIsPlayerEquip(ItemData item)
+    {
+        return item.type switch
+        {
+            EquipType.One_Hand_Weapon.Sword or
+            EquipType.One_Hand_Weapon.Dagger => GameData.NowPlayerData.equips.Right_Hand == item.uid,
+            // EquipType.Two_Hand_Weapon => GameData.NowPlayerData.equips.Right_Hand == item.uid && GameData.NowPlayerData.equips.Left_Hand == -1,
+            EquipType.Shield => GameData.NowPlayerData.equips.Left_Hand == item.uid,
+            EquipType.Helmet => GameData.NowPlayerData.equips.Helmet == item.uid,
+            EquipType.Armor => GameData.NowPlayerData.equips.Armor == item.uid,
+            EquipType.Greaves => GameData.NowPlayerData.equips.Greaves == item.uid,
+            EquipType.Shoes => GameData.NowPlayerData.equips.Shoes == item.uid,
+            EquipType.Gloves => GameData.NowPlayerData.equips.Gloves == item.uid,
+            EquipType.Cape => GameData.NowPlayerData.equips.Cape == item.uid,
+            EquipType.Ring => GameData.NowPlayerData.equips.Ring == item.uid,
+            EquipType.Pendant => GameData.NowPlayerData.equips.Pendant == item.uid,
+            _ => false,
+        };
+    }
 }

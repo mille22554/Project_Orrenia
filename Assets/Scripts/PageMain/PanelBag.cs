@@ -141,7 +141,7 @@ public class PanelBag : MonoBehaviour
             ability.text = item.info.GetAbilityString();
             if (ItemTypeCheck.IsEquipType(item.info.type))
             {
-                if (CheckIsPlayerEquip(item.info))
+                if (PublicFunc.CheckIsPlayerEquip(item.info))
                     textUse.text = "卸下";
                 else
                     textUse.text = "裝備";
@@ -184,78 +184,10 @@ public class PanelBag : MonoBehaviour
         PublicFunc.SaveData();
     }
 
-    private bool CheckIsPlayerEquip(ItemData item)
-    {
-        return item.type switch
-        {
-            EquipType.One_Hand_Weapon.Sword or
-            EquipType.One_Hand_Weapon.Dagger => GameData.NowPlayerData.equips.Right_Hand == item.uid,
-            // EquipType.Two_Hand_Weapon => GameData.NowPlayerData.equips.Right_Hand == item.uid && GameData.NowPlayerData.equips.Left_Hand == -1,
-            EquipType.Shield => GameData.NowPlayerData.equips.Left_Hand == item.uid,
-            EquipType.Helmet => GameData.NowPlayerData.equips.Helmet == item.uid,
-            EquipType.Armor => GameData.NowPlayerData.equips.Armor == item.uid,
-            EquipType.Greaves => GameData.NowPlayerData.equips.Greaves == item.uid,
-            EquipType.Shoes => GameData.NowPlayerData.equips.Shoes == item.uid,
-            EquipType.Gloves => GameData.NowPlayerData.equips.Gloves == item.uid,
-            EquipType.Cape => GameData.NowPlayerData.equips.Cape == item.uid,
-            EquipType.Ring => GameData.NowPlayerData.equips.Ring == item.uid,
-            EquipType.Pendant => GameData.NowPlayerData.equips.Pendant == item.uid,
-            _ => false,
-        };
-    }
-
     private void SwitchEquipStatus(ItemData item)
     {
-        var isEquipped = CheckIsPlayerEquip(item);
-        switch (item.type)
-        {
-            case EquipType.One_Hand_Weapon.Sword:
-            case EquipType.One_Hand_Weapon.Dagger:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Right_Hand);
-                GameData.NowPlayerData.equips.Right_Hand = isEquipped ? 0 : item.uid;
-                break;
-            // case EquipType.Two_Hand_Weapon:
-            //     GameData.NowPlayerData.equips.Right_Hand = isEquipped ? 0 : item.uid;
-            //     PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Right_Hand);
-            //     GameData.NowPlayerData.equips.Left_Hand = isEquipped ? 0 : -1;
-            //     break;
-            case EquipType.Shield:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Left_Hand);
-                GameData.NowPlayerData.equips.Left_Hand = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Helmet:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Helmet);
-                GameData.NowPlayerData.equips.Helmet = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Armor:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Armor);
-                GameData.NowPlayerData.equips.Armor = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Greaves:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Greaves);
-                GameData.NowPlayerData.equips.Greaves = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Shoes:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Shoes);
-                GameData.NowPlayerData.equips.Shoes = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Gloves:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Gloves);
-                GameData.NowPlayerData.equips.Gloves = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Cape:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Cape);
-                GameData.NowPlayerData.equips.Cape = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Ring:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Ring);
-                GameData.NowPlayerData.equips.Ring = isEquipped ? 0 : item.uid;
-                break;
-            case EquipType.Pendant:
-                PublicFunc.UnloadEquip(GameData.NowPlayerData.equips.Pendant);
-                GameData.NowPlayerData.equips.Pendant = isEquipped ? 0 : item.uid;
-                break;
-        }
+        var isEquipped = PublicFunc.CheckIsPlayerEquip(item);
+        RefreshEquipState(item.type, item, isEquipped);
 
         if (!isEquipped)
         {
@@ -265,4 +197,48 @@ public class PanelBag : MonoBehaviour
         else
             textUse.text = "裝備";
     }
+
+    private void RefreshEquipState(string type, ItemData item, bool isEquipped)
+    {
+        string fieldName = type switch
+        {
+            EquipType.One_Hand_Weapon.Sword or EquipType.One_Hand_Weapon.Dagger => "Right_Hand",
+            EquipType.Shield => "Left_Hand",
+            EquipType.Helmet => "Helmet",
+            EquipType.Armor => "Armor",
+            EquipType.Greaves => "Greaves",
+            EquipType.Shoes => "Shoes",
+            EquipType.Gloves => "Gloves",
+            EquipType.Cape => "Cape",
+            EquipType.Ring => "Ring",
+            EquipType.Pendant => "Pendant",
+            _ => null
+        };
+
+        if (fieldName == null)
+            return;
+
+        var equips = GameData.NowPlayerData.equips;
+        var field = typeof(EquipBase).GetField(fieldName);
+        long currentUid = (long)field.GetValue(equips);
+
+        // 解除當前裝備
+        PublicFunc.UnloadEquip(currentUid);
+
+        if (isEquipped)
+        {
+            field.SetValue(equips, 0L);
+            selectedBagItem.iconEquip.SetActive(false);
+        }
+        else
+        {
+            var existingItem = bagItems.Find(x => x.info.uid == currentUid);
+            if (existingItem != null)
+                existingItem.iconEquip.SetActive(false);
+
+            field.SetValue(equips, item.uid);
+            selectedBagItem.iconEquip.SetActive(true);
+        }
+    }
+
 }

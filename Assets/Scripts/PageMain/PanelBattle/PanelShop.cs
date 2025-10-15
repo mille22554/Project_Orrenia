@@ -100,6 +100,8 @@ public class PanelShop : MonoBehaviour
 
         foreach (var itemInfo in GameData.NowBagData.items)
         {
+            if (PublicFunc.CheckIsPlayerEquip(itemInfo)) continue;
+
             var item = Instantiate(shopItem, itemList.content);
             item.SetInfo(itemInfo);
             item.refreshBagInfo = RefreshBagInfo;

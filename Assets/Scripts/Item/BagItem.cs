@@ -8,6 +8,7 @@ public class BagItem : MonoBehaviour
     public Text itemName;
     public Text count;
     public Toggle toggle;
+    public GameObject iconEquip;
     public Action<BagItem> refreshBagInfo;
     [NonSerialized] public ItemData info;
 
@@ -31,6 +32,8 @@ public class BagItem : MonoBehaviour
             count.text = data.durability.ToString();
         else
             count.text = data.count.ToString();
+
+        iconEquip.SetActive(PublicFunc.CheckIsPlayerEquip(info));
     }
 
     private void OnToggleValueChange(bool isOn)
