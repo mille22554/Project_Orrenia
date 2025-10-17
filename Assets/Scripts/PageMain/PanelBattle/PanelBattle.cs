@@ -26,7 +26,6 @@ public class PanelBattle : MonoBehaviour
 
     private readonly List<ItemEnemy> enemyList = new();
     private ItemEnemy selectedEnemy;
-    private const int tpCost = 10000;
     private readonly List<string> LogList = new();
 
     private void Start()
@@ -108,6 +107,7 @@ public class PanelBattle : MonoBehaviour
 
     private async void OnGo()
     {
+        GameData.NowPlayerData.CurrentSTA -= 1;
         if (GameData.NowPlayerData.deep == 0)
         {
             area.text = GameData.NowPlayerData.area = GameArea.Floor1;
@@ -137,6 +137,9 @@ public class PanelBattle : MonoBehaviour
         btnGo.gameObject.SetActive(false);
         btnAttack.gameObject.SetActive(true);
 
+        // foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+        //     effectAction.Invoke();
+
         PublicFunc.SaveData();
         RunSpeed().Forget();
     }
@@ -158,6 +161,11 @@ public class PanelBattle : MonoBehaviour
         enemyList.Clear();
 
         await SetLog("離開迷宮，回到 " + area.text);
+        GameData.NowPlayerData.CurrentSTA = GameData.NowPlayerData.ability.STA;
+
+        foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+            effectAction.Invoke();
+
         GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
         GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
 
@@ -166,10 +174,13 @@ public class PanelBattle : MonoBehaviour
 
     private async void OnAttack()
     {
-        if (GameData.NowPlayerData.currentTp < tpCost) return;
+        if (GameData.NowPlayerData.currentTp < GameData.tpCost) return;
 
-        GameData.NowPlayerData.currentTp -= tpCost;
+        GameData.NowPlayerData.CurrentSTA -= 1;
+        GameData.NowPlayerData.currentTp -= GameData.tpCost;
         await RunPlayerAttack();
+        foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+            effectAction.Invoke();
 
         PublicFunc.SaveData();
         RunSpeed().Forget();
@@ -339,6 +350,7 @@ public class PanelBattle : MonoBehaviour
                 GameData.NowPlayerData.skillPoint += 1;
                 GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
                 GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
+                GameData.NowPlayerData.CurrentSTA = GameData.NowPlayerData.ability.STA;
             }
 
             foreach (var drop in enemy.info.dropItems)
@@ -433,18 +445,21 @@ public class PanelBattle : MonoBehaviour
             var fastestEnemy = enemyList
                 .Aggregate((max, next) => next.info.currentTp > max.info.currentTp ? next : max);
 
-            if (GameData.NowPlayerData.currentTp >= fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp > tpCost)
+            if (GameData.NowPlayerData.currentTp >= fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp > GameData.tpCost)
             {
                 PublicFunc.SaveData();
                 // #if UNITY_EDITOR
-                //                 await UniTask.NextFrame();
-                //                 OnAttack();
+                if (GameData.NowPlayerData.effects.Find(x => x.type == EffectType.Buff.Berserk) != null)
+                {
+                    await UniTask.NextFrame();
+                    OnAttack();
+                }
                 // #endif
                 return;
             }
-            else if (fastestEnemy.info.currentTp > tpCost)
+            else if (fastestEnemy.info.currentTp > GameData.tpCost)
             {
-                fastestEnemy.info.currentTp -= tpCost;
+                fastestEnemy.info.currentTp -= GameData.tpCost;
                 await RunEnemyAttack(fastestEnemy);
                 continue;
             }

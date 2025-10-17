@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class GameSaveData
@@ -66,6 +67,20 @@ public class PlayerData
             EventMng.EmitEvent(EventName.RefreshPlayerInfo);
         }
     }
+    private int currentSTA;
+    public int CurrentSTA
+    {
+        get { return currentSTA; }
+        set
+        {
+            currentSTA = value;
+            if (currentSTA > ability?.STA) currentSTA = ability.STA;
+            else if (currentSTA < 0) currentSTA = 0;
+            else if (currentSTA == 0) PublicFunc.AddPlayerEffect(EffectType.Debuff.Exhausted, 10, 1);
+
+            EventMng.EmitEvent(EventName.RefreshPlayerInfo);
+        }
+    }
     public int currentTp;
 
     public string area;
@@ -86,6 +101,10 @@ public class PlayerData
 
     public EquipBase equips;
 
+    public List<EffectData> effects;
+    [JsonIgnore]
+    public List<Action> effectActions;
+
     public int skillPoint;
 
     public bool isGetBasicDagger2;
@@ -97,6 +116,7 @@ public class PlayerData
         maxExp = 100;
         CurrentHp = 100;
         CurrentMp = 50;
+        CurrentSTA = 100;
         currentTp = 0;
 
         area = GameArea.Home;
@@ -114,8 +134,10 @@ public class PlayerData
             LUK_Point = 1
         };
         equips = new();
-        PublicFunc.SetPlayerAbility(ability, equips);
+        effects = new();
+        effectActions = new();
 
+        PublicFunc.SetPlayerAbility(ability, equips, effects, effectActions);
 
         skillPoint = 0;
 
@@ -141,6 +163,7 @@ public class AbilityBase
 
     public int HP;
     public int MP;
+    public int STA;
     public int ATK;
     public int MATK;
     public int DEF;
@@ -248,6 +271,13 @@ public class ItemData
     }
 }
 
+public class EffectData
+{
+    public string type;
+    public int value;
+    public int times;
+}
+
 public class SkillData
 {
     public string name;
@@ -259,5 +289,4 @@ public class SkillData
     public string weaponType;
     public int cost;
     public int cooldown;
-
 }

@@ -5,7 +5,10 @@ using System.Reflection;
 
 public static class GameData
 {
-    public static string version = "0.0.14";
+    public static string version = "0.0.15";
+
+    public const int tpCost = 10000;
+
     public static GameSaveData gameData;
 
     public static PlayerData NowPlayerData => gameData.datas.playerData;
@@ -169,6 +172,30 @@ public static class GameItem
             },
             count = 1
         };
+
+        public static ItemData SmallSTAPotion = new()
+        {
+            name = "小型體力藥水",
+            id = 102,
+            type = UseType.Use,
+            description = "恢復少量體力。",
+            price = 50,
+            ability = new()
+            {
+                STA = 10
+            },
+            count = 1
+        };
+
+        public static ItemData BerserkPotion = new()
+        {
+            name = "狂暴藥水",
+            id = 103,
+            type = UseType.Use,
+            description = "使全數值呈倍數上升，但會不受控",
+            price = 1000,
+            count = 1
+        };
     }
 
     public static class Material
@@ -235,7 +262,7 @@ public static class EquipType
     }
     public static class Two_Hand_Weapon
     {
-        
+
     }
     public const string Shield = "盾牌";
     public const string Helmet = "頭盔";
@@ -322,7 +349,10 @@ public static class GameShopItem
         GameItem.Equip.ClothArmor,
         GameItem.Equip.ClothGreaves,
         GameItem.Equip.ClothBoots,
-        GameItem.Use.SmallHpPotion
+        GameItem.Use.SmallHpPotion,
+        GameItem.Use.SmallMpPotion,
+        GameItem.Use.SmallSTAPotion,
+        GameItem.Use.BerserkPotion,
     };
 }
 
@@ -394,5 +424,6 @@ public static class EffectType
         public const string Stun = "暈眩";
         public const string Silence = "沉默";
         public const string Confusion = "混亂";
+        public const string Exhausted = "筋疲力竭";
     }
 }

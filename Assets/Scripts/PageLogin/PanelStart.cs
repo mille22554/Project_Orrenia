@@ -41,6 +41,8 @@ public class PanelStart : MonoBehaviour
                 PublicFunc.SaveData();
             }
 
+            PublicFunc.SetPlayerAbility();
+
             EventMng.EmitEvent(EventName.SwitchPage, PageName.Main);
         }
         else

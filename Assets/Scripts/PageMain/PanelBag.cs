@@ -179,7 +179,12 @@ public class PanelBag : MonoBehaviour
 
             GameData.NowPlayerData.CurrentHp += selectedBagItem.info.ability.HP;
             GameData.NowPlayerData.CurrentMp += selectedBagItem.info.ability.MP;
+            GameData.NowPlayerData.CurrentSTA += selectedBagItem.info.ability.STA;
+
+            UseItemSpecial(selectedBagItem.info.name);
         }
+        if (GameData.NowPlayerData.currentTp >= GameData.tpCost)
+            GameData.NowPlayerData.currentTp -= GameData.tpCost;
 
         PublicFunc.SaveData();
     }
@@ -241,4 +246,11 @@ public class PanelBag : MonoBehaviour
         }
     }
 
+    private void UseItemSpecial(string itemName)
+    {
+        if (itemName == GameItem.Use.BerserkPotion.name)
+        {
+            PublicFunc.AddPlayerEffect(EffectType.Buff.Berserk, 2, 100);
+        }
+    }
 }

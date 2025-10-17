@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
@@ -75,11 +76,68 @@ public class PublicFunc
             }
         }
 
+        // ====== 處理屬性 ======
+        foreach (var prop in oldData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (!prop.CanRead || !prop.CanWrite) continue; // 跳過唯讀屬性
+
+            object oldValue = prop.GetValue(oldData);
+            if (oldValue == null) continue;
+
+            Type propType = prop.PropertyType;
+
+            if (!propType.IsPrimitive && propType != typeof(string))
+            {
+                if (typeof(IList).IsAssignableFrom(propType))
+                {
+                    if (oldValue is not IList oldList) continue;
+
+                    if (prop.GetValue(newData) is not IList newList)
+                    {
+                        newList = Activator.CreateInstance(propType) as IList;
+                        prop.SetValue(newData, newList);
+                    }
+
+                    newList.Clear();
+                    foreach (var item in oldList)
+                        newList.Add(item);
+                }
+                else
+                {
+                    object newChild = prop.GetValue(newData);
+                    if (newChild == null)
+                    {
+                        newChild = Activator.CreateInstance(propType);
+                        prop.SetValue(newData, newChild);
+                    }
+                    CopyNonDefaultValues(oldValue, newChild);
+                }
+            }
+            else
+            {
+                prop.SetValue(newData, oldValue);
+            }
+        }
+
         return newData;
     }
 
-    public static void SetPlayerAbility() => SetPlayerAbility(GameData.NowPlayerData.ability, GameData.NowPlayerData.equips);
-    public static void SetPlayerAbility(AbilityBase data, EquipBase equips)
+    public static void SetPlayerAbility()
+    {
+        SetPlayerAbility(
+            GameData.NowPlayerData.ability,
+            GameData.NowPlayerData.equips,
+            GameData.NowPlayerData.effects,
+            GameData.NowPlayerData.effectActions
+        );
+        if (GameData.NowPlayerData.CurrentHp > GameData.NowPlayerData.ability?.HP)
+            GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
+        if (GameData.NowPlayerData.CurrentMp > GameData.NowPlayerData.ability?.MP)
+            GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
+        if (GameData.NowPlayerData.CurrentSTA > GameData.NowPlayerData.ability?.STA)
+            GameData.NowPlayerData.CurrentSTA = GameData.NowPlayerData.ability.STA;
+    }
+    public static void SetPlayerAbility(AbilityBase data, EquipBase equips, List<EffectData> effects, List<Action> actions)
     {
         data.STR = data.STR_Point;
         data.VIT = data.VIT_Point;
@@ -87,8 +145,10 @@ public class PublicFunc
         data.INT = data.INT_Point;
         data.AGI = data.AGI_Point;
         data.LUK = data.LUK_Point;
+
         data.HP = data.VIT * 10 + data.STR * 5 + 85;
         data.MP = data.INT * 10 + data.VIT * 5 + 35;
+        data.STA = data.VIT * 5 + 95;
         data.ATK = data.STR * 2 + data.VIT;
         data.MATK = data.INT * 2 + data.VIT;
         data.DEF = data.VIT * 2 + data.STR;
@@ -99,6 +159,9 @@ public class PublicFunc
         data.SPD = data.DEX;
 
         ReSetEquipAbility(equips);
+
+        SetEffectAbility(effects, actions);
+
         EventMng.EmitEvent(EventName.RefreshPlayerInfo);
     }
 
@@ -144,7 +207,6 @@ public class PublicFunc
         }
     }
 
-
     public static void UnloadEquip(long uid)
     {
         SwitchEquipSlot(uid);
@@ -188,5 +250,98 @@ public class PublicFunc
             EquipType.Pendant => GameData.NowPlayerData.equips.Pendant == item.uid,
             _ => false,
         };
+    }
+
+    public static void SetEffectAbility(List<EffectData> effects, List<Action> actions)
+    {
+        actions.Clear();
+
+        foreach (var effect in effects)
+        {
+            Action effectAction = null;
+            switch (effect.type)
+            {
+                case EffectType.Buff.HP_UP:
+                    GameData.NowPlayerData.ability.HP *= effect.value;
+                    EventMng.EmitEvent(EventName.RefreshPlayerInfo);
+
+                    effectAction = () => ActionCounter(ref effectAction);
+                    break;
+                case EffectType.Buff.HP_Regen:
+                    effectAction = () =>
+                    {
+                        GameData.NowPlayerData.CurrentHp += effect.value;
+                        ActionCounter(ref effectAction);
+                    };
+                    break;
+                case EffectType.Buff.Berserk:
+                    GameData.NowPlayerData.ability.HP *= effect.value;
+                    GameData.NowPlayerData.ability.MP *= effect.value;
+                    GameData.NowPlayerData.ability.ATK *= effect.value;
+                    GameData.NowPlayerData.ability.MATK *= effect.value;
+                    GameData.NowPlayerData.ability.DEF *= effect.value;
+                    GameData.NowPlayerData.ability.MDEF *= effect.value;
+                    GameData.NowPlayerData.ability.ACC *= effect.value;
+                    GameData.NowPlayerData.ability.EVA *= effect.value;
+                    GameData.NowPlayerData.ability.CRIT *= effect.value;
+                    GameData.NowPlayerData.ability.SPD *= effect.value;
+                    effectAction = () => ActionCounter(ref effectAction);
+                    break;
+
+                case EffectType.Debuff.Exhausted:
+                    GameData.NowPlayerData.ability.HP /= effect.value;
+                    GameData.NowPlayerData.ability.MP /= effect.value;
+                    GameData.NowPlayerData.ability.ATK /= effect.value;
+                    GameData.NowPlayerData.ability.MATK /= effect.value;
+                    GameData.NowPlayerData.ability.DEF /= effect.value;
+                    GameData.NowPlayerData.ability.MDEF /= effect.value;
+                    GameData.NowPlayerData.ability.ACC /= effect.value;
+                    GameData.NowPlayerData.ability.EVA /= effect.value;
+                    GameData.NowPlayerData.ability.CRIT /= effect.value;
+                    GameData.NowPlayerData.ability.SPD /= effect.value;
+
+                    Action temp = () =>
+                    {
+                        Debug.Log(GameData.NowPlayerData.CurrentSTA);
+                        if (GameData.NowPlayerData.CurrentSTA > 0)
+                        {
+                            Debug.Log("應該要清掉了");
+                            RemovePlayerEffect(effect, ref effectAction);
+                        }
+                    };
+                    effectAction = temp;
+
+                    break;
+            }
+            if (effectAction != null)
+                GameData.NowPlayerData.effectActions.Add(effectAction);
+
+            void ActionCounter(ref Action action)
+            {
+                effect.times--;
+                if (effect.times <= 0) RemovePlayerEffect(effect, ref action);
+            }
+        }
+    }
+
+    public static void AddPlayerEffect(string effectType, int effectValue, int effectTimes)
+    {
+        GameData.NowPlayerData.effects.Add(new()
+        {
+            type = effectType,
+            value = effectValue,
+            times = effectTimes
+        });
+        SetPlayerAbility();
+    }
+
+    public static void RemovePlayerEffect(EffectData effect, ref Action action)
+    {
+        // var effectRemoved =
+        GameData.NowPlayerData.effects.Remove(effect);
+        // var actionRemoved =
+        GameData.NowPlayerData.effectActions.Remove(action);
+        // Debug.Log($"Effect is {effect.type}. Effect removed: {effectRemoved}, Action removed: {actionRemoved}");
+        SetPlayerAbility();
     }
 }

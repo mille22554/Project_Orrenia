@@ -57,11 +57,6 @@ public class PanelCharacter : MonoBehaviour
             LUK_Point = 1
         };
         PublicFunc.SetPlayerAbility();
-        if (GameData.NowPlayerData.CurrentHp > GameData.NowPlayerData.ability?.HP)
-            GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
-        if (GameData.NowPlayerData.CurrentMp > GameData.NowPlayerData.ability?.MP)
-            GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
-
         RefreshInfo();
         PublicFunc.SaveData();
     }
