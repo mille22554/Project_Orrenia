@@ -14,6 +14,7 @@ public class PanelBattle : MonoBehaviour
     public Text deep;
     public Button btnGo;
     public Button btnAttack;
+    public Button btnRest;
     public Button btnLeave;
     public Button btnShop;
     public ToggleGroup enemies;
@@ -32,6 +33,7 @@ public class PanelBattle : MonoBehaviour
     {
         btnGo.onClick.AddListener(OnGo);
         btnAttack.onClick.AddListener(OnAttack);
+        btnRest.onClick.AddListener(OnRest);
         btnLeave.onClick.AddListener(OnLeave);
         btnShop.onClick.AddListener(panelShop.OnShop);
 
@@ -53,6 +55,7 @@ public class PanelBattle : MonoBehaviour
                 deep.text = "";
                 btnGo.gameObject.SetActive(true);
                 btnShop.gameObject.SetActive(true);
+                btnRest.gameObject.SetActive(false);
                 btnLeave.gameObject.SetActive(false);
                 btnAttack.gameObject.SetActive(false);
                 log.gameObject.SetActive(false);
@@ -60,6 +63,7 @@ public class PanelBattle : MonoBehaviour
             else
             {
                 deep.text = "深度 " + GameData.NowPlayerData.deep;
+                btnRest.gameObject.SetActive(true);
                 btnLeave.gameObject.SetActive(true);
                 btnShop.gameObject.SetActive(false);
                 log.gameObject.SetActive(true);
@@ -76,12 +80,14 @@ public class PanelBattle : MonoBehaviour
                     }
                     enemyList[0].toggle.isOn = true;
                     btnGo.gameObject.SetActive(false);
+                    btnRest.gameObject.SetActive(false);
                     btnAttack.gameObject.SetActive(true);
                     RunSpeed().Forget();
                 }
                 else
                 {
                     btnGo.gameObject.SetActive(true);
+                    btnRest.gameObject.SetActive(true);
                     btnAttack.gameObject.SetActive(false);
                 }
             }
@@ -101,6 +107,7 @@ public class PanelBattle : MonoBehaviour
     {
         btnGo.onClick.RemoveListener(OnGo);
         btnAttack.onClick.RemoveListener(OnAttack);
+        btnRest.onClick.RemoveListener(OnRest);
         btnLeave.onClick.RemoveListener(OnLeave);
         btnShop.onClick.RemoveListener(panelShop.OnShop);
     }
@@ -111,6 +118,7 @@ public class PanelBattle : MonoBehaviour
         if (GameData.NowPlayerData.deep == 0)
         {
             area.text = GameData.NowPlayerData.area = GameArea.Floor1;
+            btnRest.gameObject.SetActive(true);
             btnLeave.gameObject.SetActive(true);
             btnShop.gameObject.SetActive(false);
             log.gameObject.SetActive(true);
@@ -120,6 +128,14 @@ public class PanelBattle : MonoBehaviour
         GameData.NowPlayerData.deep += 1;
         deep.text = "深度 " + GameData.NowPlayerData.deep;
 
+        OnEnemyAppear();
+
+        PublicFunc.SaveData();
+        RunSpeed().Forget();
+    }
+
+    private void OnEnemyAppear()
+    {
         GameData.NowEnemyData.enemies = EnemySetting.SetEnemy(
             GameData.NowPlayerData.area,
             GameData.NowPlayerData.deep
@@ -135,13 +151,8 @@ public class PanelBattle : MonoBehaviour
         }
         enemyList[0].toggle.isOn = true;
         btnGo.gameObject.SetActive(false);
+        btnRest.gameObject.SetActive(false);
         btnAttack.gameObject.SetActive(true);
-
-        // foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
-        //     effectAction.Invoke();
-
-        PublicFunc.SaveData();
-        RunSpeed().Forget();
     }
 
     private async void OnLeave()
@@ -152,6 +163,7 @@ public class PanelBattle : MonoBehaviour
 
         btnGo.gameObject.SetActive(true);
         btnShop.gameObject.SetActive(true);
+        btnRest.gameObject.SetActive(false);
         btnLeave.gameObject.SetActive(false);
         btnAttack.gameObject.SetActive(false);
 
@@ -168,6 +180,36 @@ public class PanelBattle : MonoBehaviour
 
         GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
         GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
+
+        PublicFunc.SaveData();
+    }
+
+    private async void OnRest()
+    {
+        var hp0 = GameData.NowPlayerData.CurrentHp;
+        var mp0 = GameData.NowPlayerData.CurrentMp;
+        var sta0 = GameData.NowPlayerData.CurrentSTA;
+        var prop = 0;
+        while (
+            GameData.NowPlayerData.CurrentHp < GameData.NowPlayerData.ability.HP ||
+            GameData.NowPlayerData.CurrentMp < GameData.NowPlayerData.ability.MP ||
+            GameData.NowPlayerData.CurrentSTA < GameData.NowPlayerData.ability.STA
+        )
+        {
+            GameData.NowPlayerData.CurrentHp++;
+            GameData.NowPlayerData.CurrentMp++;
+            GameData.NowPlayerData.CurrentSTA++;
+
+            prop = Dice(1, 3);
+            if (prop > 0) break;
+        }
+        await SetLog($"恢復了{GameData.NowPlayerData.CurrentHp - hp0}HP, {GameData.NowPlayerData.CurrentMp - mp0}MP, {GameData.NowPlayerData.CurrentSTA - sta0}體力");
+
+        if (prop > 0)
+        {
+            OnEnemyAppear();
+            RunSpeed().Forget();
+        }
 
         PublicFunc.SaveData();
     }
@@ -191,12 +233,8 @@ public class PanelBattle : MonoBehaviour
     {
         int count = 0;
         for (int i = 0; i < times; i++)
-        {
-            if (Random.Range(0, 100) < prop)
-            {
-                count++;
-            }
-        }
+            if (Random.Range(0, 100) < prop) count++;
+
         return count;
     }
 
@@ -379,7 +417,7 @@ public class PanelBattle : MonoBehaviour
         else return false;
     }
 
-    private void RunDurability(bool isAttack)
+    private async void RunDurability(bool isAttack)
     {
         // 1️⃣ 建立武器清單（只需一次）
         var weapons = typeof(EquipType.One_Hand_Weapon)
@@ -417,6 +455,7 @@ public class PanelBattle : MonoBehaviour
             {
                 PublicFunc.UnloadEquip(_item.uid);
                 GameData.NowBagData.items.Remove(_item);
+                await SetLog($"{_item.name}毀損了", Color.yellow);
             }
         }
     }
@@ -451,7 +490,7 @@ public class PanelBattle : MonoBehaviour
                 // #if UNITY_EDITOR
                 if (GameData.NowPlayerData.effects.Find(x => x.type == EffectType.Buff.Berserk) != null)
                 {
-                    await UniTask.NextFrame();
+                    await SetLog($"{GameData.NowPlayerData.name}因狂化無法控制", Color.yellow);
                     OnAttack();
                 }
                 // #endif
@@ -470,6 +509,7 @@ public class PanelBattle : MonoBehaviour
         await SetLog("戰鬥結束");
         GameData.NowPlayerData.currentTp = 0;
         btnGo.gameObject.SetActive(true);
+        btnRest.gameObject.SetActive(true);
         btnAttack.gameObject.SetActive(false);
 
         PublicFunc.SaveData();

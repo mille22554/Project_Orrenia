@@ -5,7 +5,7 @@ using System.Reflection;
 
 public static class GameData
 {
-    public static string version = "0.0.15";
+    public static string version = "0.0.16";
 
     public const int tpCost = 10000;
 
