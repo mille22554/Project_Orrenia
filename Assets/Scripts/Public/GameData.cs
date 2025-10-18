@@ -192,7 +192,7 @@ public static class GameItem
             name = "狂暴藥水",
             id = 103,
             type = UseType.Use,
-            description = "使全數值呈倍數上升，但會不受控",
+            description = "使全數值呈倍數上升，但會不受控。\n狂化－100回合",
             price = 1000,
             count = 1
         };

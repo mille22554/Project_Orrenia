@@ -209,11 +209,14 @@ public class MobData
     public AbilityBase ability;
 
     public List<DropItem> dropItems;
+    
+    public List<EffectData> effects;
 
     public MobData()
     {
         ability = new();
         dropItems = new();
+        effects = new();
     }
 }
 
