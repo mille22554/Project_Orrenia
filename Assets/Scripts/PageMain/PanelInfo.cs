@@ -33,7 +33,7 @@ public class PanelInfo : MonoBehaviour
             playerName.text = GameData.NowPlayerData.name;
             playerHp.text = $"HP {GameData.NowPlayerData.CurrentHp}/{GameData.NowPlayerData.ability.HP}";
             playerMp.text = $"MP {GameData.NowPlayerData.CurrentMp}/{GameData.NowPlayerData.ability.MP}";
-            playerSTA.text = $"體力 {GameData.NowPlayerData.CurrentSTA}/{GameData.NowPlayerData.ability.STA}";
+            playerSTA.text = $"體力 {GameData.NowPlayerData.currentSTA}/{GameData.NowPlayerData.ability.STA}";
             playerLv.text = $"Lv {GameData.NowPlayerData.level}";
             playerExp.text = $"ExP {GameData.NowPlayerData.CurrentExp}/{GameData.NowPlayerData.maxExp}";
         }

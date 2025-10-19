@@ -18,7 +18,7 @@ public class PublicFunc
     public static GameSaveData UpdateSaveData(GameSaveData oldData)
     {
         // Debug.Log("更新存檔資料結構");
-        var newData = new GameSaveData();
+        var newData = new GameSaveData().Create();
         newData.datas.playerData.name = oldData.datas.playerData.name;
 
         CopyNonDefaultValues(oldData.datas, newData.datas);
@@ -134,10 +134,10 @@ public class PublicFunc
             GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
         if (GameData.NowPlayerData.CurrentMp > GameData.NowPlayerData.ability?.MP)
             GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
-        if (GameData.NowPlayerData.CurrentSTA > GameData.NowPlayerData.ability?.STA)
-            GameData.NowPlayerData.CurrentSTA = GameData.NowPlayerData.ability.STA;
+        if (GameData.NowPlayerData.currentSTA > GameData.NowPlayerData.ability?.STA)
+            GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.ability.STA);
     }
-    public static void SetPlayerAbility(AbilityBase data, EquipBase equips, List<EffectData> effects, List<Action> actions)
+    public static void SetPlayerAbility(AbilityBase data, EquipBase equips, List<EffectData> effects, List<Action<bool>> actions)
     {
         data.STR = data.STR_Point;
         data.VIT = data.VIT_Point;
@@ -252,26 +252,26 @@ public class PublicFunc
         };
     }
 
-    public static void SetEffectAbility(List<EffectData> effects, List<Action> actions)
+    public static void SetEffectAbility(List<EffectData> effects, List<Action<bool>> actions)
     {
         actions.Clear();
 
         foreach (var effect in effects)
         {
-            Action effectAction = null;
+            Action<bool> effectAction = null;
             switch (effect.type)
             {
                 case EffectType.Buff.HP_UP:
                     GameData.NowPlayerData.ability.HP *= effect.value;
                     EventMng.EmitEvent(EventName.RefreshPlayerInfo);
 
-                    effectAction = () => ActionCounter(ref effectAction);
+                    effectAction = isTimePass => ActionCounter(isTimePass, ref effectAction);
                     break;
                 case EffectType.Buff.HP_Regen:
-                    effectAction = () =>
+                    effectAction = isTimePass =>
                     {
-                        GameData.NowPlayerData.CurrentHp += effect.value;
-                        ActionCounter(ref effectAction);
+                        if (isTimePass) GameData.NowPlayerData.CurrentHp += effect.value;
+                        ActionCounter(isTimePass, ref effectAction);
                     };
                     break;
                 case EffectType.Buff.Berserk:
@@ -285,7 +285,7 @@ public class PublicFunc
                     GameData.NowPlayerData.ability.EVA *= effect.value;
                     GameData.NowPlayerData.ability.CRIT *= effect.value;
                     GameData.NowPlayerData.ability.SPD *= effect.value;
-                    effectAction = () => ActionCounter(ref effectAction);
+                    effectAction = isTimePass => ActionCounter(isTimePass, ref effectAction);
                     break;
 
                 case EffectType.Debuff.Exhausted:
@@ -300,12 +300,11 @@ public class PublicFunc
                     GameData.NowPlayerData.ability.CRIT /= effect.value;
                     GameData.NowPlayerData.ability.SPD /= effect.value;
 
-                    Action temp = () =>
+                    Action<bool> temp = isTimePass =>
                     {
-                        Debug.Log(GameData.NowPlayerData.CurrentSTA);
-                        if (GameData.NowPlayerData.CurrentSTA > 0)
+                        if (GameData.NowPlayerData.currentSTA > 0)
                         {
-                            Debug.Log("應該要清掉了");
+                            // Debug.Log("應該要清掉了");
                             RemovePlayerEffect(effect, ref effectAction);
                         }
                     };
@@ -316,9 +315,9 @@ public class PublicFunc
             if (effectAction != null)
                 GameData.NowPlayerData.effectActions.Add(effectAction);
 
-            void ActionCounter(ref Action action)
+            void ActionCounter(bool isTimePass, ref Action<bool> action)
             {
-                effect.times--;
+                if (isTimePass) effect.times--;
                 if (effect.times <= 0) RemovePlayerEffect(effect, ref action);
             }
         }
@@ -335,7 +334,7 @@ public class PublicFunc
         SetPlayerAbility();
     }
 
-    public static void RemovePlayerEffect(EffectData effect, ref Action action)
+    public static void RemovePlayerEffect(EffectData effect, ref Action<bool> action)
     {
         // var effectRemoved =
         GameData.NowPlayerData.effects.Remove(effect);

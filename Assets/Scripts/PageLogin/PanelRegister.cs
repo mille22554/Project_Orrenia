@@ -18,7 +18,7 @@ public class PanelRegister : MonoBehaviour
 
     private void OnRegister()
     {
-        GameData.gameData = new();
+        GameData.gameData = new GameSaveData().Create();
         GameData.NowPlayerData.name = inputUsername.text;
         GameData.NowBagData.items.Add(PublicFunc.GetItem(GameItem.Equip.BasicDagger));
         GameData.NowPlayerData.isGetBasicDagger2 = true;

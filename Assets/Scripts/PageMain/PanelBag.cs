@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
@@ -177,11 +178,17 @@ public class PanelBag : MonoBehaviour
             }
             else selectedBagItem.SetInfo(selectedBagItem.info);
 
-            GameData.NowPlayerData.CurrentHp += selectedBagItem.info.ability.HP;
-            GameData.NowPlayerData.CurrentMp += selectedBagItem.info.ability.MP;
-            GameData.NowPlayerData.CurrentSTA += selectedBagItem.info.ability.STA;
+            if (selectedBagItem.info.ability.HP != 0)
+                GameData.NowPlayerData.CurrentHp += selectedBagItem.info.ability.HP;
+            if (selectedBagItem.info.ability.MP != 0)
+                GameData.NowPlayerData.CurrentMp += selectedBagItem.info.ability.MP;
+            if (selectedBagItem.info.ability.STA != 0)
+                GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA + selectedBagItem.info.ability.STA);
 
             UseItemSpecial(selectedBagItem.info.name);
+
+            foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+                effectAction.Invoke(false);
         }
         if (GameData.NowPlayerData.currentTp >= GameData.tpCost)
             GameData.NowPlayerData.currentTp -= GameData.tpCost;

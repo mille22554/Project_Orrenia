@@ -2,17 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Newtonsoft.Json;
-using UnityEngine;
 
 public class GameSaveData
 {
     public string version;
     public Datas datas;
 
-    public GameSaveData()
+    public GameSaveData Create()
     {
         version = GameData.version;
-        datas = new();
+        datas = new Datas().Create();
+
+        return this;
     }
 }
 
@@ -22,11 +23,13 @@ public class Datas
     public EnemyData enemyData;
     public BagData bagData;
 
-    public Datas()
+    public Datas Create()
     {
-        playerData = new();
+        playerData = new PlayerData().Create();
         enemyData = new();
         bagData = new();
+
+        return this;
     }
 }
 
@@ -67,20 +70,7 @@ public class PlayerData
             EventMng.EmitEvent(EventName.RefreshPlayerInfo);
         }
     }
-    private int currentSTA;
-    public int CurrentSTA
-    {
-        get { return currentSTA; }
-        set
-        {
-            currentSTA = value;
-            if (currentSTA > ability?.STA) currentSTA = ability.STA;
-            else if (currentSTA < 0) currentSTA = 0;
-            else if (currentSTA == 0) PublicFunc.AddPlayerEffect(EffectType.Debuff.Exhausted, 10, 1);
-
-            EventMng.EmitEvent(EventName.RefreshPlayerInfo);
-        }
-    }
+    public int currentSTA;
     public int currentTp;
 
     public string area;
@@ -103,20 +93,20 @@ public class PlayerData
 
     public List<EffectData> effects;
     [JsonIgnore]
-    public List<Action> effectActions;
+    public List<Action<bool>> effectActions = new();
 
     public int skillPoint;
 
     public bool isGetBasicDagger2;
 
-    public PlayerData()
+    public PlayerData Create()
     {
         level = 1;
         CurrentExp = 0;
         maxExp = 100;
         CurrentHp = 100;
         CurrentMp = 50;
-        CurrentSTA = 100;
+        SetCurrentSTA(100);
         currentTp = 0;
 
         area = GameArea.Home;
@@ -135,13 +125,24 @@ public class PlayerData
         };
         equips = new();
         effects = new();
-        effectActions = new();
 
         PublicFunc.SetPlayerAbility(ability, equips, effects, effectActions);
 
         skillPoint = 0;
 
         isGetBasicDagger2 = false;
+
+        return this;
+    }
+
+    public void SetCurrentSTA(int value)
+    {
+        currentSTA = value;
+        if (currentSTA > ability?.STA) currentSTA = ability.STA;
+        else if (currentSTA < 0) currentSTA = 0;
+        else if (currentSTA == 0) PublicFunc.AddPlayerEffect(EffectType.Debuff.Exhausted, 10, 1);
+
+        EventMng.EmitEvent(EventName.RefreshPlayerInfo);
     }
 }
 
@@ -209,7 +210,7 @@ public class MobData
     public AbilityBase ability;
 
     public List<DropItem> dropItems;
-    
+
     public List<EffectData> effects;
 
     public MobData()

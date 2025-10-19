@@ -106,7 +106,11 @@ public class PanelBattle : MonoBehaviour
 
     private async void OnGo()
     {
-        GameData.NowPlayerData.CurrentSTA -= 1;
+        GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA - 1);
+
+        foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+            effectAction.Invoke(false);
+
         if (GameData.NowPlayerData.deep == 0)
         {
             area.text = GameData.NowPlayerData.area = GameArea.Floor1;
@@ -119,6 +123,7 @@ public class PanelBattle : MonoBehaviour
         GameData.NowPlayerData.deep += 1;
         deep.text = "深度 " + GameData.NowPlayerData.deep;
 
+        panelLog.ClearBattleLog();
         OnEnemyAppear();
 
         PublicFunc.SaveData();
@@ -163,11 +168,12 @@ public class PanelBattle : MonoBehaviour
         GameData.NowEnemyData.enemies.Clear();
         enemyList.Clear();
 
+        panelLog.ClearBattleLog();
         await panelLog.SetLog("離開迷宮，回到 " + area.text);
-        GameData.NowPlayerData.CurrentSTA = GameData.NowPlayerData.ability.STA;
+        GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.ability.STA);
 
         foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
-            effectAction.Invoke();
+            effectAction.Invoke(false);
 
         GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
         GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
@@ -179,22 +185,23 @@ public class PanelBattle : MonoBehaviour
     {
         var hp0 = GameData.NowPlayerData.CurrentHp;
         var mp0 = GameData.NowPlayerData.CurrentMp;
-        var sta0 = GameData.NowPlayerData.CurrentSTA;
+        var sta0 = GameData.NowPlayerData.currentSTA;
         var prop = 0;
         while (
             GameData.NowPlayerData.CurrentHp < GameData.NowPlayerData.ability.HP ||
             GameData.NowPlayerData.CurrentMp < GameData.NowPlayerData.ability.MP ||
-            GameData.NowPlayerData.CurrentSTA < GameData.NowPlayerData.ability.STA
+            GameData.NowPlayerData.currentSTA < GameData.NowPlayerData.ability.STA
         )
         {
             GameData.NowPlayerData.CurrentHp++;
             GameData.NowPlayerData.CurrentMp++;
-            GameData.NowPlayerData.CurrentSTA++;
+            GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA + 1);
 
             prop = Dice(1, 3);
             if (prop > 0) break;
         }
-        await panelLog.SetLog($"恢復了{GameData.NowPlayerData.CurrentHp - hp0}HP, {GameData.NowPlayerData.CurrentMp - mp0}MP, {GameData.NowPlayerData.CurrentSTA - sta0}體力");
+        panelLog.ClearBattleLog();
+        await panelLog.SetLog($"恢復了{GameData.NowPlayerData.CurrentHp - hp0}HP, {GameData.NowPlayerData.CurrentMp - mp0}MP, {GameData.NowPlayerData.currentSTA - sta0}體力");
 
         if (prop > 0)
         {
@@ -209,11 +216,11 @@ public class PanelBattle : MonoBehaviour
     {
         if (GameData.NowPlayerData.currentTp < GameData.tpCost) return;
 
-        GameData.NowPlayerData.CurrentSTA -= 1;
+        GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA - 1);
         GameData.NowPlayerData.currentTp -= GameData.tpCost;
         await RunPlayerAttack();
         foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
-            effectAction.Invoke();
+            effectAction.Invoke(true);
 
         PublicFunc.SaveData();
         RunSpeed().Forget();
@@ -379,7 +386,7 @@ public class PanelBattle : MonoBehaviour
                 GameData.NowPlayerData.skillPoint += 1;
                 GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
                 GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
-                GameData.NowPlayerData.CurrentSTA = GameData.NowPlayerData.ability.STA;
+                GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.ability.STA);
             }
 
             foreach (var drop in enemy.info.dropItems)
