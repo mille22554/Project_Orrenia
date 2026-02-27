@@ -258,11 +258,20 @@ public static class EquipType
     public static class One_Hand_Weapon
     {
         public const string Sword = "單手劍";
+        public const string Hammer = "單手錘";
+        public const string Spear = "長槍";
+        public const string Staff = "法杖";
+        public const string Rapier = "刺劍";
         public const string Dagger = "短刀";
     }
     public static class Two_Hand_Weapon
     {
-
+        public const string Axe = "雙手斧";
+        public const string Aegis = "塔盾";
+        public const string Bow = "弓";
+        public const string Book = "魔導書";
+        public const string Katana = "武士刀";
+        public const string Tarot = "塔羅牌";
     }
     public const string Shield = "盾牌";
     public const string Helmet = "頭盔";

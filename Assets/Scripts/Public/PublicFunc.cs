@@ -194,6 +194,9 @@ public class PublicFunc
 
     public static void SetEquipAbility(AbilityBase ability) => SetEquipAbility(ability, false);
     public static void SetEquipAbility(AbilityBase ability, bool isUnload)
+        => SetEquipAbility(ability, GameData.NowPlayerData.ability, isUnload);
+    public static void SetEquipAbility(AbilityBase ability, AbilityBase baseAbility) => SetEquipAbility(ability, baseAbility, false);
+    public static void SetEquipAbility(AbilityBase ability, AbilityBase baseAbility, bool isUnload)
     {
         var fields = typeof(AbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
         foreach (var field in fields)
@@ -201,8 +204,8 @@ public class PublicFunc
             int valueB = (int)field.GetValue(ability);
             if (valueB != 0)
             {
-                int valueA = (int)field.GetValue(GameData.NowPlayerData.ability);
-                field.SetValue(GameData.NowPlayerData.ability, valueA + (isUnload ? valueB * (-1) : valueB));
+                int valueA = (int)field.GetValue(baseAbility);
+                field.SetValue(baseAbility, valueA + (isUnload ? valueB * (-1) : valueB));
             }
         }
     }

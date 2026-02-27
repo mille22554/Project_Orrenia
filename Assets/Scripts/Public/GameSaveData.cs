@@ -97,6 +97,10 @@ public class PlayerData
 
     public int skillPoint;
 
+    public int forgeLevel;
+    public int currentForgeExp;
+    public int maxForgeExp;
+
     public bool isGetBasicDagger2;
 
     public PlayerData Create()
@@ -129,6 +133,10 @@ public class PlayerData
         PublicFunc.SetPlayerAbility(ability, equips, effects, effectActions);
 
         skillPoint = 0;
+
+        forgeLevel = 1;
+        currentForgeExp = 0;
+        maxForgeExp = 100;
 
         isGetBasicDagger2 = false;
 

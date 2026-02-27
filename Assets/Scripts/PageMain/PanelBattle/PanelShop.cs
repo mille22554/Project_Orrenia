@@ -139,7 +139,7 @@ public class PanelShop : MonoBehaviour
         {
             GameData.NowPlayerData.gold += selectedShopItem.info.price / 2 * itemNum;
 
-            var existing = GameData.NowBagData.items.Find(item => item.id == selectedShopItem.info.id);
+            var existing = GameData.NowBagData.items.Find(item => item.uid == selectedShopItem.info.uid);
             if (existing != null) existing.count -= itemNum;
 
             if (ItemTypeCheck.IsEquipType(selectedShopItem.info.type) || existing?.count == 0)

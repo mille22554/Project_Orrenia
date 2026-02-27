@@ -38,4 +38,5 @@ public enum PanelName
     Battle,
     Character,
     Bag,
+    Forge,
 }
