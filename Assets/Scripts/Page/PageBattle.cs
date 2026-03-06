@@ -8,27 +8,37 @@ using System;
 using System.IO;
 using System.Reflection;
 
-public class PanelBattle : MonoBehaviour
+public class PageBattle : MonoBehaviour
 {
-    public Text area;
-    public Text deep;
-    public Button btnGo;
-    public Button btnAttack;
-    public Button btnRest;
-    public Button btnLeave;
-    public Button btnShop;
-    public ToggleGroup enemies;
-    public ScrollRect log;
-    public ItemEnemy itemEnemy;
+    const string resourcePath = "Prefabs/PageBattle";
+    [SerializeField] Text area;
+    [SerializeField] Text deep;
+    [SerializeField] Button btnGo;
+    [SerializeField] Button btnAttack;
+    [SerializeField] Button btnRest;
+    [SerializeField] Button btnLeave;
+    [SerializeField] Button btnShop;
+    [SerializeField] ToggleGroup enemies;
+    [SerializeField] ScrollRect log;
+    [SerializeField] ItemEnemy itemEnemy;
 
-    public PanelShop panelShop;
-    public PanelLog panelLog;
+    [SerializeField] PanelShop panelShop;
+    [SerializeField] PanelLog panelLog;
 
-    private readonly List<ItemEnemy> enemyList = new();
-    private ItemEnemy selectedEnemy;
-    private readonly List<string> LogList = new();
+    readonly List<ItemEnemy> enemyList = new();
+    ItemEnemy selectedEnemy;
+    readonly List<string> LogList = new();
+    PlayerData _playerData => GameData.NowPlayerData;
+    EnemyData _enemyData => GameData.NowEnemyData;
 
-    private void Start()
+    public static void Create()
+    {
+        var page = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageBattle>(), MainController.Instance.PageContent);
+
+        MainController.Instance.SwitchPage(page);
+    }
+
+    void Awake()
     {
         btnGo.onClick.AddListener(OnGo);
         btnAttack.onClick.AddListener(OnAttack);
@@ -40,13 +50,13 @@ public class PanelBattle : MonoBehaviour
             Destroy(enemy.gameObject);
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
-        if (GameData.gameData != null && GameData.NowPlayerData != null)
+        if (GameData.gameData != null && _playerData != null)
         {
             panelShop.gameObject.SetActive(false);
-            area.text = GameData.NowPlayerData.area;
-            if (GameData.NowPlayerData.deep == 0)
+            area.text = _playerData.Area;
+            if (_playerData.Deep == 0)
             {
                 deep.text = "";
                 btnGo.gameObject.SetActive(true);
@@ -57,14 +67,14 @@ public class PanelBattle : MonoBehaviour
             }
             else
             {
-                deep.text = "深度 " + GameData.NowPlayerData.deep;
+                deep.text = "深度 " + _playerData.Deep;
                 btnRest.gameObject.SetActive(true);
                 btnLeave.gameObject.SetActive(true);
                 btnShop.gameObject.SetActive(false);
 
-                if (GameData.NowEnemyData.enemies != null && GameData.NowEnemyData.enemies.Count > 0)
+                if (_enemyData.enemies != null && _enemyData.enemies.Count > 0)
                 {
-                    foreach (var enemy in GameData.NowEnemyData.enemies)
+                    foreach (var enemy in _enemyData.enemies)
                     {
                         var obj = Instantiate(itemEnemy, enemies.transform);
                         obj.toggle.group = enemies;
@@ -88,73 +98,69 @@ public class PanelBattle : MonoBehaviour
         }
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         foreach (var enemy in enemyList)
             Destroy(enemy.gameObject);
+
         enemyList.Clear();
     }
 
-    private void OnDestroy()
+    async void OnGo()
     {
-        btnGo.onClick.RemoveListener(OnGo);
-        btnAttack.onClick.RemoveListener(OnAttack);
-        btnRest.onClick.RemoveListener(OnRest);
-        btnLeave.onClick.RemoveListener(OnLeave);
-        btnShop.onClick.RemoveListener(panelShop.OnShop);
-    }
+        PublicFunc.SetCurrentSTA(_playerData.CurrentSTA - 1);
 
-    private async void OnGo()
-    {
-        GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA - 1);
-
-        foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+        foreach (var effectAction in _playerData.effectActions.ToList())
             effectAction.Invoke(false);
 
-        if (GameData.NowPlayerData.deep == 0)
+        if (_playerData.Deep == 0)
         {
-            area.text = GameData.NowPlayerData.area = GameArea.Floor1;
+            area.text = _playerData.Area = GameArea.Floor1;
             btnRest.gameObject.SetActive(true);
             btnLeave.gameObject.SetActive(true);
             btnShop.gameObject.SetActive(false);
             await panelLog.SetLog("進入 " + area.text);
         }
 
-        GameData.NowPlayerData.deep += 1;
-        deep.text = "深度 " + GameData.NowPlayerData.deep;
+        _playerData.Deep += 1;
+        deep.text = "深度 " + _playerData.Deep;
 
         panelLog.ClearBattleLog();
         OnEnemyAppear();
 
         PublicFunc.SaveData();
+        PanelInfo.Instance.RefreshInfo();
         RunSpeed().Forget();
     }
 
-    private void OnEnemyAppear()
+    void OnEnemyAppear()
     {
-        GameData.NowEnemyData.enemies = EnemySetting.SetEnemy(
-            GameData.NowPlayerData.area,
-            GameData.NowPlayerData.deep
+        _enemyData.enemies = EnemySetting.SetEnemy(
+            _playerData.Area,
+            _playerData.Deep
         );
-        foreach (var enemy in GameData.NowEnemyData.enemies)
+        foreach (var enemy in _enemyData.enemies)
         {
-            var obj = Instantiate(itemEnemy, enemies.transform);
+            var obj = ObjectPool.Get(itemEnemy, enemies.transform);
             obj.toggle.group = enemies;
             obj.toggle.isOn = true;
             obj.SetData(enemy);
             enemyList.Add(obj);
             panelLog.SetLog(enemy.name + " 出現了！").Forget();
         }
-        enemyList[0].toggle.isOn = true;
+        var firstEnemy = enemyList.FirstOrDefault();
+        if (firstEnemy != null)
+            firstEnemy.toggle.isOn = true;
+
         btnGo.gameObject.SetActive(false);
         btnRest.gameObject.SetActive(false);
         btnAttack.gameObject.SetActive(true);
     }
 
-    private async void OnLeave()
+    async void OnLeave()
     {
-        area.text = GameData.NowPlayerData.area = GameArea.Home;
-        GameData.NowPlayerData.deep = 0;
+        area.text = _playerData.Area = GameArea.Home;
+        _playerData.Deep = 0;
         deep.text = "";
 
         btnGo.gameObject.SetActive(true);
@@ -164,44 +170,47 @@ public class PanelBattle : MonoBehaviour
         btnAttack.gameObject.SetActive(false);
 
         foreach (var enemy in enemyList)
-            Destroy(enemy.gameObject);
-        GameData.NowEnemyData.enemies.Clear();
+            ObjectPool.Put(enemy);
+
+        _enemyData.enemies.Clear();
         enemyList.Clear();
 
         panelLog.ClearBattleLog();
         await panelLog.SetLog("離開迷宮，回到 " + area.text);
-        GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.ability.STA);
+        PublicFunc.SetCurrentSTA(_playerData.ability.STA);
 
-        foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+        foreach (var effectAction in _playerData.effectActions.ToList())
             effectAction.Invoke(false);
 
-        GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
-        GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
+        PublicFunc.SetHP(_playerData.ability.HP);
+        PublicFunc.SetMP(_playerData.ability.MP);
 
         PublicFunc.SaveData();
+        PanelInfo.Instance.RefreshInfo();
     }
 
-    private async void OnRest()
+    async void OnRest()
     {
-        var hp0 = GameData.NowPlayerData.CurrentHp;
-        var mp0 = GameData.NowPlayerData.CurrentMp;
-        var sta0 = GameData.NowPlayerData.currentSTA;
+        var hp0 = _playerData.CurrentHp;
+        var mp0 = _playerData.CurrentMp;
+        var sta0 = _playerData.CurrentSTA;
         var prop = 0;
         while (
-            GameData.NowPlayerData.CurrentHp < GameData.NowPlayerData.ability.HP ||
-            GameData.NowPlayerData.CurrentMp < GameData.NowPlayerData.ability.MP ||
-            GameData.NowPlayerData.currentSTA < GameData.NowPlayerData.ability.STA
+            _playerData.CurrentHp < _playerData.ability.HP ||
+            _playerData.CurrentMp < _playerData.ability.MP ||
+            _playerData.CurrentSTA < _playerData.ability.STA
         )
         {
-            GameData.NowPlayerData.CurrentHp++;
-            GameData.NowPlayerData.CurrentMp++;
-            GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA + 1);
+            PublicFunc.SetHP(_playerData.CurrentHp + 1);
+            PublicFunc.SetMP(_playerData.CurrentMp + 1);
+            PublicFunc.SetCurrentSTA(_playerData.CurrentSTA + 1);
 
             prop = Dice(1, 3);
-            if (prop > 0) break;
+            if (prop > 0)
+                break;
         }
         panelLog.ClearBattleLog();
-        await panelLog.SetLog($"恢復了{GameData.NowPlayerData.CurrentHp - hp0}HP, {GameData.NowPlayerData.CurrentMp - mp0}MP, {GameData.NowPlayerData.currentSTA - sta0}體力");
+        await panelLog.SetLog($"恢復了{_playerData.CurrentHp - hp0}HP, {_playerData.CurrentMp - mp0}MP, {_playerData.CurrentSTA - sta0}體力");
 
         if (prop > 0)
         {
@@ -210,24 +219,27 @@ public class PanelBattle : MonoBehaviour
         }
 
         PublicFunc.SaveData();
+        PanelInfo.Instance.RefreshInfo();
     }
 
-    private async void OnAttack()
+    async void OnAttack()
     {
-        if (GameData.NowPlayerData.currentTp < GameData.tpCost) return;
+        if (_playerData.CurrentTp < GameData.tpCost)
+            return;
 
-        GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.currentSTA - 1);
-        GameData.NowPlayerData.currentTp -= GameData.tpCost;
+        PublicFunc.SetCurrentSTA(_playerData.CurrentSTA - 1);
+        _playerData.CurrentTp -= GameData.tpCost;
         await RunPlayerAttack();
-        foreach (var effectAction in GameData.NowPlayerData.effectActions.ToList())
+        foreach (var effectAction in _playerData.effectActions.ToList())
             effectAction.Invoke(true);
 
         PublicFunc.SaveData();
+        PanelInfo.Instance.RefreshInfo();
         RunSpeed().Forget();
     }
 
-    private int Dice(int times) => Dice(times, 20);
-    private int Dice(int times, int prop)
+    int Dice(int times) => Dice(times, 20);
+    int Dice(int times, int prop)
     {
         int count = 0;
         for (int i = 0; i < times; i++)
@@ -236,23 +248,24 @@ public class PanelBattle : MonoBehaviour
         return count;
     }
 
-    private async UniTask RunPlayerAttack()
+    async UniTask RunPlayerAttack()
     {
         selectedEnemy = enemyList.Find(x => x.toggle.isOn);
         if (selectedEnemy == null && enemyList.Count > 0)
         {
-            selectedEnemy = enemyList[0];
+            selectedEnemy = enemyList.FirstOrDefault();
             selectedEnemy.toggle.isOn = true;
         }
 
         #region 幸運事件
-        if (await LuckyEventCheck(selectedEnemy)) return;
+        if (await LuckyEventCheck(selectedEnemy))
+            return;
         #endregion
 
         #region 迴避判定
-        if (!(Dice(GameData.NowPlayerData.ability.ACC, 40) > Dice(selectedEnemy.info.ability.EVA)))
+        if (!(Dice(_playerData.ability.ACC, 40) > Dice(selectedEnemy.info.ability.EVA)))
         {
-            await panelLog.SetLog($"{selectedEnemy.info.name}閃避了{GameData.NowPlayerData.name}的攻擊!");
+            await panelLog.SetLog($"{selectedEnemy.info.name}閃避了{_playerData.PlayerName}的攻擊!");
             return;
         }
         #endregion
@@ -260,33 +273,35 @@ public class PanelBattle : MonoBehaviour
         var damageMulti = 1;
         var defenceMulti = 1;
         #region 爆擊判定
-        if (Dice(GameData.NowPlayerData.ability.CRIT) > Dice(selectedEnemy.info.ability.EVA))
+        if (Dice(_playerData.ability.CRIT) > Dice(selectedEnemy.info.ability.EVA))
         {
             damageMulti = 2;
             defenceMulti = 0;
-            await panelLog.SetLog($"{GameData.NowPlayerData.name}命中了要害!", Color.yellow);
+            await panelLog.SetLog($"{_playerData.PlayerName}命中了要害!", Color.yellow);
         }
         #endregion
 
-        var damage = Dice(GameData.NowPlayerData.ability.ATK) * damageMulti - Dice(selectedEnemy.info.ability.DEF) * defenceMulti;
+        var damage = Dice(_playerData.ability.ATK) * damageMulti - Dice(selectedEnemy.info.ability.DEF) * defenceMulti;
         if (damage <= 0) damage = 1;
 
         RunDurability(true);
 
-        await panelLog.SetLog($"{GameData.NowPlayerData.name}對{selectedEnemy.info.name}造成了{damage}點傷害!");
-        if (await EnemyCheckDead(selectedEnemy, damage)) return;
+        await panelLog.SetLog($"{_playerData.PlayerName}對{selectedEnemy.info.name}造成了{damage}點傷害!");
+        if (await EnemyCheckDead(selectedEnemy, damage))
+            return;
     }
 
-    private async UniTask RunEnemyAttack(ItemEnemy enemy)
+    async UniTask RunEnemyAttack(ItemEnemy enemy)
     {
         #region 幸運事件
-        if (await LuckyEventCheck(enemy)) return;
+        if (await LuckyEventCheck(enemy))
+            return;
         #endregion
 
         #region 迴避判定
-        if (!(Dice(GameData.NowPlayerData.ability.EVA) < Dice(enemy.info.ability.ACC, 40)))
+        if (!(Dice(_playerData.ability.EVA) < Dice(enemy.info.ability.ACC, 40)))
         {
-            await panelLog.SetLog($"{GameData.NowPlayerData.name}閃避了{enemy.info.name}的攻擊!", Color.gray);
+            await panelLog.SetLog($"{_playerData.PlayerName}閃避了{enemy.info.name}的攻擊!", Color.gray);
             return;
         }
         #endregion
@@ -294,7 +309,7 @@ public class PanelBattle : MonoBehaviour
         var damageMulti = 1;
         var defenceMulti = 1;
         #region 爆擊判定
-        if (Dice(GameData.NowPlayerData.ability.EVA) < Dice(enemy.info.ability.CRIT))
+        if (Dice(_playerData.ability.EVA) < Dice(enemy.info.ability.CRIT))
         {
             damageMulti = 2;
             defenceMulti = 0;
@@ -302,17 +317,19 @@ public class PanelBattle : MonoBehaviour
         }
         #endregion
 
-        var damage = Dice(enemy.info.ability.ATK) * damageMulti - Dice(GameData.NowPlayerData.ability.DEF) * defenceMulti;
-        if (damage <= 0) damage = 1;
+        var damage = Dice(enemy.info.ability.ATK) * damageMulti - Dice(_playerData.ability.DEF) * defenceMulti;
+        if (damage <= 0)
+            damage = 1;
 
-        await panelLog.SetLog($"{enemy.info.name}對{GameData.NowPlayerData.name}造成了{damage}點傷害!", Color.gray);
-        if (await PlayerGetDamage(damage)) return;
+        await panelLog.SetLog($"{enemy.info.name}對{_playerData.PlayerName}造成了{damage}點傷害!", Color.gray);
+        if (await PlayerGetDamage(damage))
+            return;
     }
 
-    private async UniTask<bool> LuckyEventCheck(ItemEnemy enemy)
+    async UniTask<bool> LuckyEventCheck(ItemEnemy enemy)
     {
         //先比誰觸發
-        var playerLUK = GameData.NowPlayerData.ability.LUK;
+        var playerLUK = _playerData.ability.LUK;
         var enemyLUK = enemy.info.ability.LUK;
         bool playerAttacks = Dice(playerLUK) > Dice(enemyLUK);
 
@@ -324,14 +341,16 @@ public class PanelBattle : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            if (Dice(attackerLUK) > Dice(defenderLUK * (luckLevel * 2 + 1) * 10)) luckLevel++;
-            else break; // 只要輸掉就結束
+            if (Dice(attackerLUK) > Dice(defenderLUK * (luckLevel * 2 + 1) * 10))
+                luckLevel++;
+            else
+                break; // 只要輸掉就結束
         }
 
         if (luckLevel > 0)
         {
             int damage;
-            var hitter = playerAttacks ? enemy.info.name : GameData.NowPlayerData.name;
+            var hitter = playerAttacks ? enemy.info.name : _playerData.PlayerName;
             switch (luckLevel)
             {
                 case 2:
@@ -346,28 +365,39 @@ public class PanelBattle : MonoBehaviour
                     return false;
             }
 
-            if (playerAttacks) { if (await EnemyCheckDead(enemy, damage)) return true; }
-            else { if (await PlayerGetDamage(damage)) return true; }
+            if (playerAttacks)
+            {
+                if (await EnemyCheckDead(enemy, damage))
+                    return true;
+            }
+            else
+            {
+                if (await PlayerGetDamage(damage))
+                    return true;
+            }
         }
         return false;
     }
 
-    private async UniTask<bool> PlayerGetDamage(int damage)
+    async UniTask<bool> PlayerGetDamage(int damage)
     {
         RunDurability(false);
-        GameData.NowPlayerData.CurrentHp -= damage;
+        PublicFunc.SetHP(_playerData.CurrentHp - damage);
 
-        if (GameData.NowPlayerData.CurrentHp <= 0)
+        if (_playerData.CurrentHp <= 0)
         {
-            await panelLog.SetLog($"{GameData.NowPlayerData.name}倒下了!");
-            GameData.NowPlayerData.CurrentHp = 1;
+            await panelLog.SetLog($"{_playerData.PlayerName}倒下了!");
+            PublicFunc.SetHP(1);
             OnLeave();
             return true;
         }
-        else return false;
+        else
+        {
+            return false;
+        }
     }
 
-    private async UniTask<bool> EnemyCheckDead(ItemEnemy enemy, int damage)
+    async UniTask<bool> EnemyCheckDead(ItemEnemy enemy, int damage)
     {
         enemy.GetDamage(damage);
 
@@ -375,53 +405,57 @@ public class PanelBattle : MonoBehaviour
         {
             await panelLog.SetLog($"{enemy.info.name}倒下了!");
 
-            GameData.NowPlayerData.CurrentExp += 1 << (enemy.info.level - 1);
-            if (GameData.NowPlayerData.CurrentExp >= GameData.NowPlayerData.maxExp)
+            PublicFunc.SetEXP(_playerData.CurrentExp + 1 << (enemy.info.level - 1));
+            if (_playerData.CurrentExp >= _playerData.MaxExp)
             {
-                await panelLog.SetLog($"{GameData.NowPlayerData.name}升級了!");
-                GameData.NowPlayerData.level += 1;
-                GameData.NowPlayerData.CurrentExp -= GameData.NowPlayerData.maxExp;
-                GameData.NowPlayerData.maxExp = (1 << (GameData.NowPlayerData.level - 1)) * 100;
-                GameData.NowPlayerData.AbilityPoint += 6;
-                GameData.NowPlayerData.skillPoint += 1;
-                GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
-                GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
-                GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.ability.STA);
+                await panelLog.SetLog($"{_playerData.PlayerName}升級了!");
+                _playerData.Level += 1;
+                PublicFunc.SetEXP(_playerData.CurrentExp - _playerData.MaxExp);
+                _playerData.MaxExp = (1 << (_playerData.Level - 1)) * 100;
+                PublicFunc.SetAbilityPoint(_playerData.AbilityPoint + 6);
+                _playerData.skillPoint += 1;
+                PublicFunc.SetHP(_playerData.ability.HP);
+                PublicFunc.SetMP(_playerData.ability.MP);
+                PublicFunc.SetCurrentSTA(_playerData.ability.STA);
             }
 
             foreach (var drop in enemy.info.dropItems)
             {
-                if (Dice(drop.prop) <= 0) continue;
+                if (Dice(drop.prop) <= 0)
+                    continue;
 
-                var existing = GameData.NowBagData.items.Find(item => item.id == drop.item.id);
+                var existing = GameData.NowBagData.items.Find(item => item.itemID == drop.item.id);
 
                 if (ItemTypeCheck.IsEquipType(drop.item.type) || existing == null)
                 {
                     GameData.NowBagData.items.Add(PublicFunc.GetItem(drop.item));
-                    await panelLog.SetLog($"{GameData.NowPlayerData.name}獲得了{drop.item.name}!");
+                    await panelLog.SetLog($"{_playerData.PlayerName}獲得了{drop.item.name}!");
                 }
                 else
                 {
                     existing.count++;
-                    await panelLog.SetLog($"{GameData.NowPlayerData.name}獲得了{existing.name}!");
+                    await panelLog.SetLog($"{_playerData.PlayerName}獲得了{ItemBaseData.Get(existing.itemID).name}!");
                 }
             }
 
             enemyList.Remove(enemy);
-            Destroy(enemy.gameObject);
-            GameData.NowEnemyData.enemies.Remove(enemy.info);
+            _enemyData.enemies.Remove(enemy.info);
+            ObjectPool.Put(enemy);
             return true;
         }
-        else return false;
+        else
+        {
+            return false;
+        }
     }
 
-    private async void RunDurability(bool isAttack)
+    async void RunDurability(bool isAttack)
     {
         // 1️⃣ 建立武器清單（只需一次）
         var weapons = typeof(EquipType.One_Hand_Weapon)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Concat(typeof(EquipType.Two_Hand_Weapon)
-                .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
             .Select(f => f.GetValue(null)?.ToString())
             .Where(v => v != null)
             .ToHashSet();
@@ -431,34 +465,36 @@ public class PanelBattle : MonoBehaviour
         // 2️⃣ 掃描所有裝備欄位
         foreach (var field in typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
         {
-            long uid = (long)field.GetValue(GameData.NowPlayerData.equips);
-            if (uid == 0) continue;
+            long uid = (long)field.GetValue(_playerData.equips);
+            if (uid == 0)
+                continue;
 
             var item = GameData.NowBagData.items
-                .Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(x.type));
-            if (item == null) continue;
+                .Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(ItemBaseData.Get(x.itemID).type));
+            if (item == null)
+                continue;
 
             // 攻擊時扣武器耐久、防禦時扣防具耐久
-            bool isWeapon = weapons.Contains(item.type);
+            bool isWeapon = weapons.Contains(ItemBaseData.Get(item.itemID).type);
             if ((isAttack && isWeapon) || (!isAttack && !isWeapon))
                 items.Add(item);
         }
 
         // 3️⃣ 處理耐久度扣減與移除
-        foreach (var _item in items.ToList()) // ToList 避免修改集合時出錯
+        foreach (var item in items.ToList()) // ToList 避免修改集合時出錯
         {
             // Debug.Log(_item.name);
-            _item.durability--;
-            if (_item.durability <= 0)
+            item.durability--;
+            if (item.durability <= 0)
             {
-                PublicFunc.UnloadEquip(_item.uid);
-                GameData.NowBagData.items.Remove(_item);
-                await panelLog.SetLog($"{_item.name}毀損了", Color.yellow);
+                PublicFunc.UnloadEquip(item.uid);
+                GameData.NowBagData.items.Remove(item);
+                await panelLog.SetLog($"{ItemBaseData.Get(item.itemID).name}毀損了", Color.yellow);
             }
         }
     }
 
-    private async UniTask RunSpeed()
+    async UniTask RunSpeed()
     {
         // Debug.Log("跑");
         while (enemyList.Count > 0)
@@ -466,13 +502,14 @@ public class PanelBattle : MonoBehaviour
             var fastestEnemy = enemyList
                 .Aggregate((max, next) => next.info.currentTp > max.info.currentTp ? next : max);
 
-            if (GameData.NowPlayerData.currentTp >= fastestEnemy.info.currentTp && GameData.NowPlayerData.currentTp > GameData.tpCost)
+            if (_playerData.CurrentTp >= fastestEnemy.info.currentTp && _playerData.CurrentTp > GameData.tpCost)
             {
                 PublicFunc.SaveData();
+                PanelInfo.Instance.RefreshInfo();
                 // #if UNITY_EDITOR
-                if (GameData.NowPlayerData.effects.Find(x => x.type == EffectType.Buff.Berserk) != null)
+                if (_playerData.effects.Find(x => x.type == EffectType.Buff.Berserk) != null)
                 {
-                    await panelLog.SetLog($"{GameData.NowPlayerData.name}因狂化無法控制", Color.yellow);
+                    await panelLog.SetLog($"{_playerData.PlayerName}因狂化無法控制", Color.yellow);
                     OnAttack();
                 }
                 // #endif
@@ -485,16 +522,17 @@ public class PanelBattle : MonoBehaviour
                 continue;
             }
 
-            GameData.NowPlayerData.currentTp += GameData.NowPlayerData.ability.SPD;
+            _playerData.CurrentTp += _playerData.ability.SPD;
             enemyList.ForEach(x => x.info.currentTp += x.info.ability.SPD);
         }
         await panelLog.SetLog("戰鬥結束");
-        GameData.NowPlayerData.currentTp = 0;
+        _playerData.CurrentTp = 0;
         btnGo.gameObject.SetActive(true);
         btnRest.gameObject.SetActive(true);
         btnAttack.gameObject.SetActive(false);
 
         PublicFunc.SaveData();
+        PanelInfo.Instance.RefreshInfo();
         LogList.Clear();
         // #if UNITY_EDITOR
         //         await UniTask.NextFrame();
@@ -502,12 +540,12 @@ public class PanelBattle : MonoBehaviour
         // #endif
     }
 
-    private void SaveLog()
+    void SaveLog()
     {
         string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         string logPath = Path.Combine(desktopPath, "小破遊.log");
 
-        var message = "玩家: " + GameData.NowPlayerData.currentTp;
+        var message = "玩家: " + _playerData.CurrentTp;
         string logContent = $"[{DateTime.Now}] {message}\n";
         LogList.Add(logContent);
         Debug.Log(logContent);

@@ -8,12 +8,15 @@ public class GameSaveData
     public string version;
     public Datas datas;
 
-    public GameSaveData Create()
+    public static GameSaveData CreateDefault()
     {
-        version = GameData.version;
-        datas = new Datas().Create();
+        var saveData = new GameSaveData
+        {
+            version = GameData.version,
+            datas = Datas.CreateDefault()
+        };
 
-        return this;
+        return saveData;
     }
 }
 
@@ -23,70 +26,35 @@ public class Datas
     public EnemyData enemyData;
     public BagData bagData;
 
-    public Datas Create()
+    public static Datas CreateDefault()
     {
-        playerData = new PlayerData().Create();
-        enemyData = new();
-        bagData = new();
+        var datas = new Datas
+        {
+            playerData = PlayerData.CreateDefault(),
+            enemyData = new(),
+            bagData = new()
+        };
 
-        return this;
+        return datas;
     }
 }
 
 public class PlayerData
 {
-    public string name;
-    public int level;
-    private int currentExp;
-    public int CurrentExp
-    {
-        get { return currentExp; }
-        set
-        {
-            currentExp = value;
-            EventMng.EmitEvent(EventName.RefreshPlayerInfo);
-        }
-    }
-    public int maxExp;
-    private int currentHp;
-    public int CurrentHp
-    {
-        get { return currentHp; }
-        set
-        {
-            currentHp = value;
-            if (currentHp > ability?.HP) currentHp = ability.HP;
-            EventMng.EmitEvent(EventName.RefreshPlayerInfo);
-        }
-    }
-    private int currentMp;
-    public int CurrentMp
-    {
-        get { return currentMp; }
-        set
-        {
-            currentMp = value;
-            if (currentMp > ability?.MP) currentMp = ability.MP;
-            EventMng.EmitEvent(EventName.RefreshPlayerInfo);
-        }
-    }
-    public int currentSTA;
-    public int currentTp;
+    public string PlayerName;
+    public int Level;
+    public int CurrentExp;
+    public int MaxExp;
+    public int CurrentHp;
+    public int CurrentMp;
+    public int CurrentSTA;
+    public int CurrentTp;
 
-    public string area;
-    public int deep;
-    public int gold;
+    public string Area;
+    public int Deep;
+    public int Gold;
 
-    private int abilityPoint;
-    public int AbilityPoint
-    {
-        get { return abilityPoint; }
-        set
-        {
-            abilityPoint = value;
-            EventMng.EmitEvent(EventName.RefreshAbilityPoint);
-        }
-    }
+    public int AbilityPoint;
     public AbilityBase ability;
 
     public EquipBase equips;
@@ -101,56 +69,43 @@ public class PlayerData
     public int currentForgeExp;
     public int maxForgeExp;
 
-    public bool isGetBasicDagger2;
+    public bool isGetBasicDagger;
 
-    public PlayerData Create()
+    public static PlayerData CreateDefault()
     {
-        level = 1;
-        CurrentExp = 0;
-        maxExp = 100;
-        CurrentHp = 100;
-        CurrentMp = 50;
-        SetCurrentSTA(100);
-        currentTp = 0;
-
-        area = GameArea.Home;
-        deep = 0;
-        gold = 0;
-
-        AbilityPoint = 0;
-        ability = new()
+        var playerData = new PlayerData
         {
-            STR_Point = 1,
-            DEX_Point = 1,
-            INT_Point = 1,
-            VIT_Point = 1,
-            AGI_Point = 1,
-            LUK_Point = 1
+            Level = 1,
+            CurrentExp = 0,
+            MaxExp = 100,
+            CurrentTp = 0,
+
+            Area = GameArea.Home,
+            Deep = 0,
+            Gold = 0,
+
+            AbilityPoint = 0,
+            ability = new()
+            {
+                STR_Point = 1,
+                DEX_Point = 1,
+                INT_Point = 1,
+                VIT_Point = 1,
+                AGI_Point = 1,
+                LUK_Point = 1
+            },
+            equips = new(),
+            effects = new(),
+            skillPoint = 0,
+
+            forgeLevel = 1,
+            currentForgeExp = 0,
+            maxForgeExp = 100,
+
+            isGetBasicDagger = false
         };
-        equips = new();
-        effects = new();
 
-        PublicFunc.SetPlayerAbility(ability, equips, effects, effectActions);
-
-        skillPoint = 0;
-
-        forgeLevel = 1;
-        currentForgeExp = 0;
-        maxForgeExp = 100;
-
-        isGetBasicDagger2 = false;
-
-        return this;
-    }
-
-    public void SetCurrentSTA(int value)
-    {
-        currentSTA = value;
-        if (currentSTA > ability?.STA) currentSTA = ability.STA;
-        else if (currentSTA < 0) currentSTA = 0;
-        else if (currentSTA == 0) PublicFunc.AddPlayerEffect(EffectType.Debuff.Exhausted, 10, 1);
-
-        EventMng.EmitEvent(EventName.RefreshPlayerInfo);
+        return playerData;
     }
 }
 
@@ -231,7 +186,7 @@ public class MobData
 
 public class DropItem
 {
-    public ItemData item;
+    public ItemBaseData item;
     public int prop;
 }
 
@@ -245,26 +200,26 @@ public class BagData
     }
 }
 
-public class ItemData
+public class ItemBaseData
 {
     public int id;
-    public long uid;
     public string name;
     public string type;
     public string description;
-    public int count;
     public AbilityBase ability;
     public int price;
     public int durability;
+    public int count;
 
-    public ItemData()
+    public ItemBaseData()
     {
         ability = new();
     }
 
     public string GetAbilityString()
     {
-        if (ability == null) return "";
+        if (ability == null)
+            return "";
 
         List<string> parts = new();
 
@@ -281,6 +236,63 @@ public class ItemData
 
         return string.Join(", ", parts);
     }
+    static readonly Dictionary<int, ItemBaseData> items = new();
+
+    public static void BuildDatabase()
+    {
+        Type root = typeof(GameItem);
+
+        // 取得所有 nested types (Equip, Armor...)
+        var nestedTypes = root.GetNestedTypes(
+            BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        foreach (var type in nestedTypes)
+        {
+            ScanType(type);
+        }
+    }
+
+    static void ScanType(Type type)
+    {
+        var fields = type.GetFields(
+            BindingFlags.Public |
+            BindingFlags.NonPublic |
+            BindingFlags.Static
+        );
+
+        foreach (var field in fields)
+        {
+            if (field.FieldType == typeof(ItemBaseData))
+            {
+                var item = (ItemBaseData)field.GetValue(null);
+
+                if (item == null)
+                    continue;
+
+                if (items.ContainsKey(item.id))
+                {
+                    throw new Exception($"Duplicate item id: {item.id}");
+                }
+
+                items[item.id] = item;
+            }
+        }
+    }
+
+    public static ItemBaseData Get(int id)
+    {
+        items.TryGetValue(id, out var item);
+        return item;
+    }
+}
+
+public class ItemData
+{
+    public long uid;
+    public int itemID;
+    public int durability;
+    public int count;
 }
 
 public class EffectData

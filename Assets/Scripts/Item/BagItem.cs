@@ -27,8 +27,8 @@ public class BagItem : MonoBehaviour
     public void SetInfo(ItemData data)
     {
         info = data;
-        itemName.text = data.name;
-        if (ItemTypeCheck.IsEquipType(data.type))
+        itemName.text = ItemBaseData.Get(data.itemID).name;
+        if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(data.itemID).type))
             count.text = data.durability.ToString();
         else
             count.text = data.count.ToString();

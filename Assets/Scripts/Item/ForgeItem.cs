@@ -23,7 +23,7 @@ public class ForgeItem : MonoBehaviour
     public void SetData(ItemData data, UnityAction callback)
     {
         Data = data;
-        itemName.text = data.name;
+        itemName.text = ItemBaseData.Get(data.itemID).name;
         Count.text = data.count.ToString();
         _callback = callback;
     }

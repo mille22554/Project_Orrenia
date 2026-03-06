@@ -8,9 +8,11 @@ using UnityEngine;
 
 public class PublicFunc
 {
+    static PlayerData _playerData => GameData.NowPlayerData;
+
     public static void SaveData()
     {
-        var path = Path.Combine(Application.persistentDataPath, "savedata.json");
+        var path = GameData.SaveDataPath;
         // Debug.Log($"儲存遊戲資料到 {path}");
         File.WriteAllText(path, JsonConvert.SerializeObject(GameData.gameData));
     }
@@ -18,8 +20,8 @@ public class PublicFunc
     public static GameSaveData UpdateSaveData(GameSaveData oldData)
     {
         // Debug.Log("更新存檔資料結構");
-        var newData = new GameSaveData().Create();
-        newData.datas.playerData.name = oldData.datas.playerData.name;
+        var newData = GameSaveData.CreateDefault();
+        newData.datas.playerData.PlayerName = oldData.datas.playerData.PlayerName;
 
         CopyNonDefaultValues(oldData.datas, newData.datas);
         return newData;
@@ -125,18 +127,16 @@ public class PublicFunc
     public static void SetPlayerAbility()
     {
         SetPlayerAbility(
-            GameData.NowPlayerData.ability,
-            GameData.NowPlayerData.equips,
-            GameData.NowPlayerData.effects,
-            GameData.NowPlayerData.effectActions
+            _playerData.ability,
+            _playerData.equips,
+            _playerData.effects,
+            _playerData.effectActions
         );
-        if (GameData.NowPlayerData.CurrentHp > GameData.NowPlayerData.ability?.HP)
-            GameData.NowPlayerData.CurrentHp = GameData.NowPlayerData.ability.HP;
-        if (GameData.NowPlayerData.CurrentMp > GameData.NowPlayerData.ability?.MP)
-            GameData.NowPlayerData.CurrentMp = GameData.NowPlayerData.ability.MP;
-        if (GameData.NowPlayerData.currentSTA > GameData.NowPlayerData.ability?.STA)
-            GameData.NowPlayerData.SetCurrentSTA(GameData.NowPlayerData.ability.STA);
+        SetHP(_playerData.CurrentHp);
+        SetMP(_playerData.CurrentMp);
+        SetCurrentSTA(_playerData.CurrentSTA);
     }
+
     public static void SetPlayerAbility(AbilityBase data, EquipBase equips, List<EffectData> effects, List<Action<bool>> actions)
     {
         data.STR = data.STR_Point;
@@ -161,22 +161,19 @@ public class PublicFunc
         ReSetEquipAbility(equips);
 
         SetEffectAbility(effects, actions);
-
-        EventMng.EmitEvent(EventName.RefreshPlayerInfo);
     }
 
-    public static ItemData GetItem(ItemData source)
+    public static ItemData GetItem(ItemBaseData source)
     {
-        var target = CopyFields(source);
-        target.uid = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0));
+        var target = new ItemData
+        {
+            itemID = source.id,
+            durability = source.durability,
+            uid = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0)),
+            count = source.count
+        };
         return target;
     }
-
-    private static T CopyFields<T>(T source)
-    {
-        return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(source));
-    }
-
 
     public static void ReSetEquipAbility(EquipBase equips)
     {
@@ -187,14 +184,14 @@ public class PublicFunc
             if (uid != 0)
             {
                 var item = GameData.NowBagData.items.Find(x => x.uid == uid);
-                SetEquipAbility(item.ability);
+                SetEquipAbility(ItemBaseData.Get(item.itemID).ability);
             }
         }
     }
 
     public static void SetEquipAbility(AbilityBase ability) => SetEquipAbility(ability, false);
     public static void SetEquipAbility(AbilityBase ability, bool isUnload)
-        => SetEquipAbility(ability, GameData.NowPlayerData.ability, isUnload);
+        => SetEquipAbility(ability, _playerData.ability, isUnload);
     public static void SetEquipAbility(AbilityBase ability, AbilityBase baseAbility) => SetEquipAbility(ability, baseAbility, false);
     public static void SetEquipAbility(AbilityBase ability, AbilityBase baseAbility, bool isUnload)
     {
@@ -213,9 +210,9 @@ public class PublicFunc
     public static void UnloadEquip(long uid)
     {
         SwitchEquipSlot(uid);
-        var item = GameData.NowBagData.items.Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(x.type));
+        var item = GameData.NowBagData.items.Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(ItemBaseData.Get(x.itemID).type));
         if (item != null)
-            SetEquipAbility(item.ability, true);
+            SetEquipAbility(ItemBaseData.Get(item.itemID).ability, true);
     }
 
     public static void SwitchEquipSlot(long uid)
@@ -225,11 +222,11 @@ public class PublicFunc
 
         foreach (var field in fields)
         {
-            long value = (long)field.GetValue(GameData.NowPlayerData.equips);
+            long value = (long)field.GetValue(_playerData.equips);
 
             if (value == uid && uid != 0)
             {
-                field.SetValue(GameData.NowPlayerData.equips, 0L);
+                field.SetValue(_playerData.equips, 0L);
                 Debug.Log($"已清空欄位：{field.Name}");
             }
         }
@@ -237,20 +234,20 @@ public class PublicFunc
 
     public static bool CheckIsPlayerEquip(ItemData item)
     {
-        return item.type switch
+        return ItemBaseData.Get(item.itemID).type switch
         {
             EquipType.One_Hand_Weapon.Sword or
-            EquipType.One_Hand_Weapon.Dagger => GameData.NowPlayerData.equips.Right_Hand == item.uid,
-            // EquipType.Two_Hand_Weapon => GameData.NowPlayerData.equips.Right_Hand == item.uid && GameData.NowPlayerData.equips.Left_Hand == -1,
-            EquipType.Shield => GameData.NowPlayerData.equips.Left_Hand == item.uid,
-            EquipType.Helmet => GameData.NowPlayerData.equips.Helmet == item.uid,
-            EquipType.Armor => GameData.NowPlayerData.equips.Armor == item.uid,
-            EquipType.Greaves => GameData.NowPlayerData.equips.Greaves == item.uid,
-            EquipType.Shoes => GameData.NowPlayerData.equips.Shoes == item.uid,
-            EquipType.Gloves => GameData.NowPlayerData.equips.Gloves == item.uid,
-            EquipType.Cape => GameData.NowPlayerData.equips.Cape == item.uid,
-            EquipType.Ring => GameData.NowPlayerData.equips.Ring == item.uid,
-            EquipType.Pendant => GameData.NowPlayerData.equips.Pendant == item.uid,
+            EquipType.One_Hand_Weapon.Dagger => _playerData.equips.Right_Hand == item.uid,
+            // EquipType.Two_Hand_Weapon => _playerData.equips.Right_Hand == item.uid && _playerData.equips.Left_Hand == -1,
+            EquipType.Shield => _playerData.equips.Left_Hand == item.uid,
+            EquipType.Helmet => _playerData.equips.Helmet == item.uid,
+            EquipType.Armor => _playerData.equips.Armor == item.uid,
+            EquipType.Greaves => _playerData.equips.Greaves == item.uid,
+            EquipType.Shoes => _playerData.equips.Shoes == item.uid,
+            EquipType.Gloves => _playerData.equips.Gloves == item.uid,
+            EquipType.Cape => _playerData.equips.Cape == item.uid,
+            EquipType.Ring => _playerData.equips.Ring == item.uid,
+            EquipType.Pendant => _playerData.equips.Pendant == item.uid,
             _ => false,
         };
     }
@@ -265,47 +262,49 @@ public class PublicFunc
             switch (effect.type)
             {
                 case EffectType.Buff.HP_UP:
-                    GameData.NowPlayerData.ability.HP *= effect.value;
-                    EventMng.EmitEvent(EventName.RefreshPlayerInfo);
+                    _playerData.ability.HP *= effect.value;
+                    PanelInfo.Instance.RefreshInfo();
 
                     effectAction = isTimePass => ActionCounter(isTimePass, ref effectAction);
                     break;
                 case EffectType.Buff.HP_Regen:
                     effectAction = isTimePass =>
                     {
-                        if (isTimePass) GameData.NowPlayerData.CurrentHp += effect.value;
+                        if (isTimePass)
+                            SetHP(_playerData.CurrentHp + effect.value);
+
                         ActionCounter(isTimePass, ref effectAction);
                     };
                     break;
                 case EffectType.Buff.Berserk:
-                    GameData.NowPlayerData.ability.HP *= effect.value;
-                    GameData.NowPlayerData.ability.MP *= effect.value;
-                    GameData.NowPlayerData.ability.ATK *= effect.value;
-                    GameData.NowPlayerData.ability.MATK *= effect.value;
-                    GameData.NowPlayerData.ability.DEF *= effect.value;
-                    GameData.NowPlayerData.ability.MDEF *= effect.value;
-                    GameData.NowPlayerData.ability.ACC *= effect.value;
-                    GameData.NowPlayerData.ability.EVA *= effect.value;
-                    GameData.NowPlayerData.ability.CRIT *= effect.value;
-                    GameData.NowPlayerData.ability.SPD *= effect.value;
+                    _playerData.ability.HP *= effect.value;
+                    _playerData.ability.MP *= effect.value;
+                    _playerData.ability.ATK *= effect.value;
+                    _playerData.ability.MATK *= effect.value;
+                    _playerData.ability.DEF *= effect.value;
+                    _playerData.ability.MDEF *= effect.value;
+                    _playerData.ability.ACC *= effect.value;
+                    _playerData.ability.EVA *= effect.value;
+                    _playerData.ability.CRIT *= effect.value;
+                    _playerData.ability.SPD *= effect.value;
                     effectAction = isTimePass => ActionCounter(isTimePass, ref effectAction);
                     break;
 
                 case EffectType.Debuff.Exhausted:
-                    GameData.NowPlayerData.ability.HP /= effect.value;
-                    GameData.NowPlayerData.ability.MP /= effect.value;
-                    GameData.NowPlayerData.ability.ATK /= effect.value;
-                    GameData.NowPlayerData.ability.MATK /= effect.value;
-                    GameData.NowPlayerData.ability.DEF /= effect.value;
-                    GameData.NowPlayerData.ability.MDEF /= effect.value;
-                    GameData.NowPlayerData.ability.ACC /= effect.value;
-                    GameData.NowPlayerData.ability.EVA /= effect.value;
-                    GameData.NowPlayerData.ability.CRIT /= effect.value;
-                    GameData.NowPlayerData.ability.SPD /= effect.value;
+                    _playerData.ability.HP /= effect.value;
+                    _playerData.ability.MP /= effect.value;
+                    _playerData.ability.ATK /= effect.value;
+                    _playerData.ability.MATK /= effect.value;
+                    _playerData.ability.DEF /= effect.value;
+                    _playerData.ability.MDEF /= effect.value;
+                    _playerData.ability.ACC /= effect.value;
+                    _playerData.ability.EVA /= effect.value;
+                    _playerData.ability.CRIT /= effect.value;
+                    _playerData.ability.SPD /= effect.value;
 
                     Action<bool> temp = isTimePass =>
                     {
-                        if (GameData.NowPlayerData.currentSTA > 0)
+                        if (_playerData.CurrentSTA > 0)
                         {
                             // Debug.Log("應該要清掉了");
                             RemovePlayerEffect(effect, ref effectAction);
@@ -316,7 +315,7 @@ public class PublicFunc
                     break;
             }
             if (effectAction != null)
-                GameData.NowPlayerData.effectActions.Add(effectAction);
+                _playerData.effectActions.Add(effectAction);
 
             void ActionCounter(bool isTimePass, ref Action<bool> action)
             {
@@ -328,7 +327,7 @@ public class PublicFunc
 
     public static void AddPlayerEffect(string effectType, int effectValue, int effectTimes)
     {
-        GameData.NowPlayerData.effects.Add(new()
+        _playerData.effects.Add(new()
         {
             type = effectType,
             value = effectValue,
@@ -340,10 +339,50 @@ public class PublicFunc
     public static void RemovePlayerEffect(EffectData effect, ref Action<bool> action)
     {
         // var effectRemoved =
-        GameData.NowPlayerData.effects.Remove(effect);
+        _playerData.effects.Remove(effect);
         // var actionRemoved =
-        GameData.NowPlayerData.effectActions.Remove(action);
+        _playerData.effectActions.Remove(action);
         // Debug.Log($"Effect is {effect.type}. Effect removed: {effectRemoved}, Action removed: {actionRemoved}");
         SetPlayerAbility();
     }
+
+    public static void CheckFlags()
+    {
+        var playerData = _playerData;
+        if (!playerData.isGetBasicDagger)
+        {
+            GameData.NowBagData.items.Add(GetItem(GameItem.Equip.BasicDagger));
+            playerData.isGetBasicDagger = true;
+        }
+        SaveData();
+    }
+
+    public static void SetEXP(int value) => _playerData.CurrentExp = value;
+
+    public static void SetHP(int value)
+    {
+        _playerData.CurrentHp = value;
+        if (_playerData.CurrentHp > _playerData.ability?.HP)
+            _playerData.CurrentHp = _playerData.ability.HP;
+    }
+
+    public static void SetMP(int value)
+    {
+        _playerData.CurrentMp = value;
+        if (_playerData.CurrentMp > _playerData.ability?.MP)
+            _playerData.CurrentMp = _playerData.ability.MP;
+    }
+
+    public static void SetCurrentSTA(int value)
+    {
+        _playerData.CurrentSTA = value;
+        if (_playerData.CurrentSTA > _playerData.ability?.STA)
+            _playerData.CurrentSTA = _playerData.ability.STA;
+        else if (_playerData.CurrentSTA < 0)
+            _playerData.CurrentSTA = 0;
+        else if (_playerData.CurrentSTA == 0)
+            AddPlayerEffect(EffectType.Debuff.Exhausted, 10, 1);
+    }
+
+    public static void SetAbilityPoint(int value) => _playerData.AbilityPoint = value;
 }

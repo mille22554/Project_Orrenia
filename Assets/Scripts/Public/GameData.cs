@@ -1,10 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
 
 public static class GameData
 {
+    public static string SaveDataPath
+    {
+        get
+        {
+            var saveDataFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "SaveData");
+            if (!Directory.Exists(saveDataFolderPath))
+                Directory.CreateDirectory(saveDataFolderPath);
+
+            return Path.Combine(saveDataFolderPath, "savedata.json");
+        }
+    }
+
     public static string version = "0.0.16";
 
     public const int tpCost = 10000;
@@ -36,7 +50,7 @@ public static class GameItem
 {
     public static class Equip
     {
-        public static ItemData BasicDagger = new()
+        public static ItemBaseData BasicDagger = new()
         {
             name = "初始短刀",
             id = 1,
@@ -52,7 +66,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData WoodenSword = new()
+        public static ItemBaseData WoodenSword = new()
         {
             name = "木製長劍",
             id = 2,
@@ -67,7 +81,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData WoodenShield = new()
+        public static ItemBaseData WoodenShield = new()
         {
             name = "木盾",
             id = 3,
@@ -82,7 +96,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData WoodenHelmet = new()
+        public static ItemBaseData WoodenHelmet = new()
         {
             name = "木製頭盔",
             id = 4,
@@ -97,7 +111,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData ClothArmor = new()
+        public static ItemBaseData ClothArmor = new()
         {
             name = "布製護甲",
             id = 5,
@@ -112,7 +126,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData ClothGreaves = new()
+        public static ItemBaseData ClothGreaves = new()
         {
             name = "布製護腿",
             id = 6,
@@ -127,7 +141,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData ClothBoots = new()
+        public static ItemBaseData ClothBoots = new()
         {
             name = "布靴",
             id = 7,
@@ -145,7 +159,7 @@ public static class GameItem
 
     public static class Use
     {
-        public static ItemData SmallHpPotion = new()
+        public static ItemBaseData SmallHpPotion = new()
         {
             name = "小型生命藥水",
             id = 101,
@@ -159,7 +173,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData SmallMpPotion = new()
+        public static ItemBaseData SmallMpPotion = new()
         {
             name = "小型魔力藥水",
             id = 102,
@@ -173,10 +187,10 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData SmallSTAPotion = new()
+        public static ItemBaseData SmallSTAPotion = new()
         {
             name = "小型體力藥水",
-            id = 102,
+            id = 103,
             type = UseType.Use,
             description = "恢復少量體力。",
             price = 50,
@@ -187,10 +201,10 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData BerserkPotion = new()
+        public static ItemBaseData BerserkPotion = new()
         {
             name = "狂暴藥水",
-            id = 103,
+            id = 104,
             type = UseType.Use,
             description = "使全數值呈倍數上升，但會不受控。\n狂化－100回合",
             price = 1000,
@@ -200,7 +214,7 @@ public static class GameItem
 
     public static class Material
     {
-        public static ItemData SlimeGel = new()
+        public static ItemBaseData SlimeGel = new()
         {
             name = "史萊姆凝膠",
             id = 201,
@@ -214,7 +228,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData WhiteRabbitFur = new()
+        public static ItemBaseData WhiteRabbitFur = new()
         {
             name = "白兔毛皮",
             id = 202,
@@ -228,7 +242,7 @@ public static class GameItem
             count = 1
         };
 
-        public static ItemData SparrowFeather = new()
+        public static ItemBaseData SparrowFeather = new()
         {
             name = "麻雀羽毛",
             id = 203,
@@ -350,7 +364,7 @@ public static class ItemTypeCheck
 
 public static class GameShopItem
 {
-    public static List<ItemData> list = new()
+    public static List<ItemBaseData> list = new()
     {
         GameItem.Equip.WoodenSword,
         GameItem.Equip.WoodenShield,

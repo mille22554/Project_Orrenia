@@ -28,7 +28,7 @@ public class ItemAbility : MonoBehaviour
         if (GameData.NowPlayerData.AbilityPoint > 0)
         {
             p++;
-            GameData.NowPlayerData.AbilityPoint--;
+            PublicFunc.SetAbilityPoint(GameData.NowPlayerData.AbilityPoint - 1);
             btnPlus.interactable = GameData.NowPlayerData.AbilityPoint > 0;
             point.text = p.ToString();
 

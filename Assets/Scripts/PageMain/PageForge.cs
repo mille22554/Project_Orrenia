@@ -4,8 +4,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PanelForge : MonoBehaviour
+public class PageForge : MonoBehaviour
 {
+    const string resourcePath = "Prefabs/PageForge";
     [SerializeField] InputField inputItemName;
     [SerializeField] Transform transToggleTypes;
     [SerializeField] List<Transform> listTransToggles;
@@ -17,22 +18,27 @@ public class PanelForge : MonoBehaviour
     [SerializeField] ForgeItem forgeItem;
     [SerializeField] Text itemUsedMaterial;
 
-    private readonly List<Toggle> toggleTypes = new();
-    private readonly List<List<Toggle>> listToggles = new();
-    private readonly Dictionary<ForgeItem, Text> usedMaterials = new();
-    private readonly List<ForgeItem> bagMaterials = new();
-    private readonly ItemData itemTemplate = new()
+    readonly List<Toggle> toggleTypes = new();
+    readonly List<List<Toggle>> listToggles = new();
+    readonly Dictionary<ForgeItem, Text> usedMaterials = new();
+    readonly List<ForgeItem> bagMaterials = new();
+    readonly ItemBaseData itemTemplate = new()
     {
         description = "使用素材: ",
         price = 500,
         id = 1,
         durability = 500,
-        count = 1
     };
-    private int nowMaterialNum;
-    private int maxMaterialNum;
+    int nowMaterialNum;
+    int maxMaterialNum;
 
-    private void Awake()
+    public static void Create()
+    {
+        var panel = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageForge>(), MainController.Instance.PageContent);
+        MainController.Instance.SwitchPage(panel);
+    }
+
+    void Awake()
     {
         for (int i = 0; i < transToggleTypes.childCount; i++)
         {
@@ -111,14 +117,14 @@ public class PanelForge : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         if (GameData.gameData == null || GameData.NowBagData == null)
             return;
 
         inputItemName.text = "";
 
-        foreach (var material in GameData.NowBagData.items.Where(x => ItemTypeCheck.IsMaterialType(x.type)))
+        foreach (var material in GameData.NowBagData.items.Where(x => ItemTypeCheck.IsMaterialType(ItemBaseData.Get(x.itemID).type)))
         {
             var tempItem = Instantiate(forgeItem, srBagMaterials.content);
             tempItem.SetData(material, OnBtnBagMaterial);
@@ -143,12 +149,12 @@ public class PanelForge : MonoBehaviour
 
                 if (usedMaterials.TryGetValue(tempItem, out var textNum))
                 {
-                    textNum.text = $"{tempItem.Data.name} x{tempItem.Data.count - count}";
+                    textNum.text = $"{ItemBaseData.Get(tempItem.Data.itemID).name} x{tempItem.Data.count - count}";
                 }
                 else
                 {
                     var tempItem2 = Instantiate(itemUsedMaterial, srUsedMaterials.content);
-                    tempItem2.text = $"{tempItem.Data.name} x1";
+                    tempItem2.text = $"{ItemBaseData.Get(tempItem.Data.itemID).name} x1";
                     usedMaterials.Add(tempItem, tempItem2);
                 }
 
@@ -162,7 +168,7 @@ public class PanelForge : MonoBehaviour
             tempType.isOn = true;
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         foreach (var bagMaterial in bagMaterials)
             Destroy(bagMaterial.gameObject);
@@ -173,26 +179,26 @@ public class PanelForge : MonoBehaviour
         usedMaterials.Clear();
     }
 
-    private void Start()
+    void Start()
     {
         btnForge.onClick.AddListener(OnForge);
         btnReset.onClick.AddListener(OnReset);
     }
 
-    private void OnForge()
+    void OnForge()
     {
         if (nowMaterialNum < maxMaterialNum || string.IsNullOrWhiteSpace(inputItemName.text))
             return;
 
         var newItem = PublicFunc.GetItem(itemTemplate);
-        newItem.name = inputItemName.text;
+        ItemBaseData.Get(newItem.itemID).name = inputItemName.text;
 
         foreach (var tempItem in usedMaterials.Keys)
         {
             if (int.TryParse(tempItem.Count.text, out var count))
             {
                 for (int i = 0; i < count; i++)
-                    PublicFunc.SetEquipAbility(tempItem.Data.ability, newItem.ability);
+                    PublicFunc.SetEquipAbility(ItemBaseData.Get(tempItem.Data.itemID).ability, ItemBaseData.Get(newItem.itemID).ability);
 
                 tempItem.Data.count = count;
                 if (count == 0)
@@ -205,7 +211,7 @@ public class PanelForge : MonoBehaviour
         }
     }
 
-    private void OnReset()
+    void OnReset()
     {
         foreach (var usedMaterial in usedMaterials.Values)
             Destroy(usedMaterial.gameObject);
@@ -218,7 +224,7 @@ public class PanelForge : MonoBehaviour
         textMaterialNum.text = $"已填入素材數:{nowMaterialNum}/{maxMaterialNum}";
     }
 
-    private void CheckItemType(int index, int index2)
+    void CheckItemType(int index, int index2)
     {
         switch (index)
         {

@@ -77,7 +77,7 @@ public class PanelLog : MonoBehaviour
             if (GameData.NowPlayerData.effects.Count > 0)
             {
                 textLog = Instantiate(itemLog, effectContent);
-                textLog.text = $"{GameData.NowPlayerData.name}:";
+                textLog.text = $"{GameData.NowPlayerData.PlayerName}:";
 
                 foreach (var effect in GameData.NowPlayerData.effects)
                 {
