@@ -12,14 +12,14 @@ public class BagItem : MonoBehaviour
     public Action<BagItem> refreshBagInfo;
     [NonSerialized] public ItemData info;
 
-    private void Start()
+    void Start()
     {
         iconPick.SetActive(false);
 
         toggle.onValueChanged.AddListener(OnToggleValueChange);
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         toggle.onValueChanged.RemoveListener(OnToggleValueChange);
     }
@@ -36,7 +36,7 @@ public class BagItem : MonoBehaviour
         iconEquip.SetActive(PublicFunc.CheckIsPlayerEquip(info));
     }
 
-    private void OnToggleValueChange(bool isOn)
+    void OnToggleValueChange(bool isOn)
     {
         iconPick.SetActive(isOn);
         refreshBagInfo.Invoke(this);

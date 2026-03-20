@@ -1,71 +1,31 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ItemAbility : MonoBehaviour
 {
-    public Text point;
-    public Button btnPlus;
+    public Text Point;
+    [SerializeField] Button _btnPlus;
 
-    private void Start()
+    Action _onAbilityPlus;
+
+    void Awake()
     {
-        btnPlus.onClick.AddListener(OnClickPlus);
+        _btnPlus.onClick.AddListener(OnClickPlus);
     }
 
-    private void OnDestroy()
+    public void SetInfo(int point, bool isBtnPlusInteractable, Action onAbilityPlus)
     {
-        btnPlus.onClick.RemoveListener(OnClickPlus);
+        Point.text = point.ToString();
+        _btnPlus.interactable = isBtnPlusInteractable;
+        _onAbilityPlus = onAbilityPlus;
     }
 
-    public void SetInfo(int _point)
+    void OnClickPlus()
     {
-        point.text = _point.ToString();
-        btnPlus.interactable = GameData.NowPlayerData.AbilityPoint > 0;
-    }
-
-    private void OnClickPlus()
-    {
-        int p = int.Parse(point.text);
-        if (GameData.NowPlayerData.AbilityPoint > 0)
-        {
-            p++;
-            PublicFunc.SetAbilityPoint(GameData.NowPlayerData.AbilityPoint - 1);
-            btnPlus.interactable = GameData.NowPlayerData.AbilityPoint > 0;
-            point.text = p.ToString();
-
-            UpdateAbility(p);
-            PublicFunc.SaveData();
-        }
-    }    
-
-    private void UpdateAbility(int newValue)
-    {
-        // 更新 UI
-        point.text = newValue.ToString();
-        btnPlus.interactable = GameData.NowPlayerData.AbilityPoint > 0;
-
-        // 根據 abilityType 更新對應欄位
-        switch (gameObject.name)
-        {
-            case "STR":
-                GameData.NowPlayerData.ability.STR_Point = newValue;
-                break;
-            case "DEX":
-                GameData.NowPlayerData.ability.DEX_Point = newValue;
-                break;
-            case "INT":
-                GameData.NowPlayerData.ability.INT_Point = newValue;
-                break;
-            case "VIT":
-                GameData.NowPlayerData.ability.VIT_Point = newValue;
-                break;
-            case "AGI":
-                GameData.NowPlayerData.ability.AGI_Point = newValue;
-                break;
-            case "LUK":
-                GameData.NowPlayerData.ability.LUK_Point = newValue;
-                break;
-        }
-
-        PublicFunc.SetPlayerAbility();
+        int p = int.Parse(Point.text);
+        p++;
+        Point.text = (int.Parse(Point.text) + 1).ToString();
+        _onAbilityPlus?.Invoke();
     }
 }

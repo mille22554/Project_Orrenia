@@ -5,25 +5,27 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Toggle))]
 public class ItemEnemy : MonoBehaviour
 {
-    public Text enemyName;
-    public Text level;
-    public Text hp;
-    public GameObject iconSelected;
-    [NonSerialized] public Toggle toggle;
-    [NonSerialized] public MobData info;
+    [NonSerialized] public Toggle Toggle;
+    [NonSerialized] public MobData Info;
 
-    private void Awake()
+    [SerializeField] Text enemyName;
+    [SerializeField] Text level;
+    [SerializeField] Text hp;
+    [SerializeField] GameObject iconSelected;
+
+    void Awake()
     {
-        toggle = GetComponent<Toggle>();
-        toggle.onValueChanged.AddListener(SetToggle);
+        Toggle = GetComponent<Toggle>();
+
+        Toggle.onValueChanged.AddListener(SetToggle);
     }
 
     public void SetData(MobData data)
     {
-        info = data;
-        enemyName.text = data.name;
-        level.text = "Lv " + data.level;
-        hp.text = "HP " + data.currentHp;
+        Info = data;
+        enemyName.text = data.CharacterData.Name;
+        level.text = "Lv " + data.CharacterData.Level;
+        hp.text = "HP " + data.CharacterData.CurrentHP;
     }
 
     public void SetToggle(bool isOn)
@@ -33,8 +35,10 @@ public class ItemEnemy : MonoBehaviour
 
     public void GetDamage(int damage)
     {
-        info.currentHp -= damage;
-        if (info.currentHp < 0) info.currentHp = 0;
-        hp.text = "HP " + info.currentHp;
+        Info.CharacterData.CurrentHP -= damage;
+        if (Info.CharacterData.CurrentHP < 0)
+            Info.CharacterData.CurrentHP = 0;
+
+        hp.text = "HP " + Info.CharacterData.CurrentHP;
     }
 }

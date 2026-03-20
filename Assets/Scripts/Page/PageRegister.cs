@@ -1,13 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using static GameItem;
 
 public class PageRegister : MonoBehaviour
 {
     const string resourcePath = "Prefabs/PageRegister";
     [SerializeField] Button btnRegister;
     [SerializeField] InputField inputUsername;
-    PlayerData PlayerData => GameData.NowPlayerData;
+    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
 
     public static void Create()
     {
@@ -22,15 +21,19 @@ public class PageRegister : MonoBehaviour
 
     void OnRegister()
     {
-        GameData.gameData = GameSaveData.CreateDefault();
-        PlayerData.PlayerName = inputUsername.text;
-        PublicFunc.SetPlayerAbility(PlayerData.ability, PlayerData.equips, PlayerData.effects, PlayerData.effectActions);
-        PublicFunc.SetHP(PlayerData.ability.HP);
-        PublicFunc.SetMP(PlayerData.ability.MP);
-        PublicFunc.SetCurrentSTA(PlayerData.ability.STA);
+        if (string.IsNullOrEmpty(inputUsername.text))
+        {
+            Debug.LogWarning("Username cannot be empty");
+            return;
+        }
 
-        PublicFunc.CheckFlags();
+        var requestData = new SetPlayerNameRequest { PlayerName = inputUsername.text };
+        ApiBridge.Send(requestData, CallBack);
 
-        MainController.Instance.Login();
+        void CallBack(SetPlayerNameResponse response)
+        {
+            MainController.Instance.Login();
+        }
+
     }
 }

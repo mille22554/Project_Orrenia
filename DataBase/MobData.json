@@ -1,0 +1,46 @@
+{
+  "1": {
+    "Name": "史萊姆",
+    "Ability": {
+      "STR_Point": 1,
+      "DEX_Point": 1,
+      "INT_Point": 1,
+      "VIT_Point": 1,
+      "AGI_Point": 1,
+      "LUK_Point": 1
+    },
+    "DropItems": [
+      {
+        "Item": 201,
+        "Prop": 80
+      }
+    ]
+  },
+  "2": {
+    "Name": "小白兔",
+    "Ability": {
+      "DEX_Point": 2,
+      "AGI_Point": 1,
+      "LUK_Point": 3
+    },
+    "DropItems": [
+      {
+        "Item": 202,
+        "Prop": 80
+      }
+    ]
+  },
+  "3": {
+    "Name": "麻雀",
+    "Ability": {
+      "DEX_Point": 3,
+      "AGI_Point": 3
+    },
+    "DropItems": [
+      {
+        "Item": 203,
+        "Prop": 80
+      }
+    ]
+  }
+}

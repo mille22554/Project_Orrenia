@@ -1,44 +1,53 @@
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PanelLog : MonoBehaviour
 {
-    public ScrollRect log;
-    public Toggle toggleBattleLog;
-    public Toggle toggleEffect;
-    public Transform battleLogContent;
-    public Transform effectContent;
-    public GameObject block;
-    public Text itemLog;
+    [SerializeField] ScrollRect log;
+    [SerializeField] Toggle toggleBattleLog;
+    [SerializeField] Toggle toggleEffect;
+    [SerializeField] Transform battleLogContent;
+    [SerializeField] Transform effectContent;
+    [SerializeField] GameObject block;
+    [SerializeField] Text itemLog;
 
-    private void Start()
+    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    readonly List<Text> itemBattleLogs = new();
+    readonly List<Text> itemEffectLogs = new();
+
+    void Awake()
+    {
+        toggleBattleLog.onValueChanged.AddListener(OnBattleLog);
+        toggleEffect.onValueChanged.AddListener(OnEffect);
+    }
+
+    void Start()
     {
         ClearBattleLog();
-        foreach (Transform child in effectContent)
-            Destroy(child.gameObject);
+        ClearEffectLog();
 
         toggleEffect.isOn = true;
         toggleBattleLog.isOn = true;
 
-        toggleBattleLog.onValueChanged.AddListener(OnBattleLog);
-        toggleEffect.onValueChanged.AddListener(OnEffect);
-
         block.SetActive(false);
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         ClearBattleLog();
-        foreach (Transform child in effectContent)
-            Destroy(child.gameObject);
+        ClearEffectLog();
     }
 
-    public async UniTask SetLog(string message) => await SetLog(message, Color.white);
-    public async UniTask SetLog(string message, Color color)
+    public void SetLog(string message) => SetLog(message, Color.white);
+    public void SetLog(string message, Color color) => SetLogAsync(message, color).Forget();
+    public async UniTask SetLogAsync(string message) => await SetLogAsync(message, Color.white);
+    public async UniTask SetLogAsync(string message, Color color)
     {
         block.SetActive(true);
-        var textLog = Instantiate(itemLog, battleLogContent);
+        var textLog = ObjectPool.Get(itemLog, battleLogContent);
+        itemBattleLogs.Add(textLog);
         textLog.text = message;
         textLog.color = color;
 
@@ -49,12 +58,14 @@ public class PanelLog : MonoBehaviour
             await UniTask.WaitForSeconds(0.1f);
         }
         else if (toggleEffect.isOn)
+        {
             OnEffect(true);
+        }
 
         block.SetActive(false);
     }
 
-    private async void OnBattleLog(bool isOn)
+    async void OnBattleLog(bool isOn)
     {
         if (isOn)
         {
@@ -63,10 +74,9 @@ public class PanelLog : MonoBehaviour
         }
     }
 
-    private void OnEffect(bool isOn)
+    void OnEffect(bool isOn)
     {
-        foreach (Transform child in effectContent)
-            Destroy(child.gameObject);
+        ClearEffectLog();
 
         battleLogContent.gameObject.SetActive(!isOn);
         effectContent.gameObject.SetActive(isOn);
@@ -74,28 +84,32 @@ public class PanelLog : MonoBehaviour
         if (isOn)
         {
             Text textLog;
-            if (GameData.NowPlayerData.effects.Count > 0)
+            if (CharacterData.Effects.Count > 0)
             {
-                textLog = Instantiate(itemLog, effectContent);
-                textLog.text = $"{GameData.NowPlayerData.PlayerName}:";
+                textLog = ObjectPool.Get(itemLog, effectContent);
+                itemEffectLogs.Add(textLog);
+                textLog.text = $"{CharacterData.Name}:";
 
-                foreach (var effect in GameData.NowPlayerData.effects)
+                foreach (var effect in CharacterData.Effects)
                 {
-                    textLog = Instantiate(itemLog, effectContent);
+                    textLog = ObjectPool.Get(itemLog, effectContent);
+                    itemEffectLogs.Add(textLog);
                     textLog.text = $"{effect.type}－{effect.times}回合";
                 }
             }
 
-            foreach (var enemy in GameData.NowEnemyData.enemies)
+            foreach (var enemy in GameData_Server.NowEnemyData.enemies)
             {
-                if (enemy.effects.Count > 0)
+                if (enemy.Effects.Count > 0)
                 {
-                    textLog = Instantiate(itemLog, effectContent);
-                    textLog.text = $"{enemy.name}:";
+                    textLog = ObjectPool.Get(itemLog, effectContent);
+                    itemEffectLogs.Add(textLog);
+                    textLog.text = $"{enemy.CharacterData.Name}:";
 
-                    foreach (var effect in enemy.effects)
+                    foreach (var effect in enemy.Effects)
                     {
-                        textLog = Instantiate(itemLog, effectContent);
+                        textLog = ObjectPool.Get(itemLog, effectContent);
+                        itemEffectLogs.Add(textLog);
                         textLog.text = $"{effect.type}－{effect.times}回合";
                     }
                 }
@@ -105,7 +119,13 @@ public class PanelLog : MonoBehaviour
 
     public void ClearBattleLog()
     {
-        foreach (Transform child in battleLogContent)
-            Destroy(child.gameObject);
+        foreach (var item in itemBattleLogs)
+            ObjectPool.Put(item);
+    }
+
+    public void ClearEffectLog()
+    {
+        foreach (var item in itemEffectLogs)
+            ObjectPool.Put(item);
     }
 }

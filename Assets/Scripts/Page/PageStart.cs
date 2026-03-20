@@ -21,32 +21,17 @@ public class PageStart : MonoBehaviour
 
     void OnStart()
     {
-        string path = GameData.SaveDataPath;
-        Debug.Log($"從 {path} 讀取遊戲資料");
+        var requestData = new GetSaveDataRequest();
+        ApiBridge.Send(requestData, CallBack);
 
-        if (File.Exists(path))
+        void CallBack(GetSaveDataResponse response)
         {
-            string json = File.ReadAllText(path);
-            var data = JsonConvert.DeserializeObject<GameSaveData>(json);
+            var saveData = response.SaveData;
 
-            if (data.version != GameData.version)
-            {
-                GameData.gameData = PublicFunc.UpdateSaveData(data);
-                PublicFunc.SaveData();
-            }
+            if (string.IsNullOrEmpty(saveData.Datas.CharacterData.Name))
+                PageRegister.Create();
             else
-            {
-                GameData.gameData = data;
-            }
-
-            PublicFunc.CheckFlags();
-            PublicFunc.SetPlayerAbility();
-
-            MainController.Instance.Login();
-        }
-        else
-        {
-            PageRegister.Create();
+                MainController.Instance.Login();
         }
     }
 }

@@ -8,10 +8,15 @@ public class MainController : MonoBehaviour
     public Transform InfoContent;
     public MonoBehaviour CurrentPage;
 
+    PanelInfo _panelInfo;
+
     void Awake()
     {
         Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         ItemBaseData.BuildDatabase();
+        ApiBridge.Initialize("");
     }
 
     void Start()
@@ -21,9 +26,17 @@ public class MainController : MonoBehaviour
 
     public void Login()
     {
-        PanelBtns.Create();
-        PanelInfo.Create();
-        PageBattle.Create();
+        var requestData = new GetAreaDataRequest();
+        ApiBridge.Send(requestData, CallBack);
+
+        void CallBack(GetAreaDataResponse response)
+        {
+            GameData.AreaData = response.AreaData;
+
+            PanelBtns.Create();
+            _panelInfo = PanelInfo.Create();
+            PageBattle.Create();
+        }
     }
 
     public void SwitchPage<T>(T page) where T : MonoBehaviour
@@ -32,5 +45,18 @@ public class MainController : MonoBehaviour
             ObjectPool.Put(CurrentPage);
 
         CurrentPage = page;
+    }
+
+    public void RefreshUI()
+    {
+        var requestData = new GetSaveDataRequest();
+        ApiBridge.Send(requestData, CallBack);
+
+        void CallBack(GetSaveDataResponse response) => RefreshUI(response);
+    }
+
+    public void RefreshUI(GetSaveDataResponse response)
+    {
+        _panelInfo.RefreshInfo(response);
     }
 }

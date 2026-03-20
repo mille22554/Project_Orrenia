@@ -1,19 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Newtonsoft.Json;
 
 public class GameSaveData
 {
     public string version;
-    public Datas datas;
+    public Datas Datas;
 
     public static GameSaveData CreateDefault()
     {
         var saveData = new GameSaveData
         {
-            version = GameData.version,
-            datas = Datas.CreateDefault()
+            version = GameData_Server.version,
+            Datas = Datas.CreateDefault()
         };
 
         return saveData;
@@ -22,120 +21,23 @@ public class GameSaveData
 
 public class Datas
 {
-    public PlayerData playerData;
-    public EnemyData enemyData;
-    public BagData bagData;
+    public PlayerContextData PlayerData;
+    public CharacterData CharacterData;
+    public EnemyData EnemyData;
+    public BagData BagData;
 
     public static Datas CreateDefault()
     {
         var datas = new Datas
         {
-            playerData = PlayerData.CreateDefault(),
-            enemyData = new(),
-            bagData = new()
+            PlayerData = PlayerContextData.CreateDefault(),
+            CharacterData = CharacterData.CreateDefault(),
+            EnemyData = new(),
+            BagData = new()
         };
 
         return datas;
     }
-}
-
-public class PlayerData
-{
-    public string PlayerName;
-    public int Level;
-    public int CurrentExp;
-    public int MaxExp;
-    public int CurrentHp;
-    public int CurrentMp;
-    public int CurrentSTA;
-    public int CurrentTp;
-
-    public string Area;
-    public int Deep;
-    public int Gold;
-
-    public int AbilityPoint;
-    public AbilityBase ability;
-
-    public EquipBase equips;
-
-    public List<EffectData> effects;
-    [JsonIgnore]
-    public List<Action<bool>> effectActions = new();
-
-    public int skillPoint;
-
-    public int forgeLevel;
-    public int currentForgeExp;
-    public int maxForgeExp;
-
-    public bool isGetBasicDagger;
-
-    public static PlayerData CreateDefault()
-    {
-        var playerData = new PlayerData
-        {
-            Level = 1,
-            CurrentExp = 0,
-            MaxExp = 100,
-            CurrentTp = 0,
-
-            Area = GameArea.Home,
-            Deep = 0,
-            Gold = 0,
-
-            AbilityPoint = 0,
-            ability = new()
-            {
-                STR_Point = 1,
-                DEX_Point = 1,
-                INT_Point = 1,
-                VIT_Point = 1,
-                AGI_Point = 1,
-                LUK_Point = 1
-            },
-            equips = new(),
-            effects = new(),
-            skillPoint = 0,
-
-            forgeLevel = 1,
-            currentForgeExp = 0,
-            maxForgeExp = 100,
-
-            isGetBasicDagger = false
-        };
-
-        return playerData;
-    }
-}
-
-public class AbilityBase
-{
-    public int STR_Point;
-    public int DEX_Point;
-    public int INT_Point;
-    public int VIT_Point;
-    public int AGI_Point;
-    public int LUK_Point;
-
-    public int STR;
-    public int DEX;
-    public int INT;
-    public int VIT;
-    public int AGI;
-    public int LUK;
-
-    public int HP;
-    public int MP;
-    public int STA;
-    public int ATK;
-    public int MATK;
-    public int DEF;
-    public int MDEF;
-    public int ACC;
-    public int EVA;
-    public int CRIT;
-    public int SPD;
 }
 
 public class EquipBase
@@ -162,34 +64,6 @@ public class EnemyData
     }
 }
 
-public class MobData
-{
-    public string name;
-    public int level;
-    public int currentHp;
-    public int currentMp;
-    public int currentTp;
-
-    public AbilityBase ability;
-
-    public List<DropItem> dropItems;
-
-    public List<EffectData> effects;
-
-    public MobData()
-    {
-        ability = new();
-        dropItems = new();
-        effects = new();
-    }
-}
-
-public class DropItem
-{
-    public ItemBaseData item;
-    public int prop;
-}
-
 public class BagData
 {
     public List<ItemData> items;
@@ -206,7 +80,7 @@ public class ItemBaseData
     public string name;
     public string type;
     public string description;
-    public AbilityBase ability;
+    public FullAbilityBase ability;
     public int price;
     public int durability;
     public int count;
@@ -240,7 +114,7 @@ public class ItemBaseData
 
     public static void BuildDatabase()
     {
-        Type root = typeof(GameItem);
+        Type root = typeof(GameItemData);
 
         // 取得所有 nested types (Equip, Armor...)
         var nestedTypes = root.GetNestedTypes(
@@ -306,7 +180,7 @@ public class SkillData
 {
     public string name;
     public string description;
-    public Func<AbilityBase, int> damage;
+    public Func<FullAbilityBase, int> damage;
     public string damageType;
     public string effect;
     public Action special;
