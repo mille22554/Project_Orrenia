@@ -95,6 +95,7 @@ public class PublicFunc
                 case EffectType.Buff.HP_UP:
                     data.HP *= effect.value;
                     break;
+
                 case EffectType.Buff.Berserk:
                     data.HP *= effect.value;
                     data.MP *= effect.value;
@@ -153,7 +154,6 @@ public class PublicFunc
         };
         return target;
     }
-
 
     public static void SetEquipAbility(AbilityBase ability, AbilityBase baseAbility)
     {
@@ -227,12 +227,12 @@ public class PublicFunc
         ability ??= data.Ability;
         var totalUsedPoint = ability.STR_Point + ability.AGI_Point + ability.DEX_Point + ability.INT_Point + ability.LUK_Point + ability.VIT_Point;
 
-        return data.Level * 6 - totalUsedPoint;
+        return (data.Level + 1) * 6 - totalUsedPoint;
     }
 
     public static int GetExp(CharacterData data)
     {
-        return data.Level * 100;
+        return (1 << (data.Level - 1)) * 100;
     }
 
     public static int Dice(int num, int face)

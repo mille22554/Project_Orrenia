@@ -67,7 +67,17 @@ public class SetBattleAction_Server : IApiHandler_Server
         var target = EnemyData.enemies.Find(x => x.CharacterData.Name == mob.CharacterData.Name);
         if (target != null)
         {
-            return BattleSystem.RunBattle(CharacterData, target.CharacterData);
+            var result = BattleSystem.RunBattle(CharacterData, target.CharacterData);
+
+            if (result.IsDefenderDead)
+            {
+                BattleSystem.EnemyDeadProcess(target, result);
+            }
+            else if (result.IsAttackerDead)
+            {
+                OnLeave();
+            }
+            return result;
         }
         else
         {

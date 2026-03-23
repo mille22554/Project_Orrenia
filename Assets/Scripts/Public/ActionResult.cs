@@ -1,7 +1,7 @@
 public class ActionResult
 {
     public BattleResult BattleResult;
-
+    public RestResult RestResult;
 }
 
 public class BattleResult
@@ -17,4 +17,13 @@ public class BattleResult
     public int BattleDamage;
     public bool IsAttackerDead;
     public bool IsDefenderDead;
+    public bool IsUnitLevelUp;
+    public string LevelUpUnit;
+}
+
+public class RestResult
+{
+    public int RecoverHP;
+    public int RecoverMP;
+    public int RecoverSTA;
 }

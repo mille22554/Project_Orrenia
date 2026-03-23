@@ -22,7 +22,7 @@ public class PanelInfo : MonoBehaviour
         RefreshInfo();
     }
 
-    public void RefreshInfo()
+    void RefreshInfo()
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);

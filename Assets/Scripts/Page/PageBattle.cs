@@ -59,9 +59,9 @@ public class PageBattle : MonoBehaviour
     void OnEnable()
     {
         var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
+        ApiBridge.Send(requestData, OnGetSaveData);
 
-        void CallBack(GetSaveDataResponse response)
+        void OnGetSaveData(GetSaveDataResponse response)
         {
             var playerData = response.SaveData.Datas.PlayerData;
             var enemyData = response.SaveData.Datas.EnemyData;
@@ -104,7 +104,9 @@ public class PageBattle : MonoBehaviour
                     btnGoAhead.gameObject.SetActive(false);
                     btnRest.gameObject.SetActive(false);
                     btnAttack.gameObject.SetActive(true);
-                    // RunSpeed().Forget();
+
+                    var requestData = new GetBattleStatusRequest();
+                    ApiBridge.Send(requestData, OnGetBattleState);
                 }
                 else
                 {
@@ -124,7 +126,7 @@ public class PageBattle : MonoBehaviour
         enemyList.Clear();
     }
 
-    async void OnInto()
+    void OnInto()
     {
         var requestData = new SetAdventureActionRequest
         {
@@ -165,9 +167,11 @@ public class PageBattle : MonoBehaviour
             deep.text = "深度 " + response.SaveData.Datas.PlayerData.Deep;
 
             if (response.SaveData.Datas.EnemyData.enemies.Count != 0)
+            {
                 OnEnemyAppear(response.SaveData.Datas.EnemyData.enemies);
 
-            MainController.Instance.RefreshUI();
+                RunBattleVisuals(response.ActionResult.BattleResult);
+            }
         }
     }
 
@@ -180,7 +184,7 @@ public class PageBattle : MonoBehaviour
             obj.Toggle.isOn = true;
             obj.SetData(enemy);
             enemyList.Add(obj);
-            panelLog.SetLogAsync(enemy.CharacterData.Name + " 出現了！").Forget();
+            panelLog.SetLog(enemy.CharacterData.Name + " 出現了！");
         }
         var firstEnemy = enemyList.FirstOrDefault();
         if (firstEnemy != null)
@@ -191,7 +195,33 @@ public class PageBattle : MonoBehaviour
         btnAttack.gameObject.SetActive(true);
     }
 
-    async void OnLeave()
+    void OnGetBattleState(GetBattleStatusResponse response)
+    {
+        var result = response.BattleResult;
+        RunBattleVisuals(result);
+
+        if (result != null)
+        {
+            if (result.IsAttackerDead && response.SaveData.Datas.CharacterData.Name == result.Attacker ||
+                result.IsDefenderDead && response.SaveData.Datas.CharacterData.Name == result.Defenderer)
+                LeaveDungon(response.SaveData.Datas.PlayerData.Area);
+        }
+    }
+
+    void RunBattleVisuals(BattleResult result)
+    {
+        if (result != null)
+        {
+            ShowBattleLog(result);
+
+            var requestData = new GetBattleStatusRequest();
+            ApiBridge.Send(requestData, OnGetBattleState);
+        }
+
+        MainController.Instance.RefreshUI();
+    }
+
+    void OnLeave()
     {
         var requestData = new SetAdventureActionRequest
         {
@@ -199,61 +229,57 @@ public class PageBattle : MonoBehaviour
         };
         ApiBridge.Send(requestData, CallBack);
 
-        void CallBack(SetAdventureActionResponse response)
-        {
-            btnInto.gameObject.SetActive(true);
-            btnShop.gameObject.SetActive(true);
-            btnGoAhead.gameObject.SetActive(false);
-            btnRest.gameObject.SetActive(false);
-            btnLeave.gameObject.SetActive(false);
-
-            var area = GameData.AreaData[response.SaveData.Datas.PlayerData.Area];
-            _area.text = area.Name;
-            deep.text = "";
-
-            foreach (var enemy in enemyList)
-                ObjectPool.Put(enemy);
-
-            enemyList.Clear();
-
-            panelLog.ClearBattleLog();
-            panelLog.SetLog("離開迷宮，回到 " + _area.text);
-
-            MainController.Instance.RefreshUI();
-        }
+        void CallBack(SetAdventureActionResponse response) => LeaveDungon(response.SaveData.Datas.PlayerData.Area);
     }
 
-    async void OnRest()
+    void LeaveDungon(int areaID)
     {
-        // var hp0 = _playerData.CurrentHp;
-        // var mp0 = _playerData.CurrentMp;
-        // var sta0 = _playerData.CurrentSTA;
-        // var prop = 0;
-        // while (
-        //     _playerData.CurrentHp < _playerData.Ability.HP ||
-        //     _playerData.CurrentMp < _playerData.Ability.MP ||
-        //     _playerData.CurrentSTA < _playerData.Ability.STA
-        // )
-        // {
-        //     PublicFunc.SetHP(_playerData.CurrentHp + 1);
-        //     PublicFunc.SetMP(_playerData.CurrentMp + 1);
-        //     PublicFunc.SetCurrentSTA(_playerData.CurrentSTA + 1);
+        btnInto.gameObject.SetActive(true);
+        btnShop.gameObject.SetActive(true);
+        btnGoAhead.gameObject.SetActive(false);
+        btnAttack.gameObject.SetActive(false);
+        btnRest.gameObject.SetActive(false);
+        btnLeave.gameObject.SetActive(false);
 
-        //     prop = PublicFunc.Dice(1, 3);
-        //     if (prop > 0)
-        //         break;
-        // }
-        // panelLog.ClearBattleLog();
-        // await panelLog.SetLogAsync($"恢復了{_playerData.CurrentHp - hp0}HP, {_playerData.CurrentMp - mp0}MP, {_playerData.CurrentSTA - sta0}體力");
+        var area = GameData.AreaData[areaID];
+        _area.text = area.Name;
+        deep.text = "";
 
-        // if (prop > 0)
-        // {
-        //     OnEnemyAppear();
-        //     RunSpeed().Forget();
-        // }
+        foreach (var enemy in enemyList)
+            ObjectPool.Put(enemy);
 
-        // PublicFunc.SaveData();
-        // MainController.Instance.RefreshUI();
+        enemyList.Clear();
+
+        panelLog.ClearBattleLog();
+        panelLog.SetLog("離開迷宮，回到 " + _area.text);
+
+        MainController.Instance.RefreshUI();
+    }
+
+    void OnRest()
+    {
+        var requestData = new SetAdventureActionRequest
+        {
+            AdventureAction = AdventureActionType.Rest
+        };
+        ApiBridge.Send(requestData, CallBack);
+
+        void CallBack(SetAdventureActionResponse response)
+        {
+            var characterData = response.SaveData.Datas.CharacterData;
+            var restResult = response.ActionResult.RestResult;
+
+            panelLog.ClearBattleLog();
+
+            panelLog.SetLog($"恢復了{restResult.RecoverHP}HP, {restResult.RecoverMP}MP, {restResult.RecoverSTA}體力");
+
+            if (response.SaveData.Datas.EnemyData.enemies.Count != 0)
+            {
+                OnEnemyAppear(response.SaveData.Datas.EnemyData.enemies);
+            }
+
+            RunBattleVisuals(response.ActionResult.BattleResult);
+        }
     }
 
     async void OnAttack()
@@ -269,7 +295,27 @@ public class PageBattle : MonoBehaviour
 
         void CallBack(SetBattleActionResponse response)
         {
-            ShowBattleLog(response.ActionResult.BattleResult);
+            var battleResult = response.ActionResult.BattleResult;
+            var target = enemyList.Find(x => x.Info.CharacterData.Name == battleResult.Defenderer);
+
+            if (battleResult.IsDefenderDead)
+            {
+                enemyList.Remove(target);
+                ObjectPool.Put(target);
+
+                if (enemyList.Count == 0)
+                {
+                    btnGoAhead.gameObject.SetActive(true);
+                    btnRest.gameObject.SetActive(true);
+                    btnAttack.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                target.GetDamage(battleResult.LuckyEventDamage + battleResult.BattleDamage);
+            }
+
+            RunBattleVisuals(battleResult);
         }
     }
 
@@ -303,7 +349,20 @@ public class PageBattle : MonoBehaviour
             panelLog.SetLog($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!", Color.gray);
         }
 
-        MainController.Instance.RefreshUI();
+        if (result.IsAttackerDead)
+        {
+            panelLog.SetLog($"{result.Attacker}倒下了!");
+        }
+
+        if (result.IsDefenderDead)
+        {
+            panelLog.SetLog($"{result.Defenderer}倒下了!");
+        }
+
+        if (result.IsUnitLevelUp)
+        {
+            panelLog.SetLog($"{result.LevelUpUnit}升級了!");
+        }
     }
 
     BattleState LuckyEventCheck(BattleData character1, BattleData character2)
@@ -564,57 +623,6 @@ public class PageBattle : MonoBehaviour
     //     }
     // }
 
-    // async UniTask<bool> EnemyCheckDead(ItemEnemy enemy, int damage)
-    // {
-    //     enemy.GetDamage(damage);
-
-    //     if (enemy.info.currentHp <= 0)
-    //     {
-    //         await panelLog.SetLogAsync($"{enemy.info.name}倒下了!");
-
-    //         PublicFunc.SetEXP(_playerData.CurrentExp + 1 << (enemy.info.level - 1));
-    //         if (_playerData.CurrentExp >= _playerData.MaxExp)
-    //         {
-    //             await panelLog.SetLogAsync($"{_playerData.PlayerName}升級了!");
-    //             _playerData.Level += 1;
-    //             PublicFunc.SetEXP(_playerData.CurrentExp - _playerData.MaxExp);
-    //             _playerData.MaxExp = (1 << (_playerData.Level - 1)) * 100;
-    //             PublicFunc.SetAbilityPoint(_playerData.AbilityPoint + 6);
-    //             _playerData.SkillPoint += 1;
-    //             PublicFunc.SetHP(_playerData.Ability.HP);
-    //             PublicFunc.SetMP(_playerData.Ability.MP);
-    //             PublicFunc.SetCurrentSTA(_playerData.Ability.STA);
-    //         }
-
-    //         foreach (var drop in enemy.info.dropItems)
-    //         {
-    //             if (PublicFunc.Dice(drop.prop) <= 0)
-    //                 continue;
-
-    //             var existing = GameData.NowBagData.items.Find(item => item.itemID == drop.item.id);
-
-    //             if (ItemTypeCheck.IsEquipType(drop.item.type) || existing == null)
-    //             {
-    //                 GameData.NowBagData.items.Add(PublicFunc.GetItem(drop.item));
-    //                 await panelLog.SetLogAsync($"{_playerData.PlayerName}獲得了{drop.item.name}!");
-    //             }
-    //             else
-    //             {
-    //                 existing.count++;
-    //                 await panelLog.SetLogAsync($"{_playerData.PlayerName}獲得了{ItemBaseData.Get(existing.itemID).name}!");
-    //             }
-    //         }
-
-    //         enemyList.Remove(enemy);
-    //         _enemyData.enemies.Remove(enemy.info);
-    //         ObjectPool.Put(enemy);
-    //         return true;
-    //     }
-    //     else
-    //     {
-    //         return false;
-    //     }
-    // }
 
     #endregion
 

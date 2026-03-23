@@ -5,12 +5,23 @@ using Random = UnityEngine.Random;
 
 public static class BattleSystem
 {
-    public static List<BattleData> RunSpeedProcess(List<BattleData> units)
+    public static CharacterData RunSpeedProcess()
     {
+        var playerCharacterData = GameData_Server.NowCharacterData;
+        var units = new Dictionary<BattleData, CharacterData>
+        {
+            { BattleData.Create(playerCharacterData), playerCharacterData }
+        };
+
+        foreach (var mob in GameData_Server.NowEnemyData.enemies)
+        {
+            units.Add(BattleData.Create(mob.CharacterData), mob.CharacterData);
+        }
+
         BattleData next = null;
         decimal minTime = decimal.MaxValue;
 
-        foreach (var unit in units)
+        foreach (var unit in units.Keys)
         {
             decimal time = (GameData_Server.tpCost - unit.TP) / unit.SPD;
 
@@ -22,13 +33,35 @@ public static class BattleSystem
         }
 
         foreach (var unit in units)
-            unit.TP += unit.SPD * minTime;
+        {
+            unit.Value.CurrentTP += unit.Key.SPD * minTime;
+        }
 
-        return units;
+        return units[next];
+    }
+
+    public static BattleResult CheckNowActor()
+    {
+        var nowActor = RunSpeedProcess();
+        BattleResult result = null;
+
+        switch (nowActor.Role)
+        {
+            case CharacterRole.Player:
+
+                break;
+            case CharacterRole.Mob:
+                result = RunBattle(nowActor, GameData_Server.SaveData.Datas.CharacterData);
+                break;
+        }
+
+        return result;
     }
 
     public static BattleResult RunBattle(CharacterData character1, CharacterData character2)
     {
+        character1.CurrentTP -= GameData_Server.tpCost;
+
         var result = new BattleResult();
 
         var attacker = BattleData.Create(character1);
@@ -186,7 +219,7 @@ public static class BattleSystem
         // // 2️⃣ 掃描所有裝備欄位
         // foreach (var field in typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
         // {
-        //     long uid = (long)field.GetValue(_playerData.Equips);
+        //     long uid = (long)field.GetValue(characterData.Equips);
         //     if (uid == 0)
         //         continue;
 
@@ -215,11 +248,44 @@ public static class BattleSystem
         // }
     }
 
-}
+    public static void EnemyDeadProcess(MobData target, BattleResult result)
+    {
+        var characterData = GameData_Server.SaveData.Datas.CharacterData;
+        var playerData = GameData_Server.SaveData.Datas.PlayerData;
+        var enemyData = GameData_Server.SaveData.Datas.EnemyData;
 
-public enum BattleState
-{
-    Continue,
-    DefenderDead,
-    AttackerDead,
+        characterData.CurrentExp += 1 << (target.CharacterData.Level - 1);
+
+        var MaxExp = PublicFunc.GetExp(characterData);
+        if (characterData.CurrentExp >= MaxExp)
+        {
+            result.IsUnitLevelUp = true;
+            result.LevelUpUnit = characterData.Name;
+            characterData.Level += 1;
+            characterData.CurrentExp -= MaxExp;
+            playerData.SkillPoint += 1;
+            PublicFunc.InitCurrentData(characterData);
+        }
+
+        // foreach (var drop in target.DropItems)
+        // {
+        //     if (PublicFunc.Dice(1, 100) > drop.Prop)
+        //         continue;
+
+        //     var existing = GameData_Server.NowBagData.items.Find(item => item.itemID == drop.Item);
+
+        //     if (ItemTypeCheck.IsEquipType(drop.Item.type) || existing == null)
+        //     {
+        //         GameData_Server.NowBagData.items.Add(PublicFunc.GetItem(drop.item));
+        //         await panelLog.SetLogAsync($"{_playerData.PlayerName}獲得了{drop.item.name}!");
+        //     }
+        //     else
+        //     {
+        //         existing.count++;
+        //         await panelLog.SetLogAsync($"{_playerData.PlayerName}獲得了{ItemBaseData.Get(existing.itemID).name}!");
+        //     }
+        // }
+
+        enemyData.enemies.Remove(target);
+    }
 }

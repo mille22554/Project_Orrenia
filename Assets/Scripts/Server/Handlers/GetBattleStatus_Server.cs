@@ -7,15 +7,45 @@ public class GetBattleStatus_Server : IApiHandler_Server
 {
     public string Cmd => "GetBattleStatus";
 
+    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
+    EnemyData EnemyData => GameData_Server.NowEnemyData;
+
     public string Get(object request)
     {
         try
         {
+            BattleResult battleResult = null;
+            if (EnemyData.enemies.Count > 0)
+            {
+                battleResult = BattleSystem.CheckNowActor();
 
+                if (battleResult != null)
+                {
+                    var target = EnemyData.enemies.Find(x => x.CharacterData.Name == battleResult.Attacker);
 
+                    if (battleResult.IsDefenderDead)
+                    {
+                        OnLeave();
+                    }
+                    else if (battleResult.IsAttackerDead)
+                    {
+                        BattleSystem.EnemyDeadProcess(target, battleResult);
+                    }
+                }
+
+                PublicFunc.SaveData();
+            }
+
+            var responseData = new GetBattleStatus_ServerResponse
+            {
+                SaveData = GameData_Server.SaveData,
+                BattleResult = battleResult
+            };
             var response = new ResponseData_Server
             {
                 Code = 0,
+                Data = responseData
             };
             return JsonConvert.SerializeObject(response);
         }
@@ -31,9 +61,20 @@ public class GetBattleStatus_Server : IApiHandler_Server
             return JsonConvert.SerializeObject(responseData);
         }
     }
+
+    void OnLeave()
+    {
+        PlayerData.Area = 1;
+        PlayerData.Deep = 0;
+
+        EnemyData.enemies.Clear();
+
+        PublicFunc.InitCurrentData(CharacterData);
+    }
 }
 
 public class GetBattleStatus_ServerResponse
 {
-    
+    public GameSaveData SaveData;
+    public BattleResult BattleResult;
 }

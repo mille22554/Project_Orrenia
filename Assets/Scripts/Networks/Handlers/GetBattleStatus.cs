@@ -13,4 +13,8 @@ public class GetBattleStatusRequest : IRequestBase<GetBattleStatusResponse>
     public string Cmd => "GetBattleStatus";
 }
 
-public class GetBattleStatusResponse { }
+public class GetBattleStatusResponse
+{    
+    public GameSaveData SaveData;
+    public BattleResult BattleResult;
+}

@@ -18,4 +18,5 @@ public class SetAdventureActionRequest : IRequestBase<SetAdventureActionResponse
 public class SetAdventureActionResponse
 {
     public GameSaveData SaveData;
+    public ActionResult ActionResult;
 }

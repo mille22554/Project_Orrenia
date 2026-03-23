@@ -17,13 +17,14 @@ public class SetAdventureAction_Server : IApiHandler_Server
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetAdventureAction_ServerRequest>(request.ToString());
-            DoAction(requestData);
+            var actionResult = DoAction(requestData);
 
             PublicFunc.SaveData();
 
             var responseData = new SetAdventureAction_ServerResponse
             {
-                SaveData = GameData_Server.SaveData
+                SaveData = GameData_Server.SaveData,
+                ActionResult = actionResult
             };
             var response = new ResponseData_Server
             {
@@ -45,20 +46,26 @@ public class SetAdventureAction_Server : IApiHandler_Server
         }
     }
 
-    void DoAction(SetAdventureAction_ServerRequest data)
+    ActionResult DoAction(SetAdventureAction_ServerRequest data)
     {
+        var actionResult = new ActionResult();
+
         switch (data.AdventureAction)
         {
             case AdventureActionType.IntoArea:
                 OnIntoArea(data);
                 break;
             case AdventureActionType.GoAhead:
-                OnGoAhead();
+                actionResult = OnGoAhead();
+                break;
+            case AdventureActionType.Rest:
+                actionResult = OnRest();
                 break;
             case AdventureActionType.Leave:
                 OnLeave();
                 break;
         }
+        return actionResult;
     }
 
     void OnIntoArea(SetAdventureAction_ServerRequest data)
@@ -67,18 +74,62 @@ public class SetAdventureAction_Server : IApiHandler_Server
         PlayerData.Deep = 1;
     }
 
-    void OnGoAhead()
+    ActionResult OnGoAhead()
     {
+        var actionResult = new ActionResult();
+
         CharacterData.CurrentSTA--;
         PublicFunc.EffectProcess();
 
         PlayerData.Deep++;
 
         var prop = PublicFunc.Dice(1, 100);
-        if (prop < enemyProp)
+        if (prop <= enemyProp)
         {
-            OnEnemyAppear();
+            actionResult.BattleResult = OnEnemyAppear();
         }
+
+        return actionResult;
+    }
+
+    ActionResult OnRest()
+    {
+        var actionResult = new ActionResult
+        {
+            RestResult = new RestResult()
+        };
+
+        var fullAbility = PublicFunc.GetCharacterAbility(CharacterData);
+
+        int prop;
+        while (
+            CharacterData.CurrentHP + actionResult.RestResult.RecoverHP < fullAbility.HP ||
+            CharacterData.CurrentMP + actionResult.RestResult.RecoverMP < fullAbility.MP ||
+            CharacterData.CurrentSTA + actionResult.RestResult.RecoverSTA < fullAbility.STA
+        )
+        {
+            if (CharacterData.CurrentHP + actionResult.RestResult.RecoverHP < fullAbility.HP)
+                actionResult.RestResult.RecoverHP++;
+
+            if (CharacterData.CurrentMP + actionResult.RestResult.RecoverMP < fullAbility.MP)
+                actionResult.RestResult.RecoverMP++;
+
+            if (CharacterData.CurrentSTA + actionResult.RestResult.RecoverSTA < fullAbility.STA)
+                actionResult.RestResult.RecoverSTA++;
+
+            prop = PublicFunc.Dice(1, 100);
+            if (prop <= 3)
+            {
+                actionResult.BattleResult = OnEnemyAppear();
+                break;
+            }
+        }
+
+        CharacterData.CurrentHP += actionResult.RestResult.RecoverHP;
+        CharacterData.CurrentMP += actionResult.RestResult.RecoverMP;
+        CharacterData.CurrentSTA += actionResult.RestResult.RecoverSTA;
+
+        return actionResult;
     }
 
     void OnLeave()
@@ -91,12 +142,29 @@ public class SetAdventureAction_Server : IApiHandler_Server
         PublicFunc.InitCurrentData(CharacterData);
     }
 
-    void OnEnemyAppear()
+    BattleResult OnEnemyAppear()
     {
         EnemyData.enemies = EnemySetting.SetEnemy(
             PlayerData.Area,
             PlayerData.Deep
         );
+
+        var result = BattleSystem.CheckNowActor();
+        if (result != null)
+        {
+            var target = EnemyData.enemies.Find(x => x.CharacterData.Name == result.Attacker);
+
+            if (result.IsDefenderDead)
+            {
+                OnLeave();
+            }
+            else if (result.IsAttackerDead)
+            {
+                BattleSystem.EnemyDeadProcess(target, result);
+            }
+        }
+
+        return result;
     }
 }
 
@@ -109,4 +177,5 @@ public class SetAdventureAction_ServerRequest
 public class SetAdventureAction_ServerResponse
 {
     public GameSaveData SaveData;
+    public ActionResult ActionResult;
 }
