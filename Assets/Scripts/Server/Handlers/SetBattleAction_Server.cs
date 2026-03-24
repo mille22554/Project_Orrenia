@@ -64,7 +64,7 @@ public class SetBattleAction_Server : IApiHandler_Server
         CharacterData.CurrentSTA--;
         PublicFunc.EffectProcess();
 
-        var target = EnemyData.enemies.Find(x => x.CharacterData.Name == mob.CharacterData.Name);
+        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == mob.CharacterData.Name);
         if (target != null)
         {
             var result = BattleSystem.RunBattle(CharacterData, target.CharacterData);
@@ -91,7 +91,7 @@ public class SetBattleAction_Server : IApiHandler_Server
         PlayerData.Area = 1;
         PlayerData.Deep = 0;
 
-        EnemyData.enemies.Clear();
+        EnemyData.Enemies.Clear();
 
         PublicFunc.InitCurrentData(CharacterData);
     }

@@ -69,8 +69,8 @@ public class PublicFunc
             long uid = (long)equipField.GetValue(equips);
             if (uid != 0)
             {
-                var item = GameData_Server.NowBagData.items.Find(x => x.uid == uid);
-                var ability = ItemBaseData.Get(item.itemID).ability;
+                var item = GameData_Server.NowBagData.Items.Find(x => x.UID == uid);
+                var ability = ItemBaseData.Get(item.ItemID).Ability;
                 var fields = typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
                 foreach (var field in fields)
                 {
@@ -147,10 +147,10 @@ public class PublicFunc
     {
         var target = new ItemData
         {
-            itemID = source.id,
-            durability = source.durability,
-            uid = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0)),
-            count = source.count
+            ItemID = source.ID,
+            Durability = source.Durability,
+            UID = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0)),
+            Count = source.Count
         };
         return target;
     }
@@ -191,29 +191,29 @@ public class PublicFunc
         }
     }
 
-    public static bool CheckIsPlayerEquip(ItemData item)
+    public static bool CheckIsPlayerEquip(ItemData item, EquipBase equips)
     {
-        return ItemBaseData.Get(item.itemID).type switch
+        return ItemBaseData.Get(item.ItemID).Type switch
         {
             EquipType.One_Hand_Weapon.Sword or
-            EquipType.One_Hand_Weapon.Dagger => _characterData.Equips.Right_Hand == item.uid,
-            // EquipType.Two_Hand_Weapon => _playerData.equips.Right_Hand == item.uid && _playerData.equips.Left_Hand == -1,
-            EquipType.Shield => _characterData.Equips.Left_Hand == item.uid,
-            EquipType.Helmet => _characterData.Equips.Helmet == item.uid,
-            EquipType.Armor => _characterData.Equips.Armor == item.uid,
-            EquipType.Greaves => _characterData.Equips.Greaves == item.uid,
-            EquipType.Shoes => _characterData.Equips.Shoes == item.uid,
-            EquipType.Gloves => _characterData.Equips.Gloves == item.uid,
-            EquipType.Cape => _characterData.Equips.Cape == item.uid,
-            EquipType.Ring => _characterData.Equips.Ring == item.uid,
-            EquipType.Pendant => _characterData.Equips.Pendant == item.uid,
+            EquipType.One_Hand_Weapon.Dagger => equips.Right_Hand == item.UID,
+            // EquipType.Two_Hand_Weapon => equips.Right_Hand == item.uid && equips.Left_Hand == -1,
+            EquipType.Shield => equips.Left_Hand == item.UID,
+            EquipType.Helmet => equips.Helmet == item.UID,
+            EquipType.Armor => equips.Armor == item.UID,
+            EquipType.Greaves => equips.Greaves == item.UID,
+            EquipType.Shoes => equips.Shoes == item.UID,
+            EquipType.Gloves => equips.Gloves == item.UID,
+            EquipType.Cape => equips.Cape == item.UID,
+            EquipType.Ring => equips.Ring == item.UID,
+            EquipType.Pendant => equips.Pendant == item.UID,
             _ => false,
         };
     }
 
-    public static void AddPlayerEffect(string effectType, int effectValue, int effectTimes)
+    public static void AddCharacterEffect(CharacterData characterData, string effectType, int effectValue, int effectTimes)
     {
-        _characterData.Effects.Add(new()
+        characterData.Effects.Add(new()
         {
             type = effectType,
             value = effectValue,

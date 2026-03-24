@@ -98,7 +98,7 @@ public class PanelLog : MonoBehaviour
                 }
             }
 
-            foreach (var enemy in GameData_Server.NowEnemyData.enemies)
+            foreach (var enemy in GameData_Server.NowEnemyData.Enemies)
             {
                 if (enemy.Effects.Count > 0)
                 {

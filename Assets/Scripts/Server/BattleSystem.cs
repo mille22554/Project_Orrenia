@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -13,7 +15,7 @@ public static class BattleSystem
             { BattleData.Create(playerCharacterData), playerCharacterData }
         };
 
-        foreach (var mob in GameData_Server.NowEnemyData.enemies)
+        foreach (var mob in GameData_Server.NowEnemyData.Enemies)
         {
             units.Add(BattleData.Create(mob.CharacterData), mob.CharacterData);
         }
@@ -62,7 +64,10 @@ public static class BattleSystem
     {
         character1.CurrentTP -= GameData_Server.tpCost;
 
-        var result = new BattleResult();
+        var result = new BattleResult
+        {
+            BreakEquips = new()
+        };
 
         var attacker = BattleData.Create(character1);
         var defender = BattleData.Create(character2);
@@ -106,13 +111,12 @@ public static class BattleSystem
         if (result.BattleDamage <= 0)
             result.BattleDamage = 1;
 
-        RunDurability(true);
-
         Debug.Log($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!");
         if (DamageProcess(defender, result.BattleDamage))
         {
             result.IsDefenderDead = true;
         }
+        result.BreakEquips.AddRange(RunDurability(attacker.Role == CharacterRole.Player));
 
         RefreshCharacterData(attacker, character1);
         RefreshCharacterData(defender, character2);
@@ -203,49 +207,46 @@ public static class BattleSystem
         }
     }
 
-    static async void RunDurability(bool isAttack)
+    static List<string> RunDurability(bool isAttack)
     {
-        // // 1️⃣ 建立武器清單（只需一次）
-        // var weapons = typeof(EquipType.One_Hand_Weapon)
-        //     .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-        //     .Concat(typeof(EquipType.Two_Hand_Weapon)
-        //     .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
-        //     .Select(f => f.GetValue(null)?.ToString())
-        //     .Where(v => v != null)
-        //     .ToHashSet();
+        var breakEquips = new List<string>();
+        var items = new List<ItemData>();
 
-        // List<ItemData> items = new();
+        // 2️⃣ 掃描所有裝備欄位
+        foreach (var field in typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        {
+            long uid = (long)field.GetValue(GameData_Server.NowCharacterData.Equips);
+            if (uid == 0)
+                continue;
 
-        // // 2️⃣ 掃描所有裝備欄位
-        // foreach (var field in typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
-        // {
-        //     long uid = (long)field.GetValue(characterData.Equips);
-        //     if (uid == 0)
-        //         continue;
+            var item = GameData_Server.NowBagData.Items
+                .Find(x => x.UID == uid && ItemTypeCheck.IsEquipType(ItemBaseData.Get(x.ItemID).Type));
 
-        //     var item = GameData.NowBagData.items
-        //         .Find(x => x.uid == uid && ItemTypeCheck.IsEquipType(ItemBaseData.Get(x.itemID).type));
-        //     if (item == null)
-        //         continue;
+            if (item == null)
+                continue;
 
-        //     // 攻擊時扣武器耐久、防禦時扣防具耐久
-        //     bool isWeapon = weapons.Contains(ItemBaseData.Get(item.itemID).type);
-        //     if ((isAttack && isWeapon) || (!isAttack && !isWeapon))
-        //         items.Add(item);
-        // }
+            // 攻擊時扣武器耐久、防禦時扣防具耐久
+            bool isWeapon = GameData_Server.Weapons.Contains(ItemBaseData.Get(item.ItemID).Type);
 
-        // // 3️⃣ 處理耐久度扣減與移除
-        // foreach (var item in items.ToList()) // ToList 避免修改集合時出錯
-        // {
-        //     // Debug.Log(_item.name);
-        //     item.durability--;
-        //     if (item.durability <= 0)
-        //     {
-        //         PublicFunc.UnloadEquip(item.uid);
-        //         GameData.NowBagData.items.Remove(item);
-        //         await Debug.LogAsync($"{ItemBaseData.Get(item.itemID).name}毀損了", Color.yellow);
-        //     }
-        // }
+            if ((isAttack && isWeapon) || (!isAttack && !isWeapon))
+                items.Add(item);
+        }
+
+        // 3️⃣ 處理耐久度扣減與移除
+        foreach (var item in items.ToList()) // ToList 避免修改集合時出錯
+        {
+            // Debug.Log(_item.name);
+            item.Durability--;
+            if (item.Durability <= 0)
+            {
+                PublicFunc.UnloadEquip(item.UID);
+                GameData_Server.NowBagData.Items.Remove(item);
+                breakEquips.Add(ItemBaseData.Get(item.ItemID).Name);
+                // await Debug.LogAsync($"{ItemBaseData.Get(item.itemID).name}毀損了", Color.yellow);
+            }
+        }
+
+        return breakEquips;
     }
 
     public static void EnemyDeadProcess(MobData target, BattleResult result)
@@ -286,6 +287,6 @@ public static class BattleSystem
         //     }
         // }
 
-        enemyData.enemies.Remove(target);
+        enemyData.Enemies.Remove(target);
     }
 }

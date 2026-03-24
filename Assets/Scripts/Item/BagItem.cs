@@ -4,41 +4,42 @@ using UnityEngine.UI;
 
 public class BagItem : MonoBehaviour
 {
-    public GameObject iconPick;
-    public Text itemName;
-    public Text count;
-    public Toggle toggle;
-    public GameObject iconEquip;
-    public Action<BagItem> refreshBagInfo;
-    [NonSerialized] public ItemData info;
+    public Toggle Toggle;
+    public Action<BagItem> RefreshBagInfo;
+    public EquipBase Equips;
+    public GameObject IconEquip;
+    [NonSerialized] public ItemData Info;
+
+    [SerializeField] Text itemName;
+    [SerializeField] Text count;
+    [SerializeField] GameObject iconPick;
 
     void Start()
     {
         iconPick.SetActive(false);
 
-        toggle.onValueChanged.AddListener(OnToggleValueChange);
+        Toggle.onValueChanged.AddListener(OnToggleValueChange);
     }
 
-    void OnDestroy()
+    public void SetInfo(ItemData data) => SetInfo(data, null);
+    public void SetInfo(ItemData data, EquipBase equips)
     {
-        toggle.onValueChanged.RemoveListener(OnToggleValueChange);
-    }
+        Info = data;
+        Equips = equips;
 
-    public void SetInfo(ItemData data)
-    {
-        info = data;
-        itemName.text = ItemBaseData.Get(data.itemID).name;
-        if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(data.itemID).type))
-            count.text = data.durability.ToString();
+        itemName.text = ItemBaseData.Get(data.ItemID).Name;
+
+        if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(data.ItemID).Type))
+            count.text = data.Durability.ToString();
         else
-            count.text = data.count.ToString();
+            count.text = data.Count.ToString();
 
-        iconEquip.SetActive(PublicFunc.CheckIsPlayerEquip(info));
+        IconEquip.SetActive(PublicFunc.CheckIsPlayerEquip(Info, equips));
     }
 
     void OnToggleValueChange(bool isOn)
     {
         iconPick.SetActive(isOn);
-        refreshBagInfo.Invoke(this);
+        RefreshBagInfo.Invoke(this);
     }
 }

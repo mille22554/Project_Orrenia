@@ -137,14 +137,14 @@ public class SetAdventureAction_Server : IApiHandler_Server
         PlayerData.Area = 1;
         PlayerData.Deep = 0;
 
-        EnemyData.enemies.Clear();
+        EnemyData.Enemies.Clear();
 
         PublicFunc.InitCurrentData(CharacterData);
     }
 
     BattleResult OnEnemyAppear()
     {
-        EnemyData.enemies = EnemySetting.SetEnemy(
+        EnemyData.Enemies = EnemySetting.SetEnemy(
             PlayerData.Area,
             PlayerData.Deep
         );
@@ -152,7 +152,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
         var result = BattleSystem.CheckNowActor();
         if (result != null)
         {
-            var target = EnemyData.enemies.Find(x => x.CharacterData.Name == result.Attacker);
+            var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == result.Attacker);
 
             if (result.IsDefenderDead)
             {

@@ -62,6 +62,23 @@ public static class GameData_Server
     public static CharacterData NowCharacterData => SaveData.Datas.CharacterData;
     public static EnemyData NowEnemyData => SaveData.Datas.EnemyData;
     public static BagData NowBagData => SaveData.Datas.BagData;
+
+    static HashSet<string> _weapons;
+    public static HashSet<string> Weapons
+    {
+        get
+        {
+            _weapons ??= typeof(EquipType.One_Hand_Weapon)
+                    .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                    .Concat(typeof(EquipType.Two_Hand_Weapon)
+                    .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+                    .Select(f => f.GetValue(null)?.ToString())
+                    .Where(v => v != null)
+                    .ToHashSet();
+
+            return _weapons;
+        }
+    }
 }
 
 public static class EquipType
@@ -103,60 +120,6 @@ public static class UseType
 public static class MaterialType
 {
     public const string Material = "素材";
-}
-
-public static class ItemTypeCheck
-{
-    private static readonly HashSet<string> allEquipTypes;
-    private static readonly HashSet<string> allUseTypes;
-    private static readonly HashSet<string> allMaterialTypes;
-
-    static ItemTypeCheck()
-    {
-        allEquipTypes = GetAllTypes(typeof(EquipType));
-        allUseTypes = GetAllTypes(typeof(UseType));
-        allMaterialTypes = GetAllTypes(typeof(MaterialType));
-    }
-
-    public static HashSet<string> GetAllTypes(Type type)
-    {
-        var result = new HashSet<string>();
-
-        // 取得這個類別內所有 const string 欄位
-        var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(string));
-
-        foreach (var field in fields)
-        {
-            var value = field.GetValue(null)?.ToString();
-            if (value != null)
-                result.Add(value);
-        }
-
-        // 🔁 遞迴子類別
-        foreach (var nestedType in type.GetNestedTypes(BindingFlags.Public))
-        {
-            foreach (var sub in GetAllTypes(nestedType))
-                result.Add(sub);
-        }
-
-        return result;
-    }
-
-    public static bool IsEquipType(string type)
-    {
-        return allEquipTypes.Contains(type);
-    }
-
-    public static bool IsUseType(string type)
-    {
-        return allUseTypes.Contains(type);
-    }
-
-    public static bool IsMaterialType(string type)
-    {
-        return allMaterialTypes.Contains(type);
-    }
 }
 
 public static class GameShopItem

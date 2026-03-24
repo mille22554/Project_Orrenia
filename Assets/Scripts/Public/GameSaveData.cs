@@ -56,117 +56,22 @@ public class EquipBase
 
 public class EnemyData
 {
-    public List<MobData> enemies;
+    public List<MobData> Enemies;
 
     public EnemyData()
     {
-        enemies = new();
+        Enemies = new();
     }
 }
 
 public class BagData
 {
-    public List<ItemData> items;
+    public List<ItemData> Items;
 
     public BagData()
     {
-        items = new();
+        Items = new();
     }
-}
-
-public class ItemBaseData
-{
-    public int id;
-    public string name;
-    public string type;
-    public string description;
-    public FullAbilityBase ability;
-    public int price;
-    public int durability;
-    public int count;
-
-    public ItemBaseData()
-    {
-        ability = new();
-    }
-
-    public string GetAbilityString()
-    {
-        if (ability == null)
-            return "";
-
-        List<string> parts = new();
-
-        // 用反射抓 AbilityBase 的欄位
-        foreach (var field in typeof(AbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
-        {
-            int value = (int)field.GetValue(ability);
-            if (value != 0)
-            {
-                string sign = value > 0 ? "+" : "";
-                parts.Add($"{field.Name}{sign}{value}");
-            }
-        }
-
-        return string.Join(", ", parts);
-    }
-    static readonly Dictionary<int, ItemBaseData> items = new();
-
-    public static void BuildDatabase()
-    {
-        Type root = typeof(GameItemData);
-
-        // 取得所有 nested types (Equip, Armor...)
-        var nestedTypes = root.GetNestedTypes(
-            BindingFlags.Public | BindingFlags.NonPublic
-        );
-
-        foreach (var type in nestedTypes)
-        {
-            ScanType(type);
-        }
-    }
-
-    static void ScanType(Type type)
-    {
-        var fields = type.GetFields(
-            BindingFlags.Public |
-            BindingFlags.NonPublic |
-            BindingFlags.Static
-        );
-
-        foreach (var field in fields)
-        {
-            if (field.FieldType == typeof(ItemBaseData))
-            {
-                var item = (ItemBaseData)field.GetValue(null);
-
-                if (item == null)
-                    continue;
-
-                if (items.ContainsKey(item.id))
-                {
-                    throw new Exception($"Duplicate item id: {item.id}");
-                }
-
-                items[item.id] = item;
-            }
-        }
-    }
-
-    public static ItemBaseData Get(int id)
-    {
-        items.TryGetValue(id, out var item);
-        return item;
-    }
-}
-
-public class ItemData
-{
-    public long uid;
-    public int itemID;
-    public int durability;
-    public int count;
 }
 
 public class EffectData

@@ -99,17 +99,17 @@ public class PanelShop : MonoBehaviour
             Destroy(item.gameObject);
         shopItemList.Clear();
 
-        foreach (var itemInfo in GameData_Server.NowBagData.items)
+        foreach (var itemInfo in GameData_Server.NowBagData.Items)
         {
-            if (PublicFunc.CheckIsPlayerEquip(itemInfo)) continue;
+            // if (PublicFunc.CheckIsPlayerEquip(itemInfo)) continue;
 
-            var item = Instantiate(shopItem, itemList.content);
-            item.SetInfo(itemInfo);
-            item.refreshBagInfo = RefreshBagInfo;
-            item.toggle.group = toggleItems;
-            item.toggle.isOn = true;
-            item.toggle.isOn = false;
-            shopItemList.Add(item);
+            // var item = Instantiate(shopItem, itemList.content);
+            // item.SetInfo(itemInfo);
+            // item.refreshBagInfo = RefreshBagInfo;
+            // item.toggle.group = toggleItems;
+            // item.toggle.isOn = true;
+            // item.toggle.isOn = false;
+            // shopItemList.Add(item);
         }
     }
 
@@ -119,39 +119,39 @@ public class PanelShop : MonoBehaviour
 
         if (toggleBuy.isOn)
         {
-            if (GameData_Server.NowPlayerData.Gold >= ItemBaseData.Get(selectedShopItem.info.itemID).price * itemNum)
+            if (GameData_Server.NowPlayerData.Gold >= ItemBaseData.Get(selectedShopItem.info.ItemID).Price * itemNum)
             {
-                GameData_Server.NowPlayerData.Gold -= ItemBaseData.Get(selectedShopItem.info.itemID).price * itemNum;
+                GameData_Server.NowPlayerData.Gold -= ItemBaseData.Get(selectedShopItem.info.ItemID).Price * itemNum;
 
-                var existing = GameData_Server.NowBagData.items.Find(item => item.itemID == selectedShopItem.info.itemID);
-                if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(selectedShopItem.info.itemID).type))
+                var existing = GameData_Server.NowBagData.Items.Find(item => item.ItemID == selectedShopItem.info.ItemID);
+                if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(selectedShopItem.info.ItemID).Type))
                 {
                     for (int i = 0; i < itemNum; i++)
-                        GameData_Server.NowBagData.items.Add(PublicFunc.GetItem(ItemBaseData.Get(selectedShopItem.info.itemID)));
+                        GameData_Server.NowBagData.Items.Add(PublicFunc.GetItem(ItemBaseData.Get(selectedShopItem.info.ItemID)));
                 }
                 else if (existing == null)
                 {
-                    var buyItem = PublicFunc.GetItem(ItemBaseData.Get(selectedShopItem.info.itemID));
-                    buyItem.count = itemNum;
-                    GameData_Server.NowBagData.items.Add(buyItem);
+                    var buyItem = PublicFunc.GetItem(ItemBaseData.Get(selectedShopItem.info.ItemID));
+                    buyItem.Count = itemNum;
+                    GameData_Server.NowBagData.Items.Add(buyItem);
                 }
                 else
                 {
-                    existing.count += itemNum;
+                    existing.Count += itemNum;
                 }
             }
         }
         else
         {
-            GameData_Server.NowPlayerData.Gold += ItemBaseData.Get(selectedShopItem.info.itemID).price / 2 * itemNum;
+            GameData_Server.NowPlayerData.Gold += ItemBaseData.Get(selectedShopItem.info.ItemID).Price / 2 * itemNum;
 
-            var existing = GameData_Server.NowBagData.items.Find(item => item.uid == selectedShopItem.info.uid);
+            var existing = GameData_Server.NowBagData.Items.Find(item => item.UID == selectedShopItem.info.UID);
             if (existing != null)
-                existing.count -= itemNum;
+                existing.Count -= itemNum;
 
-            if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(selectedShopItem.info.itemID).type) || existing?.count == 0)
+            if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(selectedShopItem.info.ItemID).Type) || existing?.Count == 0)
             {
-                GameData_Server.NowBagData.items.Remove(selectedShopItem.info);
+                GameData_Server.NowBagData.Items.Remove(selectedShopItem.info);
                 shopItemList.Remove(selectedShopItem);
                 Destroy(selectedShopItem.gameObject);
             }
@@ -168,16 +168,16 @@ public class PanelShop : MonoBehaviour
     private void RefreshBagInfo(ShopItem item)
     {
         selectedShopItem = item;
-        itemName.text = ItemBaseData.Get(item.info.itemID).name;
-        type.text = ItemBaseData.Get(item.info.itemID).type;
+        itemName.text = ItemBaseData.Get(item.info.ItemID).Name;
+        type.text = ItemBaseData.Get(item.info.ItemID).Type;
         price.transform.parent.gameObject.SetActive(true);
-        var itemPrice = toggleBuy.isOn ? ItemBaseData.Get(item.info.itemID).price : ItemBaseData.Get(item.info.itemID).price / 2;
+        var itemPrice = toggleBuy.isOn ? ItemBaseData.Get(item.info.ItemID).Price : ItemBaseData.Get(item.info.ItemID).Price / 2;
         price.text = $"{itemPrice}";
-        description.text = ItemBaseData.Get(item.info.itemID).description;
+        description.text = ItemBaseData.Get(item.info.ItemID).Description;
         inputTradeNum.text = "";
 
-        if (!ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.info.itemID).type))
-            ability.text = ItemBaseData.Get(item.info.itemID).GetAbilityString();
+        if (!ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.info.ItemID).Type))
+            ability.text = ItemBaseData.Get(item.info.ItemID).GetAbilityString();
         else
             ability.text = "";
     }
@@ -203,11 +203,11 @@ public class PanelShop : MonoBehaviour
             return;
         }
 
-        if (toggleBuy.isOn && ItemBaseData.Get(selectedShopItem.info.itemID).price * itemNum > GameData_Server.NowPlayerData.Gold)
-            inputTradeNum.text = (GameData_Server.NowPlayerData.Gold / ItemBaseData.Get(selectedShopItem.info.itemID).price).ToString();
+        if (toggleBuy.isOn && ItemBaseData.Get(selectedShopItem.info.ItemID).Price * itemNum > GameData_Server.NowPlayerData.Gold)
+            inputTradeNum.text = (GameData_Server.NowPlayerData.Gold / ItemBaseData.Get(selectedShopItem.info.ItemID).Price).ToString();
         else if (toggleSell.isOn)
         {
-            var haveNum = GameData_Server.NowBagData.items.Find(x => x.uid == selectedShopItem.info.uid).count;
+            var haveNum = GameData_Server.NowBagData.Items.Find(x => x.UID == selectedShopItem.info.UID).Count;
             if (itemNum > haveNum)
                 inputTradeNum.text = haveNum.ToString();
         }

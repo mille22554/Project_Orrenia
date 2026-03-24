@@ -26,7 +26,6 @@ public class PageBag : MonoBehaviour
     ToggleGroup toggleItems;
     readonly List<BagItem> bagItems = new();
     BagItem selectedBagItem;
-    PlayerContextData _playerData => GameData_Server.NowPlayerData;
 
     public static void Create()
     {
@@ -56,27 +55,33 @@ public class PageBag : MonoBehaviour
 
     void OnEnable()
     {
-        if (GameData_Server.SaveData != null && _playerData != null)
+        var requestData = new GetSaveDataRequest();
+        ApiBridge.Send(requestData, OnGetSaveData);
+
+        void OnGetSaveData(GetSaveDataResponse response)
         {
+            var datas = response.SaveData.Datas;
+
             ResetBagInfo();
             btnUse.gameObject.SetActive(false);
-            gold.text = _playerData.Gold.ToString();
+            gold.text = datas.PlayerData.Gold.ToString();
 
-            foreach (var itemInfo in GameData_Server.NowBagData.items)
+            foreach (var itemInfo in datas.BagData.Items)
             {
                 var item = ObjectPool.Get(bagItem, itemList.content);
-                item.SetInfo(itemInfo);
-                item.refreshBagInfo = RefreshBagInfo;
-                item.toggle.group = toggleItems;
-                item.toggle.isOn = true;
-                item.toggle.isOn = false;
+                item.SetInfo(itemInfo, datas.CharacterData.Equips);
+                item.RefreshBagInfo = RefreshBagInfo;
+                item.Toggle.group = toggleItems;
+                item.Toggle.isOn = true;
+                item.Toggle.isOn = false;
                 bagItems.Add(item);
+
                 if (toggleEquip.isOn)
-                    item.gameObject.SetActive(ItemTypeCheck.IsEquipType(ItemBaseData.Get(item.info.itemID).type));
+                    item.gameObject.SetActive(ItemTypeCheck.IsEquipType(ItemBaseData.Get(item.Info.ItemID).Type));
                 else if (toggleUse.isOn)
-                    item.gameObject.SetActive(ItemTypeCheck.IsUseType(ItemBaseData.Get(item.info.itemID).type));
+                    item.gameObject.SetActive(ItemTypeCheck.IsUseType(ItemBaseData.Get(item.Info.ItemID).Type));
                 else if (toggleMaterial.isOn)
-                    item.gameObject.SetActive(ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.info.itemID).type));
+                    item.gameObject.SetActive(ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.Info.ItemID).Type));
             }
         }
     }
@@ -94,10 +99,10 @@ public class PageBag : MonoBehaviour
         ResetBagInfo();
         foreach (var item in bagItems)
         {
-            if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(item.info.itemID).type))
+            if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(item.Info.ItemID).Type))
             {
                 item.gameObject.SetActive(true);
-                item.toggle.isOn = false;
+                item.Toggle.isOn = false;
             }
             else
             {
@@ -111,10 +116,10 @@ public class PageBag : MonoBehaviour
         ResetBagInfo();
         foreach (var item in bagItems)
         {
-            if (ItemTypeCheck.IsUseType(ItemBaseData.Get(item.info.itemID).type))
+            if (ItemTypeCheck.IsUseType(ItemBaseData.Get(item.Info.ItemID).Type))
             {
                 item.gameObject.SetActive(true);
-                item.toggle.isOn = false;
+                item.Toggle.isOn = false;
             }
             else
             {
@@ -128,10 +133,10 @@ public class PageBag : MonoBehaviour
         ResetBagInfo();
         foreach (var item in bagItems)
         {
-            if (ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.info.itemID).type))
+            if (ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.Info.ItemID).Type))
             {
                 item.gameObject.SetActive(true);
-                item.toggle.isOn = false;
+                item.Toggle.isOn = false;
             }
             else
             {
@@ -143,21 +148,22 @@ public class PageBag : MonoBehaviour
     void RefreshBagInfo(BagItem item)
     {
         selectedBagItem = item;
-        itemName.text = ItemBaseData.Get(item.info.itemID).name;
-        type.text = ItemBaseData.Get(item.info.itemID).type;
-        description.text = ItemBaseData.Get(item.info.itemID).description;
+        itemName.text = ItemBaseData.Get(item.Info.ItemID).Name;
+        type.text = ItemBaseData.Get(item.Info.ItemID).Type;
+        description.text = ItemBaseData.Get(item.Info.ItemID).Description;
 
-        if (!ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.info.itemID).type))
+        if (!ItemTypeCheck.IsMaterialType(ItemBaseData.Get(item.Info.ItemID).Type))
         {
-            ability.text = ItemBaseData.Get(item.info.itemID).GetAbilityString();
-            if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(item.info.itemID).type))
+            ability.text = ItemBaseData.Get(item.Info.ItemID).GetAbilityString();
+
+            if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(item.Info.ItemID).Type))
             {
-                if (PublicFunc.CheckIsPlayerEquip(item.info))
+                if (PublicFunc.CheckIsPlayerEquip(item.Info, item.Equips))
                     textUse.text = "卸下";
                 else
                     textUse.text = "裝備";
             }
-            else if (ItemTypeCheck.IsUseType(ItemBaseData.Get(item.info.itemID).type))
+            else if (ItemTypeCheck.IsUseType(ItemBaseData.Get(item.Info.ItemID).Type))
             {
                 textUse.text = "使用";
             }
@@ -180,102 +186,85 @@ public class PageBag : MonoBehaviour
 
     void OnUse()
     {
-        // if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(selectedBagItem.info.itemID).type))
-        // {
-        //     SwitchEquipStatus(selectedBagItem.info);
-        // }
-        // else if (ItemTypeCheck.IsUseType(ItemBaseData.Get(selectedBagItem.info.itemID).type))
-        // {
-        //     selectedBagItem.info.count--;
-        //     if (selectedBagItem.info.count == 0)
-        //     {
-        //         bagItems.Remove(selectedBagItem);
-        //         GameData.NowBagData.items.Remove(selectedBagItem.info);
-        //         ObjectPool.Put(selectedBagItem);
-        //     }
-        //     else
-        //     {
-        //         selectedBagItem.SetInfo(selectedBagItem.info);
-        //     }
-
-        //     if (ItemBaseData.Get(selectedBagItem.info.itemID).ability.HP != 0)
-        //         PublicFunc.SetHP(_playerData.CurrentHp + ItemBaseData.Get(selectedBagItem.info.itemID).ability.HP);
-
-        //     if (ItemBaseData.Get(selectedBagItem.info.itemID).ability.MP != 0)
-        //         PublicFunc.SetMP(_playerData.CurrentMp + ItemBaseData.Get(selectedBagItem.info.itemID).ability.MP);
-
-        //     if (ItemBaseData.Get(selectedBagItem.info.itemID).ability.STA != 0)
-        //         PublicFunc.SetCurrentSTA(_playerData.CurrentSTA + ItemBaseData.Get(selectedBagItem.info.itemID).ability.STA);
-
-        //     UseItemSpecial(ItemBaseData.Get(selectedBagItem.info.itemID).name);
-        //     PublicFunc.EffectProcess();
-        // }
-
-        // if (_playerData.CurrentTp >= GameData.tpCost)
-        //     _playerData.CurrentTp -= GameData.tpCost;
-
-        // PublicFunc.SaveData();
-    }
-
-    void SwitchEquipStatus(ItemData item)
-    {
-        var isEquipped = PublicFunc.CheckIsPlayerEquip(item);
-        RefreshEquipState(ItemBaseData.Get(item.itemID).type, item, isEquipped);
-
-        if (!isEquipped)
-            textUse.text = "卸下";
-        else
-            textUse.text = "裝備";
-    }
-
-    void RefreshEquipState(string type, ItemData item, bool isEquipped)
-    {
-        // string fieldName = type switch
-        // {
-        //     EquipType.One_Hand_Weapon.Sword or EquipType.One_Hand_Weapon.Dagger => "Right_Hand",
-        //     EquipType.Shield => "Left_Hand",
-        //     EquipType.Helmet => "Helmet",
-        //     EquipType.Armor => "Armor",
-        //     EquipType.Greaves => "Greaves",
-        //     EquipType.Shoes => "Shoes",
-        //     EquipType.Gloves => "Gloves",
-        //     EquipType.Cape => "Cape",
-        //     EquipType.Ring => "Ring",
-        //     EquipType.Pendant => "Pendant",
-        //     _ => null
-        // };
-
-        // if (fieldName == null)
-        //     return;
-
-        // var equips = _playerData.Equips;
-        // var field = typeof(EquipBase).GetField(fieldName);
-        // long currentUid = (long)field.GetValue(equips);
-
-        // // 解除當前裝備
-        // PublicFunc.UnloadEquip(currentUid);
-
-        // if (isEquipped)
-        // {
-        //     field.SetValue(equips, 0L);
-        //     selectedBagItem.iconEquip.SetActive(false);
-        // }
-        // else
-        // {
-        //     var existingItem = bagItems.Find(x => x.info.uid == currentUid);
-        //     if (existingItem != null)
-        //         existingItem.iconEquip.SetActive(false);
-
-        //     field.SetValue(equips, item.uid);
-        //     selectedBagItem.iconEquip.SetActive(true);
-        // }
-    }
-
-    void UseItemSpecial(string itemName)
-    {
-        if (itemName == Use.BerserkPotion.name)
+        var requestData = new SetItemActionRequest
         {
-            PublicFunc.AddPlayerEffect(EffectType.Buff.Berserk, 2, 100);
+            ItemData = selectedBagItem.Info
+        };
+        ApiBridge.Send(requestData, CallBack);
+
+        void CallBack(SetItemActionResponse response)
+        {
+            switch (response.ItemType)
+            {
+                case 0:
+                    SwitchEquipStatus(response.ItemData.UID, response.IsEquipped);
+                    break;
+                case 1:
+                    UseItem(requestData.ItemData);
+                    break;
+            }
+
+            if (response.Enemies.Count > 0)
+            {
+                var requestData = new GetBattleStatusRequest();
+                ApiBridge.Send(requestData, CallBack);
+
+                void CallBack(GetBattleStatusResponse response)
+                {
+                    var datas = response.SaveData.Datas;
+                    var result = response.BattleResult;
+
+                    if (result != null)
+                    {
+                        if (result.IsAttackerDead && datas.CharacterData.Name == result.Attacker ||
+                            result.IsDefenderDead && datas.CharacterData.Name == result.Defenderer)
+                        {
+                            // LeaveDungon(datas.PlayerData.Area, datas.CharacterData);
+                        }
+                        else
+                        {
+                            var requestData = new GetBattleStatusRequest();
+                            ApiBridge.Send(requestData, CallBack);
+                        }
+                    }
+
+                    MainController.Instance.RefreshUI(datas.CharacterData);
+                }
+            }
+        }
+    }
+
+    void SwitchEquipStatus(long uid, bool isEquipped)
+    {
+        if (isEquipped)
+        {
+            selectedBagItem.IconEquip.SetActive(false);
+
+            textUse.text = "裝備";
+        }
+        else
+        {
+            var existingItem = bagItems.Find(x => x.Info.UID == uid);
+
+            if (existingItem != null)
+                existingItem.IconEquip.SetActive(false);
+
+            selectedBagItem.IconEquip.SetActive(true);
+
+            textUse.text = "卸下";
+        }
+    }
+
+    void UseItem(ItemData itemData)
+    {
+        if (selectedBagItem.Info.Count == 0)
+        {
+            bagItems.Remove(selectedBagItem);
+            ObjectPool.Put(selectedBagItem);
+        }
+        else
+        {
+            selectedBagItem.SetInfo(itemData);
         }
     }
 }

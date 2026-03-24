@@ -16,13 +16,13 @@ public class GetBattleStatus_Server : IApiHandler_Server
         try
         {
             BattleResult battleResult = null;
-            if (EnemyData.enemies.Count > 0)
+            if (EnemyData.Enemies.Count > 0)
             {
                 battleResult = BattleSystem.CheckNowActor();
 
                 if (battleResult != null)
                 {
-                    var target = EnemyData.enemies.Find(x => x.CharacterData.Name == battleResult.Attacker);
+                    var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == battleResult.Attacker);
 
                     if (battleResult.IsDefenderDead)
                     {
@@ -67,7 +67,7 @@ public class GetBattleStatus_Server : IApiHandler_Server
         PlayerData.Area = 1;
         PlayerData.Deep = 0;
 
-        EnemyData.enemies.Clear();
+        EnemyData.Enemies.Clear();
 
         PublicFunc.InitCurrentData(CharacterData);
     }

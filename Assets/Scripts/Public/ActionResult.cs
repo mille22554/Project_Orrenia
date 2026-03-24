@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 public class ActionResult
 {
     public BattleResult BattleResult;
@@ -19,6 +21,7 @@ public class BattleResult
     public bool IsDefenderDead;
     public bool IsUnitLevelUp;
     public string LevelUpUnit;
+    public List<string> BreakEquips;
 }
 
 public class RestResult

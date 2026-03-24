@@ -47,16 +47,15 @@ public class MainController : MonoBehaviour
         CurrentPage = page;
     }
 
-    public void RefreshUI()
-    {
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
-
-        void CallBack(GetSaveDataResponse response) => RefreshUI(response);
-    }
-
     public void RefreshUI(GetSaveDataResponse response)
     {
-        _panelInfo.RefreshInfo(response);
+        var data = RefreshInfoData.Create(response);
+        _panelInfo.RefreshInfo(data);
+    }
+
+    public void RefreshUI(CharacterData characterData)
+    {
+        var data = RefreshInfoData.Create(characterData);
+        _panelInfo.RefreshInfo(data);
     }
 }

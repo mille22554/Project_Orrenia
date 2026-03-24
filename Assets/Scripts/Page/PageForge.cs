@@ -24,10 +24,10 @@ public class PageForge : MonoBehaviour
     readonly List<ForgeItem> bagMaterials = new();
     readonly ItemBaseData itemTemplate = new()
     {
-        description = "使用素材: ",
-        price = 500,
-        id = 1,
-        durability = 500,
+        Description = "使用素材: ",
+        Price = 500,
+        ID = 1,
+        Durability = 500,
     };
     int nowMaterialNum;
     int maxMaterialNum;
@@ -124,7 +124,7 @@ public class PageForge : MonoBehaviour
 
         inputItemName.text = "";
 
-        foreach (var material in GameData_Server.NowBagData.items.Where(x => ItemTypeCheck.IsMaterialType(ItemBaseData.Get(x.itemID).type)))
+        foreach (var material in GameData_Server.NowBagData.Items.Where(x => ItemTypeCheck.IsMaterialType(ItemBaseData.Get(x.ItemID).Type)))
         {
             var tempItem = Instantiate(forgeItem, srBagMaterials.content);
             tempItem.SetData(material, OnBtnBagMaterial);
@@ -149,12 +149,12 @@ public class PageForge : MonoBehaviour
 
                 if (usedMaterials.TryGetValue(tempItem, out var textNum))
                 {
-                    textNum.text = $"{ItemBaseData.Get(tempItem.Data.itemID).name} x{tempItem.Data.count - count}";
+                    textNum.text = $"{ItemBaseData.Get(tempItem.Data.ItemID).Name} x{tempItem.Data.Count - count}";
                 }
                 else
                 {
                     var tempItem2 = Instantiate(itemUsedMaterial, srUsedMaterials.content);
-                    tempItem2.text = $"{ItemBaseData.Get(tempItem.Data.itemID).name} x1";
+                    tempItem2.text = $"{ItemBaseData.Get(tempItem.Data.ItemID).Name} x1";
                     usedMaterials.Add(tempItem, tempItem2);
                 }
 
@@ -232,16 +232,16 @@ public class PageForge : MonoBehaviour
                 switch (index2)
                 {
                     case 0:
-                        itemTemplate.type = EquipType.One_Hand_Weapon.Sword;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.One_Hand_Weapon.Sword;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 5 * GameData_Server.NowPlayerData.ForgeLevel,
                             STR = 5 * GameData_Server.NowPlayerData.ForgeLevel
                         };
                         break;
                     case 1:
-                        itemTemplate.type = EquipType.One_Hand_Weapon.Hammer;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.One_Hand_Weapon.Hammer;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 3 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 1 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -250,8 +250,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 2:
-                        itemTemplate.type = EquipType.One_Hand_Weapon.Spear;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.One_Hand_Weapon.Spear;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 4 * GameData_Server.NowPlayerData.ForgeLevel,
                             SPD = 1 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -259,16 +259,16 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 3:
-                        itemTemplate.type = EquipType.One_Hand_Weapon.Staff;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.One_Hand_Weapon.Staff;
+                        itemTemplate.Ability = new()
                         {
                             MATK = 5 * GameData_Server.NowPlayerData.ForgeLevel,
                             INT = 5 * GameData_Server.NowPlayerData.ForgeLevel
                         };
                         break;
                     case 4:
-                        itemTemplate.type = EquipType.One_Hand_Weapon.Rapier;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.One_Hand_Weapon.Rapier;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 3 * GameData_Server.NowPlayerData.ForgeLevel,
                             CRIT = 2 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -276,8 +276,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 5:
-                        itemTemplate.type = EquipType.One_Hand_Weapon.Dagger;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.One_Hand_Weapon.Dagger;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             LUK = 8 * GameData_Server.NowPlayerData.ForgeLevel
@@ -289,16 +289,16 @@ public class PageForge : MonoBehaviour
                 switch (index2)
                 {
                     case 0:
-                        itemTemplate.type = EquipType.Two_Hand_Weapon.Axe;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Two_Hand_Weapon.Axe;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 8 * GameData_Server.NowPlayerData.ForgeLevel,
                             STR = 8 * GameData_Server.NowPlayerData.ForgeLevel
                         };
                         break;
                     case 1:
-                        itemTemplate.type = EquipType.Two_Hand_Weapon.Aegis;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Two_Hand_Weapon.Aegis;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 4 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 2 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -307,8 +307,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 2:
-                        itemTemplate.type = EquipType.Two_Hand_Weapon.Bow;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Two_Hand_Weapon.Bow;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 6 * GameData_Server.NowPlayerData.ForgeLevel,
                             SPD = 1 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -317,16 +317,16 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 3:
-                        itemTemplate.type = EquipType.Two_Hand_Weapon.Book;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Two_Hand_Weapon.Book;
+                        itemTemplate.Ability = new()
                         {
                             MATK = 8 * GameData_Server.NowPlayerData.ForgeLevel,
                             INT = 8 * GameData_Server.NowPlayerData.ForgeLevel
                         };
                         break;
                     case 4:
-                        itemTemplate.type = EquipType.Two_Hand_Weapon.Katana;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Two_Hand_Weapon.Katana;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 6 * GameData_Server.NowPlayerData.ForgeLevel,
                             CRIT = 2 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -334,8 +334,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 5:
-                        itemTemplate.type = EquipType.Two_Hand_Weapon.Tarot;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Two_Hand_Weapon.Tarot;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 4 * GameData_Server.NowPlayerData.ForgeLevel,
                             LUK = 12 * GameData_Server.NowPlayerData.ForgeLevel
@@ -347,8 +347,8 @@ public class PageForge : MonoBehaviour
                 switch (index2)
                 {
                     case 0:
-                        itemTemplate.type = EquipType.Shield;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Shield;
+                        itemTemplate.Ability = new()
                         {
                             ATK = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -356,8 +356,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 1:
-                        itemTemplate.type = EquipType.Helmet;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Helmet;
+                        itemTemplate.Ability = new()
                         {
                             ACC = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -365,16 +365,16 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 2:
-                        itemTemplate.type = EquipType.Armor;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Armor;
+                        itemTemplate.Ability = new()
                         {
                             DEF = 5 * GameData_Server.NowPlayerData.ForgeLevel,
                             MDEF = 5 * GameData_Server.NowPlayerData.ForgeLevel
                         };
                         break;
                     case 3:
-                        itemTemplate.type = EquipType.Greaves;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Greaves;
+                        itemTemplate.Ability = new()
                         {
                             STA = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -382,8 +382,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 4:
-                        itemTemplate.type = EquipType.Shoes;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Shoes;
+                        itemTemplate.Ability = new()
                         {
                             SPD = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -391,8 +391,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 5:
-                        itemTemplate.type = EquipType.Gloves;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Gloves;
+                        itemTemplate.Ability = new()
                         {
                             CRIT = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -400,8 +400,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 6:
-                        itemTemplate.type = EquipType.Cape;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Cape;
+                        itemTemplate.Ability = new()
                         {
                             EVA = 2 * GameData_Server.NowPlayerData.ForgeLevel,
                             DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -409,8 +409,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 7:
-                        itemTemplate.type = EquipType.Ring;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Ring;
+                        itemTemplate.Ability = new()
                         {
                             STR = 1 * GameData_Server.NowPlayerData.ForgeLevel,
                             VIT = 1 * GameData_Server.NowPlayerData.ForgeLevel,
@@ -423,8 +423,8 @@ public class PageForge : MonoBehaviour
                         };
                         break;
                     case 8:
-                        itemTemplate.type = EquipType.Pendant;
-                        itemTemplate.ability = new()
+                        itemTemplate.Type = EquipType.Pendant;
+                        itemTemplate.Ability = new()
                         {
                             HP = 1 * GameData_Server.NowPlayerData.ForgeLevel,
                             MP = 1 * GameData_Server.NowPlayerData.ForgeLevel,

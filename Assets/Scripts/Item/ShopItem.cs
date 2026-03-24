@@ -26,11 +26,11 @@ public class ShopItem : MonoBehaviour
     public void SetInfo(ItemData data)
     {
         info = data;
-        itemName.text = ItemBaseData.Get(data.itemID).name;
-        if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(data.itemID).type))
-            count.text = data.durability.ToString();
+        itemName.text = ItemBaseData.Get(data.ItemID).Name;
+        if (ItemTypeCheck.IsEquipType(ItemBaseData.Get(data.ItemID).Type))
+            count.text = data.Durability.ToString();
         else
-            count.text = data.count.ToString();
+            count.text = data.Count.ToString();
     }
 
     private void OnToggleValueChange(bool isOn)
