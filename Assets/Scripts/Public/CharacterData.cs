@@ -11,7 +11,7 @@ public class CharacterData
     public int CurrentSTA;
     public decimal CurrentTP;
     public AbilityBase Ability;
-    public EquipBase Equips;
+    public List<long> Equips;
     public List<EffectData> Effects;
 
     public static CharacterData CreateDefault()

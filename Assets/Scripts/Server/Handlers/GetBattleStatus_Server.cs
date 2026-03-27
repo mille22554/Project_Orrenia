@@ -69,7 +69,7 @@ public class GetBattleStatus_Server : IApiHandler_Server
 
         EnemyData.Enemies.Clear();
 
-        PublicFunc.InitCurrentData(CharacterData);
+        CharacterDataCenter.InitCurrentData(CharacterData);
     }
 }
 

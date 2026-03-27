@@ -22,6 +22,7 @@ public class BattleResult
     public bool IsUnitLevelUp;
     public string LevelUpUnit;
     public List<string> BreakEquips;
+    public List<string> DropItems;
 }
 
 public class RestResult

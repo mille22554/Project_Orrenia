@@ -99,7 +99,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
             RestResult = new RestResult()
         };
 
-        var fullAbility = PublicFunc.GetCharacterAbility(CharacterData);
+        var fullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData);
 
         int prop;
         while (
@@ -139,7 +139,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
 
         EnemyData.Enemies.Clear();
 
-        PublicFunc.InitCurrentData(CharacterData);
+        CharacterDataCenter.InitCurrentData(CharacterData);
     }
 
     BattleResult OnEnemyAppear()

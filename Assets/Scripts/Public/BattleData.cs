@@ -16,30 +16,4 @@ public class BattleData
     public int EVA;
     public int CRIT;
     public int SPD;
-
-    public static BattleData Create(CharacterData characterData)
-    {
-        var fullAbility = PublicFunc.GetCharacterAbility(characterData);
-        var battleData = new BattleData
-        {
-            Name = characterData.Name,
-            Role = characterData.Role,
-            Exp = characterData.CurrentExp,
-            HP = characterData.CurrentHP,
-            MP = characterData.CurrentMP,
-            STA = characterData.CurrentSTA,
-            TP = characterData.CurrentTP,
-            LUK = fullAbility.LUK,
-            ATK = fullAbility.ATK,
-            MATK = fullAbility.MATK,
-            DEF = fullAbility.DEF,
-            MDEF = fullAbility.MDEF,
-            ACC = fullAbility.ACC,
-            EVA = fullAbility.EVA,
-            CRIT = fullAbility.CRIT,
-            SPD = fullAbility.SPD,
-        };
-
-        return battleData;
-    }
 }

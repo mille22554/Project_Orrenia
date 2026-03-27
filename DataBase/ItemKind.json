@@ -1,0 +1,94 @@
+{
+  "0": {
+    "Name": "單手劍",
+    "Category": 0
+  },
+  "1": {
+    "Name": "單手錘",
+    "Category": 0
+  },
+  "2": {
+    "Name": "長槍",
+    "Category": 0
+  },
+  "3": {
+    "Name": "法杖",
+    "Category": 0
+  },
+  "4": {
+    "Name": "刺劍",
+    "Category": 0
+  },
+  "5": {
+    "Name": "短刀",
+    "Category": 0
+  },
+  "6": {
+    "Name": "雙手斧",
+    "Category": 1
+  },
+  "7": {
+    "Name": "塔盾",
+    "Category": 1
+  },
+  "8": {
+    "Name": "弓",
+    "Category": 1
+  },
+  "9": {
+    "Name": "魔導書",
+    "Category": 1
+  },
+  "10": {
+    "Name": "武士刀",
+    "Category": 1
+  },
+  "11": {
+    "Name": "塔羅牌",
+    "Category": 1
+  },
+  "12": {
+    "Name": "盾牌",
+    "Category": 2
+  },
+  "13": {
+    "Name": "頭盔",
+    "Category": 3
+  },
+  "14": {
+    "Name": "護胸",
+    "Category": 4
+  },
+  "15": {
+    "Name": "護腿",
+    "Category": 5
+  },
+  "16": {
+    "Name": "鞋子",
+    "Category": 6
+  },
+  "17": {
+    "Name": "手套",
+    "Category": 7
+  },
+  "18": {
+    "Name": "披風",
+    "Category": 8
+  },
+  "19": {
+    "Name": "戒指",
+    "Category": 9
+  },
+  "20": {
+    "Name": "項鍊",
+    "Category": 10
+  },
+  "21": {
+    "Name": "消耗品",
+    "Category": 11
+  },
+  "22": {
+    "Name": "素材",
+    "Category": 12
+  }
+}

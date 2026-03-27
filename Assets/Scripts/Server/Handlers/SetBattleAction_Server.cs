@@ -93,7 +93,7 @@ public class SetBattleAction_Server : IApiHandler_Server
 
         EnemyData.Enemies.Clear();
 
-        PublicFunc.InitCurrentData(CharacterData);
+        CharacterDataCenter.InitCurrentData(CharacterData);
     }
 }
 

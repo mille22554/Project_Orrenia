@@ -1,0 +1,131 @@
+using System;
+using Newtonsoft.Json;
+using UnityEngine;
+
+public class SetTradeAction_Server : IApiHandler_Server
+{
+    public string Cmd => "SetTradeAction";
+
+    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
+    BagData BagData => GameData_Server.NowBagData;
+
+    public string Get(object request)
+    {
+        try
+        {
+            var requestData = JsonConvert.DeserializeObject<SetTradeAction_ServerRequest>(request.ToString());
+
+            var itemData = ItemDataCenter_Server.GetItemData(requestData.ItemID);
+            var sellItemSurplus = -1;
+            switch (requestData.TradeActionType)
+            {
+                case TradeActionType.Buy:
+                    OnBuy(itemData, requestData.TradeNum);
+                    break;
+                case TradeActionType.Sell:
+                    sellItemSurplus = OnSell(itemData, requestData.TradeNum, requestData.SelledItemUID);
+                    break;
+            }
+
+            PublicFunc.SaveData();
+
+            var responseData = new SetTradeAction_ServerResponse
+            {
+                Gold = PlayerData.Gold,
+                SelledItemSurplus = sellItemSurplus
+            };
+
+            var response = new ResponseData_Server
+            {
+                Code = 0,
+                Data = responseData
+            };
+            return JsonConvert.SerializeObject(response);
+        }
+        catch (Exception ex)
+        {
+            var errorMessage = $"使用道具時發生錯誤: {ex.Message}";
+            Debug.LogError(errorMessage);
+            var responseData = new ResponseData_Server
+            {
+                Code = 2,
+                Data = errorMessage
+            };
+            return JsonConvert.SerializeObject(responseData);
+        }
+    }
+
+    public void OnBuy(ItemData itemData, int tradeNum)
+    {
+        if (PlayerData.Gold >= itemData.Price * tradeNum)
+        {
+            PlayerData.Gold -= itemData.Price * tradeNum;
+
+            var existing = BagData.Items.Find(item => item.ItemID == itemData.ID);
+
+            ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+
+            void EquipCallBack()
+            {
+                for (int i = 0; i < tradeNum; i++)
+                    BagData.Items.Add(ItemDataCenter_Server.GetNewItem(itemData));
+            }
+
+            void OtherCallBack()
+            {
+                if (existing == null)
+                {
+                    var buyItem = ItemDataCenter_Server.GetNewItem(itemData);
+                    buyItem.Count = tradeNum;
+                    BagData.Items.Add(buyItem);
+                }
+                else
+                {
+                    existing.Count += tradeNum;
+                }
+            }
+        }
+    }
+
+    public int OnSell(ItemData itemData, int tradeNum, long sellItemUID)
+    {
+        var existing = BagData.Items.Find(item => item.UID == sellItemUID);
+        var sellItemSurplus = existing.Count;
+
+        if (existing != null && existing.Count >= tradeNum)
+        {
+            existing.Count -= tradeNum;
+            PlayerData.Gold += itemData.Price / 2 * tradeNum;
+
+            ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+
+            void EquipCallBack()
+            {
+                BagData.Items.Remove(existing);
+                sellItemSurplus = 0;
+            }
+
+            void OtherCallBack()
+            {
+                sellItemSurplus = existing.Count;
+            }
+        }
+
+        return sellItemSurplus;
+    }
+}
+
+public class SetTradeAction_ServerRequest
+{
+    public TradeActionType TradeActionType;
+    public int ItemID;
+    public int TradeNum;
+    public long SelledItemUID;
+}
+
+public class SetTradeAction_ServerResponse
+{
+    public int Gold;
+    public int SelledItemSurplus;
+}

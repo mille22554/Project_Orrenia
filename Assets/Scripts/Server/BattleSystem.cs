@@ -1,23 +1,46 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public static class BattleSystem
 {
+    public static BattleData CreateBattleData(CharacterData characterData)
+    {
+        var fullAbility = CharacterDataCenter.GetCharacterAbility(characterData);
+        var battleData = new BattleData
+        {
+            Name = characterData.Name,
+            Role = characterData.Role,
+            Exp = characterData.CurrentExp,
+            HP = characterData.CurrentHP,
+            MP = characterData.CurrentMP,
+            STA = characterData.CurrentSTA,
+            TP = characterData.CurrentTP,
+            LUK = fullAbility.LUK,
+            ATK = fullAbility.ATK,
+            MATK = fullAbility.MATK,
+            DEF = fullAbility.DEF,
+            MDEF = fullAbility.MDEF,
+            ACC = fullAbility.ACC,
+            EVA = fullAbility.EVA,
+            CRIT = fullAbility.CRIT,
+            SPD = fullAbility.SPD,
+        };
+
+        return battleData;
+    }
+
     public static CharacterData RunSpeedProcess()
     {
         var playerCharacterData = GameData_Server.NowCharacterData;
         var units = new Dictionary<BattleData, CharacterData>
         {
-            { BattleData.Create(playerCharacterData), playerCharacterData }
+            { CreateBattleData(playerCharacterData), playerCharacterData }
         };
 
         foreach (var mob in GameData_Server.NowEnemyData.Enemies)
         {
-            units.Add(BattleData.Create(mob.CharacterData), mob.CharacterData);
+            units.Add(CreateBattleData(mob.CharacterData), mob.CharacterData);
         }
 
         BattleData next = null;
@@ -66,11 +89,12 @@ public static class BattleSystem
 
         var result = new BattleResult
         {
-            BreakEquips = new()
+            BreakEquips = new(),
+            DropItems = new()
         };
 
-        var attacker = BattleData.Create(character1);
-        var defender = BattleData.Create(character2);
+        var attacker = CreateBattleData(character1);
+        var defender = CreateBattleData(character2);
 
         result.Attacker = attacker.Name;
         result.Defenderer = defender.Name;
@@ -210,39 +234,25 @@ public static class BattleSystem
     static List<string> RunDurability(bool isAttack)
     {
         var breakEquips = new List<string>();
-        var items = new List<ItemData>();
 
-        // 2️⃣ 掃描所有裝備欄位
-        foreach (var field in typeof(EquipBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        var bagItems = GameData_Server.NowBagData.Items;
+
+        foreach (var equipUID in GameData_Server.NowCharacterData.Equips)
         {
-            long uid = (long)field.GetValue(GameData_Server.NowCharacterData.Equips);
-            if (uid == 0)
-                continue;
-
-            var item = GameData_Server.NowBagData.Items
-                .Find(x => x.UID == uid && ItemTypeCheck.IsEquipType(ItemBaseData.Get(x.ItemID).Type));
-
-            if (item == null)
-                continue;
-
-            // 攻擊時扣武器耐久、防禦時扣防具耐久
-            bool isWeapon = GameData_Server.Weapons.Contains(ItemBaseData.Get(item.ItemID).Type);
+            var equip = bagItems.Find(x => x.UID == equipUID);
+            var itemData = ItemDataCenter_Server.GetItemData(equip.ItemID);
+            var kind = itemData.Kind;
+            var isWeapon = ItemDataCenter_Server.IsWeapon(kind);
 
             if ((isAttack && isWeapon) || (!isAttack && !isWeapon))
-                items.Add(item);
-        }
-
-        // 3️⃣ 處理耐久度扣減與移除
-        foreach (var item in items.ToList()) // ToList 避免修改集合時出錯
-        {
-            // Debug.Log(_item.name);
-            item.Durability--;
-            if (item.Durability <= 0)
             {
-                PublicFunc.UnloadEquip(item.UID);
-                GameData_Server.NowBagData.Items.Remove(item);
-                breakEquips.Add(ItemBaseData.Get(item.ItemID).Name);
-                // await Debug.LogAsync($"{ItemBaseData.Get(item.itemID).name}毀損了", Color.yellow);
+                equip.Durability--;
+                if (equip.Durability <= 0)
+                {
+                    GameData_Server.NowCharacterData.Equips.Remove(equipUID);
+                    bagItems.Remove(equip);
+                    breakEquips.Add(itemData.Name);
+                }
             }
         }
 
@@ -265,27 +275,30 @@ public static class BattleSystem
             characterData.Level += 1;
             characterData.CurrentExp -= MaxExp;
             playerData.SkillPoint += 1;
-            PublicFunc.InitCurrentData(characterData);
+            CharacterDataCenter.InitCurrentData(characterData);
         }
 
-        // foreach (var drop in target.DropItems)
-        // {
-        //     if (PublicFunc.Dice(1, 100) > drop.Prop)
-        //         continue;
+        foreach (var drop in target.DropItems)
+        {
+            if (PublicFunc.Dice(1, 100) > drop.Prop)
+                continue;
 
-        //     var existing = GameData_Server.NowBagData.items.Find(item => item.itemID == drop.Item);
+            var existing = GameData_Server.NowBagData.Items.Find(item => item.ItemID == drop.Item);
+            var itemData = ItemDataCenter_Server.GetItemData(drop.Item);
 
-        //     if (ItemTypeCheck.IsEquipType(drop.Item.type) || existing == null)
-        //     {
-        //         GameData_Server.NowBagData.items.Add(PublicFunc.GetItem(drop.item));
-        //         await panelLog.SetLogAsync($"{_playerData.PlayerName}獲得了{drop.item.name}!");
-        //     }
-        //     else
-        //     {
-        //         existing.count++;
-        //         await panelLog.SetLogAsync($"{_playerData.PlayerName}獲得了{ItemBaseData.Get(existing.itemID).name}!");
-        //     }
-        // }
+            ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+
+            result.DropItems.Add(itemData.Name);
+
+            void EquipCallBack()
+            {
+                if (existing == null)
+                    GameData_Server.NowBagData.Items.Add(ItemDataCenter_Server.GetNewItem(itemData));
+                else
+                    OtherCallBack();
+            }
+            void OtherCallBack() => existing.Count++;
+        }
 
         enemyData.Enemies.Remove(target);
     }

@@ -1,0 +1,161 @@
+[
+  {
+    "Name": "初始短刀",
+    "ID": 1,
+    "Kind": 5,
+    "Description": "新手冒險者的標配，感覺拿著就能受到一點保佑。",
+    "Price": 500,
+    "Ability": {
+      "ATK": 10,
+      "LUK": 10
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "木製長劍",
+    "ID": 2,
+    "Kind": 0,
+    "Description": "訓練用的木劍，比空手好一點。",
+    "Price": 500,
+    "Ability": {
+      "ATK": 1
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "木盾",
+    "ID": 3,
+    "Kind": 12,
+    "Description": "訓練用的木盾，盾反甚麼的別想了。",
+    "Price": 500,
+    "Ability": {
+      "DEF": 1
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "木製頭盔",
+    "ID": 4,
+    "Kind": 13,
+    "Description": "訓練用的木盔，戴起來沒有很舒服。",
+    "Price": 500,
+    "Ability": {
+      "DEF": 1
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "布製護甲",
+    "ID": 5,
+    "Kind": 14,
+    "Description": "訓練用的布甲，木劍程度的傷害還是可以防住的。",
+    "Price": 500,
+    "Ability": {
+      "DEF": 1
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "布製護腿",
+    "ID": 6,
+    "Kind": 15,
+    "Description": "訓練用的護腿，不用怕打到小腿。",
+    "Price": 500,
+    "Ability": {
+      "DEF": 1
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "布靴",
+    "ID": 7,
+    "Kind": 16,
+    "Description": "訓練用的布靴，比赤腳好一點。",
+    "Price": 500,
+    "Ability": {
+      "SPD": 1
+    },
+    "Durability": 500,
+    "Count": 1
+  },
+  {
+    "Name": "小型生命藥水",
+    "ID": 101,
+    "Kind": 21,
+    "Description": "恢復少量生命。",
+    "Price": 50,
+    "Ability": {
+      "HP": 50
+    },
+    "Count": 1
+  },
+  {
+    "Name": "小型魔力藥水",
+    "ID": 102,
+    "Kind": 21,
+    "Description": "恢復少量魔力。",
+    "Price": 30,
+    "Ability": {
+      "MP": 15
+    },
+    "Count": 1
+  },
+  {
+    "Name": "小型體力藥水",
+    "ID": 103,
+    "Kind": 21,
+    "Description": "恢復少量體力。",
+    "Price": 50,
+    "Ability": {
+      "STA": 10
+    },
+    "Count": 1
+  },
+  {
+    "Name": "狂暴藥水",
+    "ID": 104,
+    "Kind": 21,
+    "Description": "使全數值呈倍數上升，但會不受控。\n狂化－100回合",
+    "Price": 1000,
+    "Count": 1
+  },
+  {
+    "Name": "史萊姆凝膠",
+    "ID": 201,
+    "Kind": 22,
+    "Description": "史萊姆的一部分，軟軟的帶點彈力。",
+    "Price": 10,
+    "Ability": {
+      "VIT": 1
+    },
+    "Count": 1
+  },
+  {
+    "Name": "白兔毛皮",
+    "ID": 202,
+    "Kind": 22,
+    "Description": "白兔的毛皮，感受到些微的庇護。",
+    "Price": 10,
+    "Ability": {
+      "LUK": 1
+    },
+    "Count": 1
+  },
+  {
+    "Name": "麻雀羽毛",
+    "ID": 203,
+    "Kind": 22,
+    "Description": "麻雀的羽毛，輕巧的可以隨風飛翔。",
+    "Price": 10,
+    "Ability": {
+      "SPD": 1
+    },
+    "Count": 1
+  }
+]

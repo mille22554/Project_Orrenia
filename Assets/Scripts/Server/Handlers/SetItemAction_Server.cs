@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
-using static GameItemData;
 
 public class SetItemAction_Server : IApiHandler_Server
 {
@@ -17,7 +16,7 @@ public class SetItemAction_Server : IApiHandler_Server
         {
             var requestData = JsonConvert.DeserializeObject<SetItemAction_ServerRequest>(request.ToString());
 
-            var responseData = Do(requestData.ItemData);
+            var responseData = Do(requestData.BagItemData);
 
             PublicFunc.SaveData();
 
@@ -30,7 +29,7 @@ public class SetItemAction_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"設定玩家名稱時發生錯誤: {ex.Message}";
+            var errorMessage = $"使用道具時發生錯誤: {ex.Message}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {
@@ -41,95 +40,79 @@ public class SetItemAction_Server : IApiHandler_Server
         }
     }
 
-    SetItemAction_ServerResponse Do(ItemData itemData)
+    SetItemAction_ServerResponse Do(BagItemData bagItemData)
     {
         var response = new SetItemAction_ServerResponse();
 
-        var itemBaseData = ItemBaseData.Get(itemData.ItemID);
+        var itemData = ItemDataCenter_Server.GetItemData(bagItemData.ItemID);
+        var itemKind = ItemDataCenter_Server.GetItemKind(itemData.Kind);
 
-        if (ItemTypeCheck.IsEquipType(itemBaseData.Type))
-        {
-            response.IsEquipped = PublicFunc.CheckIsPlayerEquip(itemData, CharacterData.Equips);
-            RefreshEquipState(itemBaseData.Type, itemData.UID, response.IsEquipped);
+        ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, UseCallBack, null);
 
-            response.ItemType = 0;
-        }
-        else if (ItemTypeCheck.IsUseType(itemBaseData.Type))
+        response.ItemCategory = itemKind.Category;
+        response.BagItemData = bagItemData;
+        response.Enemies = GameData_Server.NowEnemyData.Enemies;
+
+        if (CharacterData.CurrentTP >= GameData_Server.tpCost)
+            CharacterData.CurrentTP -= GameData_Server.tpCost;
+
+        return response;
+
+        void EquipCallBack() => RefreshEquipState(itemData.Kind, bagItemData.UID);
+
+        void UseCallBack()
         {
-            var item = BagData.Items.Find(x => x.UID == itemData.UID);
+            var item = BagData.Items.Find(x => x.UID == bagItemData.UID);
             item.Count--;
 
             if (item.Count == 0)
                 BagData.Items.Remove(item);
 
-            if (itemBaseData.Ability.HP != 0)
-                CharacterData.CurrentHP += itemBaseData.Ability.HP;
+            if (itemData.Ability.HP != 0)
+                CharacterData.CurrentHP += itemData.Ability.HP;
 
-            if (itemBaseData.Ability.MP != 0)
-                CharacterData.CurrentMP += itemBaseData.Ability.MP;
+            if (itemData.Ability.MP != 0)
+                CharacterData.CurrentMP += itemData.Ability.MP;
 
-            if (itemBaseData.Ability.STA != 0)
-                CharacterData.CurrentSTA += itemBaseData.Ability.STA;
+            if (itemData.Ability.STA != 0)
+                CharacterData.CurrentSTA += itemData.Ability.STA;
 
-            UseItemSpecial(itemBaseData.Name);
+            UseItemSpecial(itemData.Name);
             PublicFunc.EffectProcess();
-
-            response.ItemType = 1;
         }
-        response.ItemData = itemData;
-        response.Enemies=GameData_Server.NowEnemyData.Enemies;
-
-        if (CharacterData.CurrentTP >= GameData_Server.tpCost)
-        {
-            CharacterData.CurrentTP -= GameData_Server.tpCost;
-        }
-
-        return response;
     }
 
-    void RefreshEquipState(string type, long uid, bool isEquipped)
+    void RefreshEquipState(EItemKind kind, long uid)
     {
-        string fieldName = type switch
-        {
-            EquipType.One_Hand_Weapon.Sword or EquipType.One_Hand_Weapon.Dagger => "Right_Hand",
-            EquipType.Shield => "Left_Hand",
-            EquipType.Helmet => "Helmet",
-            EquipType.Armor => "Armor",
-            EquipType.Greaves => "Greaves",
-            EquipType.Shoes => "Shoes",
-            EquipType.Gloves => "Gloves",
-            EquipType.Cape => "Cape",
-            EquipType.Ring => "Ring",
-            EquipType.Pendant => "Pendant",
-            _ => null
-        };
-
-        if (fieldName == null)
-            return;
-
         var equips = CharacterData.Equips;
-        var field = typeof(EquipBase).GetField(fieldName);
-        var currentUid = (long)field.GetValue(equips);
 
-        // 解除當前裝備
-        PublicFunc.UnloadEquip(currentUid);
-
-        if (isEquipped)
+        if (equips.Contains(uid))
         {
-            field.SetValue(equips, 0L);
+            equips.Remove(uid);
         }
         else
         {
-            field.SetValue(equips, uid);
+            foreach (var equipUID in equips)
+            {
+                var equip = BagData.Items.Find(x => x.UID == equipUID);
+
+                if (ItemDataCenter_Server.GetItemData(equip.ItemID).Kind == kind)
+                {
+                    equips.Remove(equip.UID);
+                    break;
+                }
+            }
+
+            equips.Add(uid);
         }
     }
 
     void UseItemSpecial(string itemName)
     {
-        if (itemName == Use.BerserkPotion.Name)
-        {
-            PublicFunc.AddCharacterEffect(CharacterData, EffectType.Buff.Berserk, 2, 100);
-        }
+        // if (itemName == Use.BerserkPotion.Name)
+        // {
+        //     PublicFunc.AddCharacterEffect(CharacterData, EffectType.Buff.Berserk, 2, 100);
+        // }
     }
 
 }
@@ -137,13 +120,13 @@ public class SetItemAction_Server : IApiHandler_Server
 public class SetItemAction_ServerRequest
 {
 
-    public ItemData ItemData;
+    public BagItemData BagItemData;
 }
 
 public class SetItemAction_ServerResponse
 {
-    public int ItemType;
-    public ItemData ItemData;
+    public EItemCategory ItemCategory;
+    public BagItemData BagItemData;
     public bool IsEquipped;
     public List<MobData> Enemies;
 }

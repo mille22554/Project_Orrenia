@@ -42,9 +42,3 @@ public static class AreaDataCenter
         return areaData;
     }
 }
-
-public class AreaData
-{
-    public string Name;
-    public List<int> MobList;
-}

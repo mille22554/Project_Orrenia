@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public class ServerController : MonoBehaviour
+public static class ServerController
 {
-    public static ServerController Instance { get; private set; }
-
     readonly static Dictionary<string, IApiHandler_Server> handlerBases = new();
 
-    void Awake()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Init()
     {
-        Instance = this;
         RegisterHandlers();
+        EventMng.SetEvent(EventName.ServerRequest, (Action<string, Action<string>>)Get);
     }
 
     static void RegisterHandlers()
@@ -35,20 +34,19 @@ public class ServerController : MonoBehaviour
         }
     }
 
-    public string Get(string request)
+    static void Get(string request, Action<string> callback)
     {
         var requestData = JsonConvert.DeserializeObject<RequestData_Server>(request);
 
         if (handlerBases.TryGetValue(requestData.cmd, out var handlerBase))
         {
-            return handlerBase.Get(requestData.data);
+            callback.Invoke(handlerBase.Get(requestData.data));
         }
         else
         {
             Debug.LogError($"No handler found for {requestData.cmd}");
-            return "";
+            callback.Invoke("");
         }
-
     }
 }
 

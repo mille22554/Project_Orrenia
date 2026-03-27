@@ -4,7 +4,6 @@ using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
 using UnityEngine;
-using static GameItemData;
 
 public class GetSaveData_Server : IApiHandler_Server
 {
@@ -37,14 +36,14 @@ public class GetSaveData_Server : IApiHandler_Server
             else
             {
                 GameData_Server.SaveData = GameSaveData.CreateDefault();
-                PublicFunc.InitCurrentData(CharacterData);
+                CharacterDataCenter.InitCurrentData(CharacterData);
             }
             CheckFlags();
 
             var responseData = new GetSaveData_ServerResponse
             {
                 SaveData = GameData_Server.SaveData,
-                FullAbility = PublicFunc.GetCharacterAbility(CharacterData),
+                FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData),
                 AbilityPoint = PublicFunc.GetAbilityPoint(CharacterData),
                 Exp = PublicFunc.GetExp(CharacterData)
             };
@@ -187,7 +186,7 @@ public class GetSaveData_Server : IApiHandler_Server
         var playerData = GameData_Server.NowPlayerData;
         if (!playerData.IsGetBasicDagger)
         {
-            GameData_Server.NowBagData.Items.Add(PublicFunc.GetItem(Equip.BasicDagger));
+            GameData_Server.NowBagData.Items.Add(ItemDataCenter_Server.GetNewItemByItemID(1));
             playerData.IsGetBasicDagger = true;
         }
         PublicFunc.SaveData();
