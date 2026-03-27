@@ -5,12 +5,13 @@ using UnityEngine.UI;
 public class ShopItem : MonoBehaviour
 {
     public ItemData Info { get; private set; }
+    public long BagItemUID;
 
     [SerializeField] GameObject _iconPick;
     [SerializeField] Text _itemName;
     [SerializeField] Text _count;
     [SerializeField] Toggle _toggle;
-    [SerializeField] Action<ShopItem> _refreshBagInfo;
+    [SerializeField] Action<ShopItem, bool> _refreshBagInfo;
 
     void Awake()
     {
@@ -22,7 +23,7 @@ public class ShopItem : MonoBehaviour
         _iconPick.SetActive(false);
     }
 
-    public void SetInfo(ItemData data, ToggleGroup group, Action<ShopItem> refreshBagInfo)
+    public void SetInfo(ItemData data, ToggleGroup group, Action<ShopItem, bool> refreshBagInfo)
     {
         Info = data;
         _toggle.group = group;
@@ -32,7 +33,6 @@ public class ShopItem : MonoBehaviour
 
         ItemDataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
-        _toggle.isOn = true;
         _toggle.isOn = false;
 
         void EquipCallBack() => _count.text = data.Durability.ToString();
@@ -47,6 +47,6 @@ public class ShopItem : MonoBehaviour
     void OnToggleValueChange(bool isOn)
     {
         _iconPick.SetActive(isOn);
-        _refreshBagInfo.Invoke(this);
+        _refreshBagInfo.Invoke(this, isOn);
     }
 }

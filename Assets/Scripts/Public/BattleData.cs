@@ -1,7 +1,7 @@
 public class BattleData
 {
     public string Name;
-    public CharacterRole Role;
+    public ECharacterRole Role;
     public int Exp;
     public int HP;
     public int MP;

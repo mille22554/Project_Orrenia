@@ -34,7 +34,7 @@ public class GetBattleStatus_Server : IApiHandler_Server
                     }
                 }
 
-                PublicFunc.SaveData();
+                SaveDataCenter.SaveData();
             }
 
             var responseData = new GetBattleStatus_ServerResponse
@@ -75,6 +75,6 @@ public class GetBattleStatus_Server : IApiHandler_Server
 
 public class GetBattleStatus_ServerResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public BattleResult BattleResult;
 }

@@ -9,31 +9,6 @@ using Random = UnityEngine.Random;
 
 public class PublicFunc
 {
-    static CharacterData _characterData => GameData_Server.NowCharacterData;
-
-    public static void SaveData()
-    {
-        var path = GameData_Server.SaveDataPath;
-        // Debug.Log($"儲存遊戲資料到 {path}");
-        File.WriteAllText(path, JsonConvert.SerializeObject(GameData_Server.SaveData));
-    }
-
-    public static void EffectProcess()
-    {
-        foreach (var effect in _characterData.Effects)
-        {
-            switch (effect.type)
-            {
-                case EffectType.Buff.HP_Regen:
-                    _characterData.CurrentHP += effect.value;
-                    break;
-            }
-
-            effect.times--;
-            if (effect.times <= 0)
-                _characterData.Effects.Remove(effect);
-        }
-    }
 
     public static void SetEquipAbility(AbilityBase ability, AbilityBase baseAbility)
     {

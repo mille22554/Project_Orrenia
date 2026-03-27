@@ -11,12 +11,12 @@ public class SetBattleAction : IApiHandler<SetBattleActionResponse>
 public class SetBattleActionRequest : IRequestBase<SetBattleActionResponse>
 {
     public string Cmd => "SetBattleAction";
-    public BattleActionType BattleAction;
+    public EBattleActionType BattleAction;
     public MobData AttackTarget;
 }
 
 public class SetBattleActionResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public ActionResult ActionResult;
 }

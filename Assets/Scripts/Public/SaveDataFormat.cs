@@ -1,22 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.IO;
+using Newtonsoft.Json;
 
-public class GameSaveData
+public class SaveDataFormat
 {
     public string version;
     public Datas Datas;
-
-    public static GameSaveData CreateDefault()
-    {
-        var saveData = new GameSaveData
-        {
-            version = GameData_Server.version,
-            Datas = Datas.CreateDefault()
-        };
-
-        return saveData;
-    }
 }
 
 public class Datas

@@ -87,7 +87,7 @@ public static class GameData_Server
 
     public const int tpCost = 10000;
 
-    public static GameSaveData SaveData;
+    public static SaveDataFormat SaveData;
 
     public static PlayerContextData NowPlayerData => SaveData.Datas.PlayerData;
     public static CharacterData NowCharacterData => SaveData.Datas.CharacterData;

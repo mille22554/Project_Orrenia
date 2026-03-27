@@ -118,7 +118,7 @@ public class PageBattle : MonoBehaviour
     {
         var requestData = new SetAdventureActionRequest
         {
-            AdventureAction = AdventureActionType.IntoArea,
+            AdventureAction = EAdventureActionType.IntoArea,
             GameArea = 2
         };
         ApiBridge.Send(requestData, CallBack);
@@ -148,7 +148,7 @@ public class PageBattle : MonoBehaviour
     {
         var requestData = new SetAdventureActionRequest
         {
-            AdventureAction = AdventureActionType.GoAhead
+            AdventureAction = EAdventureActionType.GoAhead
         };
         ApiBridge.Send(requestData, CallBack);
 
@@ -198,6 +198,8 @@ public class PageBattle : MonoBehaviour
             var datas = response.SaveData.Datas;
             var result = response.BattleResult;
 
+            // MobDeadCheck(result);
+
             RunBattleVisuals(result, datas);
         }
     }
@@ -227,7 +229,7 @@ public class PageBattle : MonoBehaviour
     {
         var requestData = new SetAdventureActionRequest
         {
-            AdventureAction = AdventureActionType.Leave
+            AdventureAction = EAdventureActionType.Leave
         };
         ApiBridge.Send(requestData, CallBack);
 
@@ -266,7 +268,7 @@ public class PageBattle : MonoBehaviour
     {
         var requestData = new SetAdventureActionRequest
         {
-            AdventureAction = AdventureActionType.Rest
+            AdventureAction = EAdventureActionType.Rest
         };
         ApiBridge.Send(requestData, CallBack);
 
@@ -295,7 +297,7 @@ public class PageBattle : MonoBehaviour
 
         var requestData = new SetBattleActionRequest
         {
-            BattleAction = BattleActionType.Attack,
+            BattleAction = EBattleActionType.Attack,
             AttackTarget = selectedEnemy.Info
         };
         ApiBridge.Send(requestData, CallBack);
@@ -305,24 +307,34 @@ public class PageBattle : MonoBehaviour
             var battleResult = response.ActionResult.BattleResult;
             var target = enemyList.Find(x => x.Info.CharacterData.Name == battleResult.Defenderer);
 
-            if (battleResult.IsDefenderDead)
-            {
-                enemyList.Remove(target);
-                ObjectPool.Put(target);
-
-                if (enemyList.Count == 0)
-                {
-                    btnGoAhead.gameObject.SetActive(true);
-                    btnRest.gameObject.SetActive(true);
-                    btnAttack.gameObject.SetActive(false);
-                }
-            }
-            else
-            {
-                target.GetDamage(battleResult.LuckyEventDamage + battleResult.BattleDamage);
-            }
+            MobDeadCheck(battleResult, target);
 
             RunBattleVisuals(battleResult, response.SaveData.Datas);
+        }
+    }
+
+    void MobDeadCheck(BattleResult result, ItemEnemy enemy)
+    {
+        if (result.IsDefenderDead)
+        {
+            enemyList.Remove(enemy);
+            ObjectPool.Put(enemy);
+
+            if (enemyList.Count == 0)
+            {
+                btnGoAhead.gameObject.SetActive(true);
+                btnRest.gameObject.SetActive(true);
+                btnAttack.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            if (result.IsLuckyEventTrigger)
+            {
+                if (result.LuckyEventTarget == enemy.Info.CharacterData.Name)
+                    enemy.GetDamage(result.LuckyEventDamage);
+            }
+            enemy.GetDamage(result.BattleDamage);
         }
     }
 

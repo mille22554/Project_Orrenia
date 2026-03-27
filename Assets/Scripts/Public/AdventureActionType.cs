@@ -1,4 +1,4 @@
-public enum AdventureActionType
+public enum EAdventureActionType
 {
     IntoArea,
     GoAhead,

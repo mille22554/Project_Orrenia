@@ -166,10 +166,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a95f1529f1c09b469d2dcf3057202b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  iconPick: {fileID: 7190501356392476928}
-  itemName: {fileID: 4361928453568989578}
-  count: {fileID: 5834620658079586719}
-  toggle: {fileID: 2342406325713119541}
+  _iconPick: {fileID: 7190501356392476928}
+  _itemName: {fileID: 4361928453568989578}
+  _count: {fileID: 5834620658079586719}
+  _toggle: {fileID: 2342406325713119541}
 --- !u!1 &2535988484554758852
 GameObject:
   m_ObjectHideFlags: 0

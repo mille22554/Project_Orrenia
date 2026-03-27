@@ -12,7 +12,7 @@ public class SetTradeAction : IApiHandler<SetTradeActionResponse>
 public class SetTradeActionRequest : IRequestBase<SetTradeActionResponse>
 {
     public string Cmd => "SetTradeAction";
-    public TradeActionType TradeActionType;
+    public ETradeActionType TradeActionType;
     public int ItemID;
     public int TradeNum;
     public long SelledItemUID;

@@ -1,4 +1,4 @@
-public enum BattleActionType
+public enum EBattleActionType
 {
     Attack,
     Leave,

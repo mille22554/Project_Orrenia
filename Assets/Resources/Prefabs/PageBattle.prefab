@@ -76,7 +76,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fafe2cfe61f6974895a912c3755e8f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_AllowSwitchOff: 0
+  m_AllowSwitchOff: 1
 --- !u!114 &2216571559528716460
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1989,19 +1989,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ba4e4ad9487eab428e9fc935def246f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  toggleBuy: {fileID: 3839374542745145156}
-  toggleSell: {fileID: 9213221790747175697}
-  itemName: {fileID: 3329178332342134095}
-  type: {fileID: 8838502995270360677}
-  price: {fileID: 6359585381811618493}
-  description: {fileID: 1920322295997028205}
-  ability: {fileID: 958513683679757162}
-  gold: {fileID: 4280218662399710907}
-  inputTradeNum: {fileID: 5739985791998064767}
-  btnTrade: {fileID: 3002134266755197903}
-  textTrade: {fileID: 5208358088504154975}
-  itemList: {fileID: 2957472015586871337}
-  shopItem: {fileID: 1386165011789835927, guid: 3803e90c9f1d18248854fc060194ec05, type: 3}
+  _toggleBuy: {fileID: 3839374542745145156}
+  _toggleSell: {fileID: 9213221790747175697}
+  _itemName: {fileID: 3329178332342134095}
+  _type: {fileID: 8838502995270360677}
+  _price: {fileID: 6359585381811618493}
+  _description: {fileID: 1920322295997028205}
+  _ability: {fileID: 958513683679757162}
+  _gold: {fileID: 4280218662399710907}
+  _inputTradeNum: {fileID: 5739985791998064767}
+  _btnTrade: {fileID: 3002134266755197903}
+  _textTrade: {fileID: 5208358088504154975}
+  _itemList: {fileID: 2957472015586871337}
+  _shopItem: {fileID: 1386165011789835927, guid: 3803e90c9f1d18248854fc060194ec05, type: 3}
+  _btnShop: {fileID: 7993925693098887936}
+  _toggleItems: {fileID: 1442057544176447526}
 --- !u!1 &4074784976241564613
 GameObject:
   m_ObjectHideFlags: 0
@@ -3360,7 +3362,6 @@ MonoBehaviour:
   btnLeave: {fileID: 1267881419302622050}
   btnShop: {fileID: 7290411690449463342}
   _enemies: {fileID: 475082298181113722}
-  log: {fileID: 6662055003565492}
   itemEnemy: {fileID: 2022533232302461471, guid: e315cefd7677a414280d0109f90a1a04, type: 3}
   panelShop: {fileID: 3659234312262631029}
   panelLog: {fileID: 5430302406047571291}

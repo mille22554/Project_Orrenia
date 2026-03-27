@@ -15,7 +15,7 @@ public class SetPlayerName_Server : IApiHandler_Server
             var requestData = JsonConvert.DeserializeObject<SetPlayerName_ServerRequest>(request.ToString());
 
             CharacterData.Name = requestData.PlayerName;
-            PublicFunc.SaveData();
+            SaveDataCenter.SaveData();
 
             var response = new ResponseData_Server
             {

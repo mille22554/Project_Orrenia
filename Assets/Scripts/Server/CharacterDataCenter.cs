@@ -37,7 +37,7 @@ public static class CharacterDataCenter
         ability.CRIT = ability.AGI * 2 + ability.LUK;
         ability.SPD = ability.DEX;
 
-        if (data.Role == CharacterRole.Mob)
+        if (data.Role == ECharacterRole.Mob)
             ability.HP /= 10;
 
         ability = CalculateEquipAbility(ability, data.Equips);
@@ -105,5 +105,22 @@ public static class CharacterDataCenter
             }
         }
         return data;
+    }
+
+    public static void EffectProcess(CharacterData characterData)
+    {
+        foreach (var effect in characterData.Effects)
+        {
+            switch (effect.type)
+            {
+                case EffectType.Buff.HP_Regen:
+                    characterData.CurrentHP += effect.value;
+                    break;
+            }
+
+            effect.times--;
+            if (effect.times <= 0)
+                characterData.Effects.Remove(effect);
+        }
     }
 }

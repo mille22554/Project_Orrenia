@@ -13,7 +13,6 @@ public class PanelLog : MonoBehaviour
     [SerializeField] GameObject block;
     [SerializeField] Text itemLog;
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
     readonly List<Text> itemBattleLogs = new();
     readonly List<Text> itemEffectLogs = new();
 
@@ -83,34 +82,43 @@ public class PanelLog : MonoBehaviour
 
         if (isOn)
         {
-            Text textLog;
-            if (CharacterData.Effects.Count > 0)
-            {
-                textLog = ObjectPool.Get(itemLog, effectContent);
-                itemEffectLogs.Add(textLog);
-                textLog.text = $"{CharacterData.Name}:";
+            var requestData = new GetSaveDataRequest();
+            ApiBridge.Send(requestData, CallBack);
 
-                foreach (var effect in CharacterData.Effects)
+            void CallBack(GetSaveDataResponse response)
+            {
+                var characterData = response.SaveData.Datas.CharacterData;
+                var enemies = response.SaveData.Datas.EnemyData.Enemies;
+
+                Text textLog;
+                if (characterData.Effects.Count > 0)
                 {
                     textLog = ObjectPool.Get(itemLog, effectContent);
                     itemEffectLogs.Add(textLog);
-                    textLog.text = $"{effect.type}－{effect.times}回合";
-                }
-            }
+                    textLog.text = $"{characterData.Name}:";
 
-            foreach (var enemy in GameData_Server.NowEnemyData.Enemies)
-            {
-                if (enemy.Effects.Count > 0)
-                {
-                    textLog = ObjectPool.Get(itemLog, effectContent);
-                    itemEffectLogs.Add(textLog);
-                    textLog.text = $"{enemy.CharacterData.Name}:";
-
-                    foreach (var effect in enemy.Effects)
+                    foreach (var effect in characterData.Effects)
                     {
                         textLog = ObjectPool.Get(itemLog, effectContent);
                         itemEffectLogs.Add(textLog);
                         textLog.text = $"{effect.type}－{effect.times}回合";
+                    }
+                }
+
+                foreach (var enemy in enemies)
+                {
+                    if (enemy.Effects.Count > 0)
+                    {
+                        textLog = ObjectPool.Get(itemLog, effectContent);
+                        itemEffectLogs.Add(textLog);
+                        textLog.text = $"{enemy.CharacterData.Name}:";
+
+                        foreach (var effect in enemy.Effects)
+                        {
+                            textLog = ObjectPool.Get(itemLog, effectContent);
+                            itemEffectLogs.Add(textLog);
+                            textLog.text = $"{effect.type}－{effect.times}回合";
+                        }
                     }
                 }
             }

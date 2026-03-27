@@ -18,7 +18,7 @@ public class SetItemAction_Server : IApiHandler_Server
 
             var responseData = Do(requestData.BagItemData);
 
-            PublicFunc.SaveData();
+            SaveDataCenter.SaveData();
 
             var response = new ResponseData_Server
             {
@@ -78,7 +78,7 @@ public class SetItemAction_Server : IApiHandler_Server
                 CharacterData.CurrentSTA += itemData.Ability.STA;
 
             UseItemSpecial(itemData.Name);
-            PublicFunc.EffectProcess();
+            CharacterDataCenter.EffectProcess(CharacterData);
         }
     }
 

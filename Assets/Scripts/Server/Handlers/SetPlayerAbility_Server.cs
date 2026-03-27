@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -19,7 +20,7 @@ public class SetPlayerAbility_Server : IApiHandler_Server
             if (abilityPoint >= 0)
             {
                 CharacterData.Ability = ability;
-                PublicFunc.SaveData();
+                SaveDataCenter.SaveData();
             }
             else
             {

@@ -17,7 +17,7 @@ public class SetBattleAction_Server : IApiHandler_Server
             var requestData = JsonConvert.DeserializeObject<SetBattleAction_ServerRequest>(request.ToString());
             var actionResult = DoAction(requestData);
 
-            PublicFunc.SaveData();
+            SaveDataCenter.SaveData();
 
             var responseData = new SetBattleAction_ServerResponse
             {
@@ -49,10 +49,10 @@ public class SetBattleAction_Server : IApiHandler_Server
         var actionResult = new ActionResult();
         switch (data.BattleAction)
         {
-            case BattleActionType.Attack:
+            case EBattleActionType.Attack:
                 actionResult.BattleResult = OnAttack(data.AttackTarget);
                 break;
-            case BattleActionType.Leave:
+            case EBattleActionType.Leave:
                 OnLeave();
                 break;
         }
@@ -62,7 +62,7 @@ public class SetBattleAction_Server : IApiHandler_Server
     BattleResult OnAttack(MobData mob)
     {
         CharacterData.CurrentSTA--;
-        PublicFunc.EffectProcess();
+        CharacterDataCenter.EffectProcess(CharacterData);
 
         var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == mob.CharacterData.Name);
         if (target != null)
@@ -99,12 +99,12 @@ public class SetBattleAction_Server : IApiHandler_Server
 
 public class SetBattleAction_ServerRequest
 {
-    public BattleActionType BattleAction;
+    public EBattleActionType BattleAction;
     public MobData AttackTarget;
 }
 
 public class SetBattleAction_ServerResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public ActionResult ActionResult;
 }

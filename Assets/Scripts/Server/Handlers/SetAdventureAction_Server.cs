@@ -19,7 +19,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
             var requestData = JsonConvert.DeserializeObject<SetAdventureAction_ServerRequest>(request.ToString());
             var actionResult = DoAction(requestData);
 
-            PublicFunc.SaveData();
+            SaveDataCenter.SaveData();
 
             var responseData = new SetAdventureAction_ServerResponse
             {
@@ -52,16 +52,16 @@ public class SetAdventureAction_Server : IApiHandler_Server
 
         switch (data.AdventureAction)
         {
-            case AdventureActionType.IntoArea:
+            case EAdventureActionType.IntoArea:
                 OnIntoArea(data);
                 break;
-            case AdventureActionType.GoAhead:
+            case EAdventureActionType.GoAhead:
                 actionResult = OnGoAhead();
                 break;
-            case AdventureActionType.Rest:
+            case EAdventureActionType.Rest:
                 actionResult = OnRest();
                 break;
-            case AdventureActionType.Leave:
+            case EAdventureActionType.Leave:
                 OnLeave();
                 break;
         }
@@ -79,7 +79,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
         var actionResult = new ActionResult();
 
         CharacterData.CurrentSTA--;
-        PublicFunc.EffectProcess();
+        CharacterDataCenter.EffectProcess(CharacterData);
 
         PlayerData.Deep++;
 
@@ -170,12 +170,12 @@ public class SetAdventureAction_Server : IApiHandler_Server
 
 public class SetAdventureAction_ServerRequest
 {
-    public AdventureActionType AdventureAction;
+    public EAdventureActionType AdventureAction;
     public int GameArea;
 }
 
 public class SetAdventureAction_ServerResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public ActionResult ActionResult;
 }

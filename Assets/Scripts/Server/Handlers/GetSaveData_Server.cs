@@ -21,12 +21,12 @@ public class GetSaveData_Server : IApiHandler_Server
             if (File.Exists(path))
             {
                 string json = File.ReadAllText(path);
-                var data = JsonConvert.DeserializeObject<GameSaveData>(json);
+                var data = JsonConvert.DeserializeObject<SaveDataFormat>(json);
 
                 if (data.version != GameData_Server.version)
                 {
                     GameData_Server.SaveData = UpdateSaveData(data);
-                    PublicFunc.SaveData();
+                    SaveDataCenter.SaveData();
                 }
                 else
                 {
@@ -35,7 +35,7 @@ public class GetSaveData_Server : IApiHandler_Server
             }
             else
             {
-                GameData_Server.SaveData = GameSaveData.CreateDefault();
+                GameData_Server.SaveData = SaveDataCenter.CreateSaveData();
                 CharacterDataCenter.InitCurrentData(CharacterData);
             }
             CheckFlags();
@@ -67,10 +67,10 @@ public class GetSaveData_Server : IApiHandler_Server
         }
     }
 
-    GameSaveData UpdateSaveData(GameSaveData oldData)
+    SaveDataFormat UpdateSaveData(SaveDataFormat oldData)
     {
         // Debug.Log("更新存檔資料結構");
-        var newData = GameSaveData.CreateDefault();
+        var newData = SaveDataCenter.CreateSaveData();
         newData.Datas.CharacterData.Name = oldData.Datas.CharacterData.Name;
 
         CopyNonDefaultValues(oldData.Datas, newData.Datas);
@@ -189,13 +189,13 @@ public class GetSaveData_Server : IApiHandler_Server
             GameData_Server.NowBagData.Items.Add(ItemDataCenter_Server.GetNewItemByItemID(1));
             playerData.IsGetBasicDagger = true;
         }
-        PublicFunc.SaveData();
+        SaveDataCenter.SaveData();
     }
 }
 
 public class GetSaveData_ServerResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public FullAbilityBase FullAbility;
     public int AbilityPoint;
     public int Exp;

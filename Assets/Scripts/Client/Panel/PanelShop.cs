@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,28 +19,19 @@ public class PanelShop : MonoBehaviour
     [SerializeField] Text _textTrade;
     [SerializeField] ScrollRect _itemList;
     [SerializeField] ShopItem _shopItem;
+    [SerializeField] Button _btnShop;
+    [SerializeField] ToggleGroup _toggleItems;
 
-    Button _btnShop;
-    ToggleGroup _toggleItems;
     readonly List<ShopItem> _shopItemList = new();
     ShopItem _selectedShopItem;
 
     void Awake()
     {
-        _btnShop = GetComponent<Button>();
-        _toggleItems = _itemList.content.GetComponent<ToggleGroup>();
-
         _btnShop.onClick.AddListener(OnShop);
         _toggleBuy.onValueChanged.AddListener(OnSwitchBuy);
         _toggleSell.onValueChanged.AddListener(OnSwitchSell);
         _inputTradeNum.onEndEdit.AddListener(OnInputEnd);
         _btnTrade.onClick.AddListener(OnTrade);
-    }
-
-    void Start()
-    {
-        _toggleBuy.isOn = true;
-        _toggleSell.isOn = true;
     }
 
     public void OnShop()
@@ -58,6 +50,7 @@ public class PanelShop : MonoBehaviour
                 ResetBagInfo();
                 _gold.text = response.SaveData.Datas.PlayerData.Gold.ToString();
                 _btnShop.gameObject.SetActive(true);
+                _toggleSell.isOn = true;
                 _toggleBuy.isOn = true;
             }
         }
@@ -104,6 +97,7 @@ public class PanelShop : MonoBehaviour
                 var itemData = ItemDataCenter.GetItemData(itemInfo.ItemID);
                 var item = ObjectPool.Get(_shopItem, _itemList.content);
                 item.SetInfo(itemData, _toggleItems, RefreshBagInfo);
+                item.BagItemUID = itemInfo.UID;
                 _shopItemList.Add(item);
             }
         }
@@ -116,10 +110,10 @@ public class PanelShop : MonoBehaviour
 
         var requestData = new SetTradeActionRequest
         {
-            TradeActionType = _toggleBuy.isOn ? TradeActionType.Buy : TradeActionType.Sell,
+            TradeActionType = _toggleBuy.isOn ? ETradeActionType.Buy : ETradeActionType.Sell,
             ItemID = _selectedShopItem.Info.ID,
             TradeNum = itemNum,
-
+            SelledItemUID = _selectedShopItem.BagItemUID
         };
         ApiBridge.Send(requestData, CallBack);
 
@@ -142,21 +136,28 @@ public class PanelShop : MonoBehaviour
         }
     }
 
-    void RefreshBagInfo(ShopItem item)
+    void RefreshBagInfo(ShopItem item, bool isOn)
     {
-        // selectedShopItem = item;
-        // itemName.text = ItemDataCenter.GetItemData(item.Info.ItemID).Name;
-        // type.text = ItemDataCenter.GetItemData(item.Info.ItemID).Kind;
-        // price.transform.parent.gameObject.SetActive(true);
-        // var itemPrice = toggleBuy.isOn ? ItemDataCenter.GetItemData(item.Info.ItemID).Price : ItemDataCenter.GetItemData(item.Info.ItemID).Price / 2;
-        // price.text = $"{itemPrice}";
-        // description.text = ItemDataCenter.GetItemData(item.Info.ItemID).Description;
-        // inputTradeNum.text = "";
+        if (isOn)
+        {
+            _selectedShopItem = item;
+            _itemName.text = item.Info.Name;
+            _type.text = ItemDataCenter.GetItemKind(item.Info.Kind).Name;
+            _price.transform.parent.gameObject.SetActive(true);
+            var itemPrice = _toggleBuy.isOn ? item.Info.Price : item.Info.Price / 2;
+            _price.text = $"{itemPrice}";
+            _description.text = item.Info.Description;
+            _inputTradeNum.text = "0";
 
-        // if (!ItemTypeCheck.IsMaterialType(ItemDataCenter.GetItemData(item.Info.ItemID).Kind))
-        //     ability.text = ItemDataCenter.GetItemData(item.Info.ItemID).GetAbilityString();
-        // else
-        //     ability.text = "";
+            ItemDataCenter.DoActionAccordingToCategory(item.Info.Kind, OtherCallBack, OtherCallBack, MaterialCallBack);
+
+            void MaterialCallBack() => _ability.text = item.Info.GetAbilityString();
+            void OtherCallBack() => _ability.text = "";
+        }
+        else
+        {
+            ResetBagInfo();
+        }
     }
 
     void ResetBagInfo()
@@ -166,17 +167,14 @@ public class PanelShop : MonoBehaviour
         _price.text = "";
         _description.text = "";
         _ability.text = "";
-        _inputTradeNum.text = "";
+        _inputTradeNum.text = "0";
 
         _price.transform.parent.gameObject.SetActive(false);
     }
 
     void OnInputEnd(string str)
     {
-        if (_selectedShopItem == null || !int.TryParse(_inputTradeNum.text, out var itemNum))
-            return;
-
-        if (itemNum < 0)
+        if (_selectedShopItem == null || !int.TryParse(_inputTradeNum.text, out var itemNum) || itemNum < 0)
         {
             _inputTradeNum.text = "0";
             return;
@@ -192,6 +190,11 @@ public class PanelShop : MonoBehaviour
             var haveNum = _selectedShopItem.Info.Count;
             if (itemNum > haveNum)
                 _inputTradeNum.text = haveNum.ToString();
+        }
+        else
+        {
+            _inputTradeNum.text = "0";
+            return;
         }
     }
 

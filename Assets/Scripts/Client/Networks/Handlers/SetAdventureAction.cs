@@ -11,12 +11,12 @@ public class SetAdventureAction : IApiHandler<SetAdventureActionResponse>
 public class SetAdventureActionRequest : IRequestBase<SetAdventureActionResponse>
 {
     public string Cmd => "SetAdventureAction";
-    public AdventureActionType AdventureAction;
+    public EAdventureActionType AdventureAction;
     public int GameArea;
 }
 
 public class SetAdventureActionResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public ActionResult ActionResult;
 }

@@ -15,6 +15,6 @@ public class GetBattleStatusRequest : IRequestBase<GetBattleStatusResponse>
 
 public class GetBattleStatusResponse
 {    
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public BattleResult BattleResult;
 }

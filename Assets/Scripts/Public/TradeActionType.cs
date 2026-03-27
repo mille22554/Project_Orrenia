@@ -1,4 +1,4 @@
-public enum TradeActionType
+public enum ETradeActionType
 {
     Buy,
     Sell

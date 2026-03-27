@@ -119,9 +119,6 @@ public class PageForge : MonoBehaviour
 
     void OnEnable()
     {
-        if (GameData_Server.SaveData == null || GameData_Server.NowBagData == null)
-            return;
-
         inputItemName.text = "";
 
         // foreach (var material in GameData_Server.NowBagData.Items.Where(x => ItemTypeCheck.IsMaterialType(ItemDataCenter.GetItemData(x.ItemID).Kind)))
@@ -198,7 +195,7 @@ public class PageForge : MonoBehaviour
         //     if (int.TryParse(tempItem.Count.text, out var count))
         //     {
         //         for (int i = 0; i < count; i++)
-        //             PublicFunc.SetEquipAbility(ItemBaseData.Get(tempItem.Data.itemID).ability, ItemBaseData.Get(newItem.itemID).ability);
+        //             SaveDataCenter.SetEquipAbility(ItemBaseData.Get(tempItem.Data.itemID).ability, ItemBaseData.Get(newItem.itemID).ability);
 
         //         tempItem.Data.count = count;
         //         if (count == 0)

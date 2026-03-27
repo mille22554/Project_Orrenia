@@ -20,15 +20,15 @@ public class SetTradeAction_Server : IApiHandler_Server
             var sellItemSurplus = -1;
             switch (requestData.TradeActionType)
             {
-                case TradeActionType.Buy:
+                case ETradeActionType.Buy:
                     OnBuy(itemData, requestData.TradeNum);
                     break;
-                case TradeActionType.Sell:
+                case ETradeActionType.Sell:
                     sellItemSurplus = OnSell(itemData, requestData.TradeNum, requestData.SelledItemUID);
                     break;
             }
 
-            PublicFunc.SaveData();
+            SaveDataCenter.SaveData();
 
             var responseData = new SetTradeAction_ServerResponse
             {
@@ -45,7 +45,7 @@ public class SetTradeAction_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"使用道具時發生錯誤: {ex.Message}";
+            var errorMessage = $"交易道具時發生錯誤: {ex.Message}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {
@@ -118,7 +118,7 @@ public class SetTradeAction_Server : IApiHandler_Server
 
 public class SetTradeAction_ServerRequest
 {
-    public TradeActionType TradeActionType;
+    public ETradeActionType TradeActionType;
     public int ItemID;
     public int TradeNum;
     public long SelledItemUID;

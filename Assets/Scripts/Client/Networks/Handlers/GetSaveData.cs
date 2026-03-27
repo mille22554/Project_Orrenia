@@ -15,7 +15,7 @@ public class GetSaveDataRequest : IRequestBase<GetSaveDataResponse>
 
 public class GetSaveDataResponse
 {
-    public GameSaveData SaveData;
+    public SaveDataFormat SaveData;
     public FullAbilityBase FullAbility;
     public int AbilityPoint;
     public int Exp;

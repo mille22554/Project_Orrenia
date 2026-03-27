@@ -43,7 +43,7 @@ public static class MobDataCenter
         {
             mobData.CharacterData.Name = mob.Name;
             mobData.CharacterData.Level = level;
-            mobData.CharacterData.Role = CharacterRole.Mob;
+            mobData.CharacterData.Role = ECharacterRole.Mob;
 
             mobData.CharacterData.Ability.STR_Point += mob.Ability.STR_Point * level;
             mobData.CharacterData.Ability.DEX_Point += mob.Ability.DEX_Point * level;

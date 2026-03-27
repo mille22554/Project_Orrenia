@@ -72,10 +72,11 @@ public static class BattleSystem
 
         switch (nowActor.Role)
         {
-            case CharacterRole.Player:
+            case ECharacterRole.Player:
 
                 break;
-            case CharacterRole.Mob:
+            case ECharacterRole.Mob:
+                CharacterDataCenter.EffectProcess(nowActor);
                 result = RunBattle(nowActor, GameData_Server.SaveData.Datas.CharacterData);
                 break;
         }
@@ -140,7 +141,7 @@ public static class BattleSystem
         {
             result.IsDefenderDead = true;
         }
-        result.BreakEquips.AddRange(RunDurability(attacker.Role == CharacterRole.Player));
+        result.BreakEquips.AddRange(RunDurability(attacker.Role == ECharacterRole.Player));
 
         RefreshCharacterData(attacker, character1);
         RefreshCharacterData(defender, character2);

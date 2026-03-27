@@ -3,7 +3,7 @@ using System.Collections.Generic;
 public class CharacterData
 {
     public string Name;
-    public CharacterRole Role;
+    public ECharacterRole Role;
     public int Level;
     public int CurrentExp;
     public int CurrentHP;
@@ -69,7 +69,7 @@ public class FullAbilityBase
     public int SPD;
 }
 
-public enum CharacterRole
+public enum ECharacterRole
 {
     Player,
     OtherPlayer,
