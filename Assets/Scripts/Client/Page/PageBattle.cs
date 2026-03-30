@@ -198,17 +198,24 @@ public class PageBattle : MonoBehaviour
             var datas = response.SaveData.Datas;
             var result = response.BattleResult;
 
-            // MobDeadCheck(result);
-
             RunBattleVisuals(result, datas);
         }
     }
 
     void RunBattleVisuals(BattleResult result, Datas datas)
     {
+        MainController.Instance.RefreshUI(datas.CharacterData);
+
         if (result != null)
         {
             ShowBattleLog(result);
+
+            if (result.IsAttackerDead && datas.CharacterData.Name != result.Attacker)
+            {
+                var target = enemyList.Find(x => x.Info.CharacterData.Name == result.Attacker);
+
+                MobDeadCheck(result, target);
+            }
 
             if (result.IsAttackerDead && datas.CharacterData.Name == result.Attacker ||
                 result.IsDefenderDead && datas.CharacterData.Name == result.Defenderer)
@@ -221,8 +228,6 @@ public class PageBattle : MonoBehaviour
             }
 
         }
-
-        MainController.Instance.RefreshUI(datas.CharacterData);
     }
 
     void OnLeave()
@@ -315,7 +320,8 @@ public class PageBattle : MonoBehaviour
 
     void MobDeadCheck(BattleResult result, ItemEnemy enemy)
     {
-        if (result.IsDefenderDead)
+        if (result.IsAttackerDead && enemy.Info.CharacterData.Name == result.Attacker ||
+            result.IsDefenderDead && enemy.Info.CharacterData.Name == result.Defenderer)
         {
             enemyList.Remove(enemy);
             ObjectPool.Put(enemy);

@@ -41,6 +41,7 @@ public class PanelInfo : MonoBehaviour
 
     public void RefreshInfo(RefreshInfoData data)
     {
+        Debug.Log("UI刷新");
         if (data.PlayerHP != -1)
             _fullAbility.HP = data.PlayerHP;
 

@@ -22,14 +22,13 @@ public class GetBattleStatus_Server : IApiHandler_Server
 
                 if (battleResult != null)
                 {
-                    var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == battleResult.Attacker);
-
                     if (battleResult.IsDefenderDead)
                     {
                         OnLeave();
                     }
                     else if (battleResult.IsAttackerDead)
                     {
+                        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == battleResult.Attacker);
                         BattleSystem.EnemyDeadProcess(target, battleResult);
                     }
                 }

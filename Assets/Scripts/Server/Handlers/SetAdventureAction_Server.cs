@@ -152,14 +152,13 @@ public class SetAdventureAction_Server : IApiHandler_Server
         var result = BattleSystem.CheckNowActor();
         if (result != null)
         {
-            var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == result.Attacker);
-
             if (result.IsDefenderDead)
             {
                 OnLeave();
             }
             else if (result.IsAttackerDead)
             {
+                var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == result.Attacker);
                 BattleSystem.EnemyDeadProcess(target, result);
             }
         }
