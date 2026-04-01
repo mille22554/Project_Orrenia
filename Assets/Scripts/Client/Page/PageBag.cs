@@ -64,11 +64,7 @@ public class PageBag : MonoBehaviour
             foreach (var itemInfo in datas.BagData.Items)
             {
                 var item = ObjectPool.Get(bagItem, itemList.content);
-                item.SetInfo(itemInfo, datas.CharacterData.Equips);
-                item.RefreshBagInfo = RefreshBagInfo;
-                item.Toggle.group = toggleItems;
-                item.Toggle.isOn = true;
-                item.Toggle.isOn = false;
+                item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, datas.CharacterData.Equips);
                 bagItems.Add(item);
 
                 var itemData = ItemDataCenter.GetItemData(item.Info.ItemID);
@@ -105,12 +101,7 @@ public class PageBag : MonoBehaviour
                 OtherCallBack
             );
 
-            void EquipCallBack()
-            {
-                item.gameObject.SetActive(true);
-                item.Toggle.isOn = false;
-            }
-
+            void EquipCallBack() => item.Show();
             void OtherCallBack() => item.gameObject.SetActive(false);
         }
     }
@@ -128,12 +119,7 @@ public class PageBag : MonoBehaviour
                 OtherCallBack
             );
 
-            void UseCallBack()
-            {
-                item.gameObject.SetActive(true);
-                item.Toggle.isOn = false;
-            }
-
+            void UseCallBack() => item.Show();
             void OtherCallBack() => item.gameObject.SetActive(false);
         }
     }
@@ -151,51 +137,53 @@ public class PageBag : MonoBehaviour
                 MaterialCallBack
             );
 
-            void MaterialCallBack()
-            {
-                item.gameObject.SetActive(true);
-                item.Toggle.isOn = false;
-            }
-
+            void MaterialCallBack() => item.Show();
             void OtherCallBack() => item.gameObject.SetActive(false);
         }
     }
 
-    void RefreshBagInfo(BagItem item)
+    void RefreshBagInfo(BagItem item, bool isOn)
     {
-        selectedBagItem = item;
-
-        var itemData = ItemDataCenter.GetItemData(item.Info.ItemID);
-        var itemKind = ItemDataCenter.GetItemKind(itemData.Kind);
-
-        itemName.text = itemData.Name;
-        type.text = itemKind.Name;
-        description.text = itemData.Description;
-
-        PublicFunc.DoActionAccordingToCategory(itemKind.Category, EquipCallBack, UseCallBack, MaterialCallBack);
-
-        void EquipCallBack()
+        if (isOn)
         {
-            if (item.Equips.Contains(item.Info.UID))
-                textUse.text = "卸下";
-            else
-                textUse.text = "裝備";
+            selectedBagItem = item;
 
-            ability.text = itemData.GetAbilityString();
-            btnUse.gameObject.SetActive(true);
+            var itemData = ItemDataCenter.GetItemData(item.Info.ItemID);
+            var itemKind = ItemDataCenter.GetItemKind(itemData.Kind);
+
+            itemName.text = itemData.Name;
+            type.text = itemKind.Name;
+            description.text = itemData.Description;
+
+            PublicFunc.DoActionAccordingToCategory(itemKind.Category, EquipCallBack, UseCallBack, MaterialCallBack);
+
+            void EquipCallBack()
+            {
+                if (item.Equips.Contains(item.Info.UID))
+                    textUse.text = "卸下";
+                else
+                    textUse.text = "裝備";
+
+                ability.text = itemData.GetAbilityString();
+                btnUse.gameObject.SetActive(true);
+            }
+
+            void UseCallBack()
+            {
+                textUse.text = "使用";
+                ability.text = itemData.GetAbilityString();
+                btnUse.gameObject.SetActive(true);
+            }
+
+            void MaterialCallBack()
+            {
+                ability.text = "";
+                btnUse.gameObject.SetActive(false);
+            }
         }
-
-        void UseCallBack()
+        else
         {
-            textUse.text = "使用";
-            ability.text = itemData.GetAbilityString();
-            btnUse.gameObject.SetActive(true);
-        }
-
-        void MaterialCallBack()
-        {
-            ability.text = "";
-            btnUse.gameObject.SetActive(false);
+            ResetBagInfo();
         }
     }
 
@@ -276,14 +264,14 @@ public class PageBag : MonoBehaviour
 
     void UseItem(BagItemData bagItemData)
     {
-        if (selectedBagItem.Info.Count == 0)
+        if (bagItemData.Count == 0)
         {
             bagItems.Remove(selectedBagItem);
-            ObjectPool.Put(selectedBagItem);
+            selectedBagItem.Remove();
         }
         else
         {
-            selectedBagItem.SetInfo(bagItemData);
+            selectedBagItem.UpdateItemCount(bagItemData.Count);
         }
     }
 }

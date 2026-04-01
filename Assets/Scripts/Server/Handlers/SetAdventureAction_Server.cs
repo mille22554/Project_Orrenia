@@ -24,7 +24,8 @@ public class SetAdventureAction_Server : IApiHandler_Server
             var responseData = new SetAdventureAction_ServerResponse
             {
                 SaveData = GameData_Server.SaveData,
-                ActionResult = actionResult
+                ActionResult = actionResult,
+                FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData)
             };
             var response = new ResponseData_Server
             {
@@ -35,7 +36,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"設定一般行動時發生錯誤: {ex.Message}";
+            var errorMessage = $"設定一般行動時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {
@@ -78,8 +79,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
     {
         var actionResult = new ActionResult();
 
-        CharacterData.CurrentSTA--;
-        CharacterDataCenter.EffectProcess(CharacterData);
+        CharacterDataCenter.STAProcess(CharacterData);
 
         PlayerData.Deep++;
 
@@ -177,4 +177,5 @@ public class SetAdventureAction_ServerResponse
 {
     public SaveDataFormat SaveData;
     public ActionResult ActionResult;
+    public FullAbilityBase FullAbility;
 }

@@ -25,7 +25,7 @@ public class SetPlayerName_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"設定玩家名稱時發生錯誤: {ex.Message}";
+            var errorMessage = $"設定玩家名稱時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {

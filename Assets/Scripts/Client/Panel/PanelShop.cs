@@ -126,7 +126,8 @@ public class PanelShop : MonoBehaviour
                 if (response.SelledItemSurplus == 0)
                 {
                     _shopItemList.Remove(_selectedShopItem);
-                    ObjectPool.Put(_selectedShopItem);
+                    _selectedShopItem.Remove();
+                    _selectedShopItem = null;
                 }
                 else
                 {

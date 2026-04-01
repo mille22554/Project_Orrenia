@@ -1,5 +1,5 @@
 ﻿<Solution>
+  <Project Path="Server.csproj" />
   <Project Path="Client.csproj" />
   <Project Path="Public.csproj" />
-  <Project Path="Server.csproj" />
 </Solution>

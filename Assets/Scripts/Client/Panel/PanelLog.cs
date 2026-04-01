@@ -101,7 +101,7 @@ public class PanelLog : MonoBehaviour
                     {
                         textLog = ObjectPool.Get(itemLog, effectContent);
                         itemEffectLogs.Add(textLog);
-                        textLog.text = $"{effect.type}－{effect.times}回合";
+                        textLog.text = $"{effect.Type}－{effect.Times}回合";
                     }
                 }
 
@@ -117,7 +117,7 @@ public class PanelLog : MonoBehaviour
                         {
                             textLog = ObjectPool.Get(itemLog, effectContent);
                             itemEffectLogs.Add(textLog);
-                            textLog.text = $"{effect.type}－{effect.times}回合";
+                            textLog.text = $"{effect.Type}－{effect.Times}回合";
                         }
                     }
                 }

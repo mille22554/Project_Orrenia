@@ -44,9 +44,10 @@ public class MainController : MonoBehaviour
         _panelInfo.RefreshInfo(data);
     }
 
-    public void RefreshUI(CharacterData characterData)
+    public void RefreshUI(CharacterData characterData) => RefreshUI(characterData, null);
+    public void RefreshUI(CharacterData characterData, FullAbilityBase fullAbility)
     {
-        var data = RefreshInfoData.Create(characterData);
+        var data = RefreshInfoData.Create(characterData, fullAbility);
         _panelInfo.RefreshInfo(data);
     }
 }

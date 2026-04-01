@@ -22,7 +22,8 @@ public class SetBattleAction_Server : IApiHandler_Server
             var responseData = new SetBattleAction_ServerResponse
             {
                 SaveData = GameData_Server.SaveData,
-                ActionResult = actionResult
+                ActionResult = actionResult,
+                FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData)
             };
             var response = new ResponseData_Server
             {
@@ -33,7 +34,7 @@ public class SetBattleAction_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"設定戰鬥行動時發生錯誤: {ex.Message}";
+            var errorMessage = $"設定戰鬥行動時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {
@@ -61,9 +62,6 @@ public class SetBattleAction_Server : IApiHandler_Server
 
     BattleResult OnAttack(MobData mob)
     {
-        CharacterData.CurrentSTA--;
-        CharacterDataCenter.EffectProcess(CharacterData);
-
         var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == mob.CharacterData.Name);
         if (target != null)
         {
@@ -77,6 +75,8 @@ public class SetBattleAction_Server : IApiHandler_Server
             {
                 OnLeave();
             }
+
+            CharacterDataCenter.STAProcess(CharacterData);
             return result;
         }
         else
@@ -107,4 +107,5 @@ public class SetBattleAction_ServerResponse
 {
     public SaveDataFormat SaveData;
     public ActionResult ActionResult;
+    public FullAbilityBase FullAbility;
 }

@@ -1,10 +1,66 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
+using Newtonsoft.Json;
+using UnityEngine;
 
 public static class CharacterDataCenter
 {
+    static Dictionary<EEffectID, EffectData> _effectDatas;
+    readonly static Dictionary<int, IEffectHandler> _effectHandlers = new();
+
+    static CharacterDataCenter()
+    {
+        LoadEffectData();
+        RegisterHandlers();
+    }
+
+    static void LoadEffectData()
+    {
+        var path = GameData_Server.EffectDataPath;
+        Debug.Log($"從 {path} 讀取效果類別資料");
+
+        if (File.Exists(path))
+        {
+            var json = File.ReadAllText(path);
+            _effectDatas = JsonConvert.DeserializeObject<Dictionary<EEffectID, EffectData>>(json);
+            foreach (var effectData in _effectDatas)
+            {
+                effectData.Value.ID = effectData.Key;
+            }
+        }
+        else
+        {
+            Debug.LogError("EffectData檔案丟失!");
+        }
+    }
+
+    static void RegisterHandlers()
+    {
+        var types = typeof(CharacterDataCenter).Assembly.GetTypes();
+
+        foreach (var type in types)
+        {
+            if (type.IsInterface || type.IsAbstract)
+                continue;
+
+            if (!typeof(IEffectHandler).IsAssignableFrom(type))
+                continue;
+
+            var instance = (IEffectHandler)Activator.CreateInstance(type);
+
+            Debug.Log($"Register effect handler: {instance.Type} -> {type.Name}");
+
+            _effectHandlers[instance.Type] = instance;
+        }
+    }
+
     public static CharacterData InitCurrentData(CharacterData data)
     {
+        data.Effects.Clear();
+
         var fullAbility = GetCharacterAbility(data);
         data.CurrentHP = fullAbility.HP;
         data.CurrentMP = fullAbility.MP;
@@ -40,13 +96,15 @@ public static class CharacterDataCenter
         if (data.Role == ECharacterRole.Mob)
             ability.HP /= 10;
 
-        ability = CalculateEquipAbility(ability, data.Equips);
-        ability = CalculateEffectAbility(ability, data.Effects);
+        CalculateEquipAbility(ability, data.Equips);
+        CalculateEffectAbility(ability, data.Effects);
+
+        FixAbility(data, ability);
 
         return ability;
     }
 
-    public static FullAbilityBase CalculateEquipAbility(FullAbilityBase data, List<long> equips)
+    static void CalculateEquipAbility(FullAbilityBase data, List<long> equips)
     {
         foreach (var equipUID in equips)
         {
@@ -63,64 +121,109 @@ public static class CharacterDataCenter
                 }
             }
         }
-
-        return data;
     }
 
-    public static FullAbilityBase CalculateEffectAbility(FullAbilityBase data, List<EffectData> effects)
+    static void CalculateEffectAbility(FullAbilityBase data, List<EffectData> effects)
     {
         foreach (var effect in effects)
         {
-            switch (effect.type)
+            if (_effectHandlers.TryGetValue(effect.Type, out var effectHandler))
             {
-                case EffectType.Buff.HP_UP:
-                    data.HP *= effect.value;
-                    break;
-
-                case EffectType.Buff.Berserk:
-                    data.HP *= effect.value;
-                    data.MP *= effect.value;
-                    data.ATK *= effect.value;
-                    data.MATK *= effect.value;
-                    data.DEF *= effect.value;
-                    data.MDEF *= effect.value;
-                    data.ACC *= effect.value;
-                    data.EVA *= effect.value;
-                    data.CRIT *= effect.value;
-                    data.SPD *= effect.value;
-                    break;
-
-                case EffectType.Debuff.Exhausted:
-                    data.HP /= effect.value;
-                    data.MP /= effect.value;
-                    data.ATK /= effect.value;
-                    data.MATK /= effect.value;
-                    data.DEF /= effect.value;
-                    data.MDEF /= effect.value;
-                    data.ACC /= effect.value;
-                    data.EVA /= effect.value;
-                    data.CRIT /= effect.value;
-                    data.SPD /= effect.value;
-                    break;
+                effectHandler.Passive(data, effect);
             }
         }
-        return data;
+    }
+
+    static void FixAbility(CharacterData data, FullAbilityBase ability)
+    {
+        if (data.CurrentHP > ability.HP)
+            data.CurrentHP = ability.HP;
+
+        if (data.CurrentMP > ability.MP)
+            data.CurrentMP = ability.MP;
+
+        if (ability.LUK < 1)
+            ability.LUK = 1;
+
+        if (ability.ATK < 1)
+            ability.ATK = 1;
+
+        if (ability.MATK < 1)
+            ability.MATK = 1;
+
+        if (ability.DEF < 1)
+            ability.DEF = 1;
+
+        if (ability.MDEF < 1)
+            ability.MDEF = 1;
+
+        if (ability.ACC < 1)
+            ability.ACC = 1;
+
+        if (ability.EVA < 1)
+            ability.EVA = 1;
+
+        if (ability.CRIT < 1)
+            ability.CRIT = 1;
+
+        if (ability.SPD < 1)
+            ability.SPD = 1;
+
     }
 
     public static void EffectProcess(CharacterData characterData)
     {
-        foreach (var effect in characterData.Effects)
+        foreach (var effect in characterData.Effects.ToList())
         {
-            switch (effect.type)
+            if (_effectHandlers.TryGetValue(effect.Type, out var effectHandler))
             {
-                case EffectType.Buff.HP_Regen:
-                    characterData.CurrentHP += effect.value;
-                    break;
+                effectHandler.Proc(characterData, effect);
             }
-
-            effect.times--;
-            if (effect.times <= 0)
-                characterData.Effects.Remove(effect);
         }
     }
+
+    public static void STAProcess(CharacterData characterData)
+    {
+        characterData.CurrentSTA--;
+
+        if (characterData.CurrentSTA <= 0)
+        {
+            characterData.CurrentSTA = 0;
+            AddCharacterEffect(characterData, EEffectID.Exhausted, 10, 1);
+        }
+
+        EffectProcess(characterData);
+    }
+
+    public static void AddCharacterEffect(CharacterData characterData, EEffectID effectID, int effectValue, int effectTimes)
+    {
+        if (_effectDatas.TryGetValue(effectID, out var effect))
+        {
+            var exist = characterData.Effects.Find(x => x.ID == effect.ID);
+
+            if (exist != null && exist.Value == effectValue)
+            {
+                exist.Times += effectTimes;
+            }
+            else
+            {
+                characterData.Effects.Add(new()
+                {
+                    Name = effect.Name,
+                    ID = effect.ID,
+                    Type = effect.Type,
+                    Value = effectValue,
+                    Times = effectTimes
+                });
+            }
+        }
+
+    }
+}
+
+public interface IEffectHandler
+{
+    int Type { get; }
+    void Passive(FullAbilityBase fullAbility, EffectData effectData);
+    void Proc(CharacterData characterData, EffectData effectData);
 }

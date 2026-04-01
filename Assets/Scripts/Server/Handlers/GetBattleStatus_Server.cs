@@ -50,7 +50,7 @@ public class GetBattleStatus_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"讀取戰鬥狀態時發生錯誤: {ex.Message}";
+            var errorMessage = $"讀取戰鬥狀態時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {

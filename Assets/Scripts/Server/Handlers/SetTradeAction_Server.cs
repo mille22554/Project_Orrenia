@@ -45,7 +45,7 @@ public class SetTradeAction_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"交易道具時發生錯誤: {ex.Message}";
+            var errorMessage = $"交易道具時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {
@@ -109,6 +109,9 @@ public class SetTradeAction_Server : IApiHandler_Server
             void OtherCallBack()
             {
                 sellItemSurplus = existing.Count;
+
+                if (sellItemSurplus == 0)
+                    BagData.Items.Remove(existing);
             }
         }
 

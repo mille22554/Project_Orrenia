@@ -97,6 +97,7 @@ public class RefreshInfoData
     }
 
     public static RefreshInfoData Create(CharacterData characterData) => Create(characterData, null, -1);
+    public static RefreshInfoData Create(CharacterData characterData, FullAbilityBase fullAbility) => Create(characterData, fullAbility, -1);
     public static RefreshInfoData Create(CharacterData characterData, FullAbilityBase fullAbility, int exp)
     {
         var data = new RefreshInfoData

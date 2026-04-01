@@ -1,7 +1,4 @@
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 public static class GameData_Server
@@ -82,6 +79,19 @@ public static class GameData_Server
             return Path.Combine(databaseFolderPath, "ItemKind.json");
         }
     }
+    public static string EffectDataPath
+    {
+        get
+        {
+            var databaseFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "DataBase");
+            if (!Directory.Exists(databaseFolderPath))
+            {
+                Debug.LogError("資料庫丟失!");
+            }
+
+            return Path.Combine(databaseFolderPath, "EffectData.json");
+        }
+    }
 
     public static string version = "0.0.16";
 
@@ -93,64 +103,6 @@ public static class GameData_Server
     public static CharacterData NowCharacterData => SaveData.Datas.CharacterData;
     public static EnemyData NowEnemyData => SaveData.Datas.EnemyData;
     public static BagData NowBagData => SaveData.Datas.BagData;
-
-    static HashSet<string> _weapons;
-    public static HashSet<string> Weapons
-    {
-        get
-        {
-            _weapons ??= typeof(EquipType.One_Hand_Weapon)
-                    .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-                    .Concat(typeof(EquipType.Two_Hand_Weapon)
-                    .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
-                    .Select(f => f.GetValue(null)?.ToString())
-                    .Where(v => v != null)
-                    .ToHashSet();
-
-            return _weapons;
-        }
-    }
-}
-
-public static class EquipType
-{
-    public static class One_Hand_Weapon
-    {
-        public const string Sword = "單手劍";
-        public const string Hammer = "單手錘";
-        public const string Spear = "長槍";
-        public const string Staff = "法杖";
-        public const string Rapier = "刺劍";
-        public const string Dagger = "短刀";
-    }
-    public static class Two_Hand_Weapon
-    {
-        public const string Axe = "雙手斧";
-        public const string Aegis = "塔盾";
-        public const string Bow = "弓";
-        public const string Book = "魔導書";
-        public const string Katana = "武士刀";
-        public const string Tarot = "塔羅牌";
-    }
-    public const string Shield = "盾牌";
-    public const string Helmet = "頭盔";
-    public const string Armor = "護胸";
-    public const string Greaves = "護腿";
-    public const string Shoes = "鞋子";
-    public const string Gloves = "手套";
-    public const string Cape = "披風";
-    public const string Ring = "戒指";
-    public const string Pendant = "項鍊";
-}
-
-public static class UseType
-{
-    public const string Use = "消耗品";
-}
-
-public static class MaterialType
-{
-    public const string Material = "素材";
 }
 
 public static class GameSkill

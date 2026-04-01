@@ -52,6 +52,7 @@ public enum EItemCategory
 {
     One_Hand,
     Two_Hand,
+    Shield,
     Helmet,
     Armor,
     Greaves,

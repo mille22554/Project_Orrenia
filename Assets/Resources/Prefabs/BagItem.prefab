@@ -119,11 +119,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8b4131f5d2f6d84d886f2882122919a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Toggle: {fileID: 2342406325713119541}
+  Equips: 
   IconEquip: {fileID: 5931640873755364275}
-  itemName: {fileID: 4361928453568989578}
-  count: {fileID: 5834620658079586719}
-  iconPick: {fileID: 7190501356392476928}
+  _itemName: {fileID: 4361928453568989578}
+  _count: {fileID: 5834620658079586719}
+  _toggle: {fileID: 2342406325713119541}
+  _iconPick: {fileID: 7190501356392476928}
 --- !u!114 &2342406325713119541
 MonoBehaviour:
   m_ObjectHideFlags: 0

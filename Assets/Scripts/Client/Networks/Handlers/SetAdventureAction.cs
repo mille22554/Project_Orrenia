@@ -19,4 +19,5 @@ public class SetAdventureActionResponse
 {
     public SaveDataFormat SaveData;
     public ActionResult ActionResult;
+    public FullAbilityBase FullAbility;
 }

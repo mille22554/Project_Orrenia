@@ -29,7 +29,7 @@ public class SetItemAction_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"使用道具時發生錯誤: {ex.Message}";
+            var errorMessage = $"使用道具時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {

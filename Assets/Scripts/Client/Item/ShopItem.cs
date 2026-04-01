@@ -11,7 +11,8 @@ public class ShopItem : MonoBehaviour
     [SerializeField] Text _itemName;
     [SerializeField] Text _count;
     [SerializeField] Toggle _toggle;
-    [SerializeField] Action<ShopItem, bool> _refreshBagInfo;
+
+    Action<ShopItem, bool> _refreshBagInfo;
 
     void Awake()
     {
@@ -42,6 +43,12 @@ public class ShopItem : MonoBehaviour
     public void UpdateItemCount(int count)
     {
         _count.text = count.ToString();
+    }
+
+    public void Remove()
+    {
+        _toggle.isOn = false;
+        ObjectPool.Put(this);
     }
 
     void OnToggleValueChange(bool isOn)

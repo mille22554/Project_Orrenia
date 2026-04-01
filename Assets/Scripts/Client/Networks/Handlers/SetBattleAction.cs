@@ -19,4 +19,5 @@ public class SetBattleActionResponse
 {
     public SaveDataFormat SaveData;
     public ActionResult ActionResult;
+    public FullAbilityBase FullAbility;
 }

@@ -140,7 +140,7 @@ public class PageBattle : MonoBehaviour
 
             deep.text = "深度 " + datas.PlayerData.Deep;
 
-            MainController.Instance.RefreshUI(datas.CharacterData);
+            MainController.Instance.RefreshUI(datas.CharacterData, response.FullAbility);
         }
     }
 
@@ -163,7 +163,7 @@ public class PageBattle : MonoBehaviour
             {
                 OnEnemyAppear(enemies);
 
-                RunBattleVisuals(response.ActionResult.BattleResult, datas);
+                RunBattleVisuals(response.ActionResult.BattleResult, datas, response.FullAbility);
             }
         }
     }
@@ -202,9 +202,10 @@ public class PageBattle : MonoBehaviour
         }
     }
 
-    void RunBattleVisuals(BattleResult result, Datas datas)
+    void RunBattleVisuals(BattleResult result, Datas datas) => RunBattleVisuals(result, datas, null);
+    void RunBattleVisuals(BattleResult result, Datas datas, FullAbilityBase fullAbility)
     {
-        MainController.Instance.RefreshUI(datas.CharacterData);
+        MainController.Instance.RefreshUI(datas.CharacterData, fullAbility);
 
         if (result != null)
         {
@@ -220,7 +221,7 @@ public class PageBattle : MonoBehaviour
             if (result.IsAttackerDead && datas.CharacterData.Name == result.Attacker ||
                 result.IsDefenderDead && datas.CharacterData.Name == result.Defenderer)
             {
-                LeaveDungon(datas.PlayerData.Area, datas.CharacterData);
+                LeaveDungon(datas.PlayerData.Area, datas.CharacterData, fullAbility);
             }
             else
             {
@@ -241,11 +242,11 @@ public class PageBattle : MonoBehaviour
         void CallBack(SetAdventureActionResponse response)
         {
             var datas = response.SaveData.Datas;
-            LeaveDungon(datas.PlayerData.Area, datas.CharacterData);
+            LeaveDungon(datas.PlayerData.Area, datas.CharacterData, response.FullAbility);
         }
     }
 
-    void LeaveDungon(int areaID, CharacterData characterData)
+    void LeaveDungon(int areaID, CharacterData characterData, FullAbilityBase fullAbility)
     {
         btnInto.gameObject.SetActive(true);
         btnShop.gameObject.SetActive(true);
@@ -266,7 +267,7 @@ public class PageBattle : MonoBehaviour
         panelLog.ClearBattleLog();
         panelLog.SetLog("離開迷宮，回到 " + _area.text);
 
-        MainController.Instance.RefreshUI(characterData);
+        MainController.Instance.RefreshUI(characterData, fullAbility);
     }
 
     void OnRest()
@@ -292,7 +293,7 @@ public class PageBattle : MonoBehaviour
                 OnEnemyAppear(datas.EnemyData.Enemies);
             }
 
-            RunBattleVisuals(response.ActionResult.BattleResult, datas);
+            RunBattleVisuals(response.ActionResult.BattleResult, datas, response.FullAbility);
         }
     }
 
@@ -314,7 +315,7 @@ public class PageBattle : MonoBehaviour
 
             MobDeadCheck(battleResult, target);
 
-            RunBattleVisuals(battleResult, response.SaveData.Datas);
+            RunBattleVisuals(battleResult, response.SaveData.Datas, response.FullAbility);
         }
     }
 

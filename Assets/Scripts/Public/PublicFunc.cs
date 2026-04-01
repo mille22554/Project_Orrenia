@@ -24,16 +24,6 @@ public class PublicFunc
         }
     }
 
-    public static void AddCharacterEffect(CharacterData characterData, string effectType, int effectValue, int effectTimes)
-    {
-        characterData.Effects.Add(new()
-        {
-            type = effectType,
-            value = effectValue,
-            times = effectTimes
-        });
-    }
-
     public static int GetAbilityPoint(CharacterData data) => GetAbilityPoint(data, null);
     public static int GetAbilityPoint(CharacterData data, AbilityBase ability)
     {
@@ -71,6 +61,7 @@ public class PublicFunc
 
     public static void DoActionAccordingToCategory(EItemCategory category, Action equipCallBack, Action useCallBack, Action materialCallBack)
     {
+        Debug.Log($"Category: {category}");
         switch (category)
         {
             case EItemCategory.One_Hand:

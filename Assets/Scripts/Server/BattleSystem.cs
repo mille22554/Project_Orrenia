@@ -7,6 +7,7 @@ public static class BattleSystem
     public static BattleData CreateBattleData(CharacterData characterData)
     {
         var fullAbility = CharacterDataCenter.GetCharacterAbility(characterData);
+
         var battleData = new BattleData
         {
             Name = characterData.Name,
@@ -76,8 +77,8 @@ public static class BattleSystem
 
                 break;
             case ECharacterRole.Mob:
-                CharacterDataCenter.EffectProcess(nowActor);
                 result = RunBattle(nowActor, GameData_Server.SaveData.Datas.CharacterData);
+                CharacterDataCenter.STAProcess(nowActor);
                 break;
         }
 
@@ -291,14 +292,21 @@ public static class BattleSystem
 
             result.DropItems.Add(itemData.Name);
 
-            void EquipCallBack()
+            void EquipCallBack() => GameData_Server.NowBagData.Items.Add(ItemDataCenter_Server.GetNewItem(itemData));
+
+            void OtherCallBack()
             {
                 if (existing == null)
-                    GameData_Server.NowBagData.Items.Add(ItemDataCenter_Server.GetNewItem(itemData));
+                {
+                    Debug.Log("1");
+                    EquipCallBack();
+                }
                 else
-                    OtherCallBack();
+                {
+                    Debug.Log("2");
+                    existing.Count++;
+                }
             }
-            void OtherCallBack() => existing.Count++;
         }
 
         enemyData.Enemies.Remove(target);
