@@ -45,7 +45,7 @@ public class GetSaveData_Server : IApiHandler_Server
                 SaveData = GameData_Server.SaveData,
                 FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData),
                 AbilityPoint = PublicFunc.GetAbilityPoint(CharacterData),
-                Exp = PublicFunc.GetExp(CharacterData)
+                Exp = PublicFunc.GetExp(CharacterData.Level)
             };
             var response = new ResponseData_Server
             {

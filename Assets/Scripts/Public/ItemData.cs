@@ -1,12 +1,10 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-public class BagItemData
+public class BagItemData : ItemData
 {
     public long UID;
-    public int ItemID;
-    public int Durability;
-    public int Count;
+    public int ItemID => ID;
 }
 
 public class ItemData
@@ -67,6 +65,7 @@ public enum EItemCategory
 
 public enum EItemKind
 {
+    None = -1,
     Sword,
     Hammer,
     Spear,

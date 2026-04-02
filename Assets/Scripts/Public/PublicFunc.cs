@@ -33,9 +33,9 @@ public class PublicFunc
         return (data.Level + 1) * 6 - totalUsedPoint;
     }
 
-    public static int GetExp(CharacterData data)
+    public static int GetExp(int level)
     {
-        return (1 << (data.Level - 1)) * 100;
+        return (1 << (level - 1)) * 100;
     }
 
     public static int Dice(int num, int face)
@@ -61,11 +61,11 @@ public class PublicFunc
 
     public static void DoActionAccordingToCategory(EItemCategory category, Action equipCallBack, Action useCallBack, Action materialCallBack)
     {
-        Debug.Log($"Category: {category}");
         switch (category)
         {
             case EItemCategory.One_Hand:
             case EItemCategory.Two_Hand:
+            case EItemCategory.Shield:
             case EItemCategory.Helmet:
             case EItemCategory.Armor:
             case EItemCategory.Greaves:

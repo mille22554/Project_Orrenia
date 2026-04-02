@@ -44,10 +44,9 @@ public class SetItemAction_Server : IApiHandler_Server
     {
         var response = new SetItemAction_ServerResponse();
 
-        var itemData = ItemDataCenter_Server.GetItemData(bagItemData.ItemID);
-        var itemKind = ItemDataCenter_Server.GetItemKind(itemData.Kind);
+        var itemKind = ItemDataCenter_Server.GetItemKind(bagItemData.Kind);
 
-        ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, UseCallBack, null);
+        ItemDataCenter_Server.DoActionAccordingToCategory(bagItemData.Kind, EquipCallBack, UseCallBack, null);
 
         response.ItemCategory = itemKind.Category;
         response.BagItemData = bagItemData;
@@ -58,7 +57,7 @@ public class SetItemAction_Server : IApiHandler_Server
 
         return response;
 
-        void EquipCallBack() => RefreshEquipState(itemData.Kind, bagItemData.UID);
+        void EquipCallBack() => RefreshEquipState(bagItemData.Kind, bagItemData.UID);
 
         void UseCallBack()
         {
@@ -68,16 +67,16 @@ public class SetItemAction_Server : IApiHandler_Server
             if (item.Count == 0)
                 BagData.Items.Remove(item);
 
-            if (itemData.Ability.HP != 0)
-                CharacterData.CurrentHP += itemData.Ability.HP;
+            if (bagItemData.Ability.HP != 0)
+                CharacterData.CurrentHP += bagItemData.Ability.HP;
 
-            if (itemData.Ability.MP != 0)
-                CharacterData.CurrentMP += itemData.Ability.MP;
+            if (bagItemData.Ability.MP != 0)
+                CharacterData.CurrentMP += bagItemData.Ability.MP;
 
-            if (itemData.Ability.STA != 0)
-                CharacterData.CurrentSTA += itemData.Ability.STA;
+            if (bagItemData.Ability.STA != 0)
+                CharacterData.CurrentSTA += bagItemData.Ability.STA;
 
-            UseItemSpecial(itemData.Name);
+            UseItemSpecial(bagItemData.Name);
             CharacterDataCenter.EffectProcess(CharacterData);
         }
     }
@@ -96,7 +95,7 @@ public class SetItemAction_Server : IApiHandler_Server
             {
                 var equip = BagData.Items.Find(x => x.UID == equipUID);
 
-                if (ItemDataCenter_Server.GetItemData(equip.ItemID).Kind == kind)
+                if (equip.Kind == kind)
                 {
                     equips.Remove(equip.UID);
                     break;

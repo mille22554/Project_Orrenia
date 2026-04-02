@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8718633570680884713}
   - component: {fileID: 996898912447832184}
   m_Layer: 5
-  m_Name: ForgeItem
+  m_Name: ForgeBagItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -161,8 +161,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98b57b702d8706d4bac43fbe87014bcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Count: {fileID: 5834620658079586719}
-  itemName: {fileID: 4361928453568989578}
+  _itemName: {fileID: 4361928453568989578}
+  _textCount: {fileID: 5834620658079586719}
 --- !u!1 &2535988484554758852
 GameObject:
   m_ObjectHideFlags: 0

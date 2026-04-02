@@ -10,7 +10,6 @@ public class PlayerContextData
 
     public int ForgeLevel;
     public int CurrentForgeExp;
-    public int MaxForgeExp;
 
     public bool IsGetBasicDagger;
 
@@ -25,7 +24,6 @@ public class PlayerContextData
 
             ForgeLevel = 1,
             CurrentForgeExp = 0,
-            MaxForgeExp = 100,
 
             IsGetBasicDagger = false
         };

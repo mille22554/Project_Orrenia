@@ -94,9 +94,8 @@ public class PanelShop : MonoBehaviour
 
             foreach (var itemInfo in bagData.Items)
             {
-                var itemData = ItemDataCenter.GetItemData(itemInfo.ItemID);
                 var item = ObjectPool.Get(_shopItem, _itemList.content);
-                item.SetInfo(itemData, _toggleItems, RefreshBagInfo);
+                item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);
                 item.BagItemUID = itemInfo.UID;
                 _shopItemList.Add(item);
             }

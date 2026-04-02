@@ -7,30 +7,33 @@ using UnityEngine.UI;
 public class PageForge : MonoBehaviour
 {
     const string resourcePath = "Prefabs/PageForge";
-    [SerializeField] InputField inputItemName;
-    [SerializeField] Transform transToggleTypes;
-    [SerializeField] List<Transform> listTransToggles;
-    [SerializeField] Text textMaterialNum;
-    [SerializeField] ScrollRect srUsedMaterials;
-    [SerializeField] ScrollRect srBagMaterials;
-    [SerializeField] Button btnForge;
-    [SerializeField] Button btnReset;
-    [SerializeField] ForgeItem forgeItem;
-    [SerializeField] Text itemUsedMaterial;
 
-    readonly List<Toggle> toggleTypes = new();
-    readonly List<List<Toggle>> listToggles = new();
-    readonly Dictionary<ForgeItem, Text> usedMaterials = new();
-    readonly List<ForgeItem> bagMaterials = new();
-    readonly ItemData itemTemplate = new()
+    [SerializeField] InputField _inputItemName;
+    [SerializeField] ToggleGroup _toggleTypesGroup;
+    [SerializeField] ToggleGroup _toggleKindsGroup;
+    [SerializeField] Text _textMaterialNum;
+    [SerializeField] ScrollRect _srSelectedMaterials;
+    [SerializeField] ScrollRect _srBagMaterials;
+    [SerializeField] Button _btnForge;
+    [SerializeField] Button _btnReset;
+    [SerializeField] ForgeBagItem _forgeBagItem;
+    [SerializeField] ForgeSelectedItem _forgeSelectedItem;
+    [SerializeField] ToggleForgeOption _toggleForgeOptionType;
+    [SerializeField] ToggleForgeOption _toggleForgeOptionKind;
+
+    readonly List<ToggleForgeOption> _toggleOptionKinds = new();
+    readonly List<Toggle> _toggleTypes = new();
+    readonly Dictionary<ForgeBagItem, ForgeSelectedItem> _selectedMaterials = new();
+    readonly List<ForgeBagItem> _bagMaterials = new();
+    int _maxMaterialNum;
+    EItemKind _nowSelectedKind = EItemKind.None;
+
+    enum EToggleType
     {
-        Description = "使用素材: ",
-        Price = 500,
-        ID = 1,
-        Durability = 500,
-    };
-    int nowMaterialNum;
-    int maxMaterialNum;
+        單手武器,
+        雙手武器,
+        防具
+    }
 
     public static void Create()
     {
@@ -40,402 +43,207 @@ public class PageForge : MonoBehaviour
 
     void Awake()
     {
-        for (int i = 0; i < transToggleTypes.childCount; i++)
+        foreach (var type in (EToggleType[])Enum.GetValues(typeof(EToggleType)))
         {
-            var index = i;
-            if (transToggleTypes.GetChild(index).TryGetComponent<Toggle>(out var toggleType))
+            var optionType = ObjectPool.Get(_toggleForgeOptionType, _toggleTypesGroup.transform);
+            optionType.SetInfo(type.ToString(), _toggleTypesGroup, OnOptionType);
+
+            void OnOptionType(bool isOn)
             {
-                var objectToggles = listTransToggles.ElementAtOrDefault(index);
-                if (objectToggles != null)
+                if (isOn)
                 {
-                    toggleType.onValueChanged.AddListener(OnToggleType);
-                    toggleTypes.Add(toggleType);
+                    foreach (var optionKind in _toggleOptionKinds)
+                        ObjectPool.Put(optionKind);
 
-                    var tempList = new List<Toggle>();
-                    listToggles.Add(tempList);
-                    SetToggleToList(objectToggles);
+                    _toggleOptionKinds.Clear();
 
-
-
-                    void OnToggleType(bool isOn)
+                    switch (type)
                     {
-                        objectToggles.gameObject.SetActive(isOn);
-
-                        if (isOn)
-                        {
-                            switch (index)
+                        case EToggleType.單手武器:
+                            var categories = new List<EItemCategory> { EItemCategory.One_Hand };
+                            SetBySwitch(6, categories);
+                            break;
+                        case EToggleType.雙手武器:
+                            categories = new List<EItemCategory> { EItemCategory.Two_Hand };
+                            SetBySwitch(10, categories);
+                            break;
+                        case EToggleType.防具:
+                            categories = new List<EItemCategory>
                             {
-                                case 0:
-                                    maxMaterialNum = 6;
-                                    break;
-                                case 1:
-                                    maxMaterialNum = 10;
-                                    break;
-                                case 2:
-                                    maxMaterialNum = 8;
-                                    break;
-                            }
-
-                            OnReset();
-
-                            var tempToggles = listToggles.ElementAtOrDefault(index);
-                            if (tempToggles != null)
-                            {
-                                var tempToggle = tempToggles.ElementAtOrDefault(0);
-                                if (tempToggle != null)
-                                    tempToggle.isOn = true;
-                            }
-                        }
+                                EItemCategory.Shield,
+                                EItemCategory.Helmet,
+                                EItemCategory.Armor,
+                                EItemCategory.Greaves,
+                                EItemCategory.Shoes,
+                                EItemCategory.Gloves,
+                                EItemCategory.Cape,
+                                EItemCategory.Ring,
+                                EItemCategory.Pendant
+                            };
+                            SetBySwitch(8, categories);
+                            break;
                     }
 
-                    void SetToggleToList(Transform transObject)
+                    OnReset();
+
+                    void SetBySwitch(int maxMaterialNum, List<EItemCategory> categories)
                     {
-                        for (int j = 0; j < transObject.childCount; j++)
+                        _maxMaterialNum = maxMaterialNum;
+
+                        foreach (var kindData in ItemDataCenter.GetItemKindList())
                         {
-                            var transToggle = transObject.GetChild(j);
-                            if (transToggle.TryGetComponent<Toggle>(out var toggle))
+                            foreach (var category in categories)
                             {
-                                var index2 = j;
-                                toggle.onValueChanged.AddListener(isOn =>
+                                if (kindData.Value.Category == category)
                                 {
-                                    if (isOn)
-                                    {
-                                        OnReset();
-                                        CheckItemType(index, index2);
-                                    }
-                                });
-                                tempList.Add(toggle);
+                                    var optionKind = ObjectPool.Get(_toggleForgeOptionKind, _toggleKindsGroup.transform);
+                                    _toggleOptionKinds.Add(optionKind);
+                                    optionKind.SetInfo(kindData.Value.Name, _toggleKindsGroup, OnOptionKind);
+                                }
                             }
-                            else if (transToggle.childCount > 0)
+
+                            void OnOptionKind(bool isOn)
                             {
-                                SetToggleToList(transToggle);
+                                if (isOn)
+                                {
+                                    _nowSelectedKind = kindData.Key;
+                                }
+                                else
+                                {
+                                    _nowSelectedKind = EItemKind.None;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
+        _btnForge.onClick.AddListener(OnForge);
+        _btnReset.onClick.AddListener(OnReset);
     }
 
     void OnEnable()
     {
-        inputItemName.text = "";
+        var requestData = new GetSaveDataRequest();
+        ApiBridge.Send(requestData, CallBack);
 
-        // foreach (var material in GameData_Server.NowBagData.Items.Where(x => ItemTypeCheck.IsMaterialType(ItemDataCenter.GetItemData(x.ItemID).Kind)))
-        // {
-        //     var tempItem = Instantiate(forgeItem, srBagMaterials.content);
-        //     tempItem.SetData(material, OnBtnBagMaterial);
-        //     bagMaterials.Add(tempItem);
-
-
-
-        //     void OnBtnBagMaterial()
-        //     {
-        //         if (int.TryParse(tempItem.Count.text, out var count))
-        //         {
-        //             if (count == 0 || nowMaterialNum == maxMaterialNum)
-        //             {
-        //                 return;
-        //             }
-        //             else
-        //             {
-        //                 count--;
-        //                 tempItem.Count.text = count.ToString();
-        //             }
-        //         }
-
-        //         if (usedMaterials.TryGetValue(tempItem, out var textNum))
-        //         {
-        //             textNum.text = $"{ItemDataCenter.GetItemData(tempItem.Data.ItemID).Name} x{tempItem.Data.Count - count}";
-        //         }
-        //         else
-        //         {
-        //             var tempItem2 = Instantiate(itemUsedMaterial, srUsedMaterials.content);
-        //             tempItem2.text = $"{ItemDataCenter.GetItemData(tempItem.Data.ItemID).Name} x1";
-        //             usedMaterials.Add(tempItem, tempItem2);
-        //         }
-
-        //         nowMaterialNum++;
-        //         textMaterialNum.text = $"已填入素材數:{nowMaterialNum}/{maxMaterialNum}";
-        //     }
-        // }
-
-        var tempType = toggleTypes.ElementAtOrDefault(0);
-        if (tempType != null)
-            tempType.isOn = true;
+        void CallBack(GetSaveDataResponse response)
+        {
+            InitPage(response.SaveData.Datas.BagData.Items);
+        }
     }
 
-    void OnDisable()
+    void InitPage(List<BagItemData> bagItemDatas)
     {
-        foreach (var bagMaterial in bagMaterials)
-            Destroy(bagMaterial.gameObject);
-        bagMaterials.Clear();
+        _inputItemName.text = "";
+        OnReset();
 
-        foreach (var usedMaterial in usedMaterials.Values)
-            Destroy(usedMaterial.gameObject);
-        usedMaterials.Clear();
+        foreach (var bagItemData in bagItemDatas)
+        {
+            var kind = bagItemData.Kind;
+            ItemDataCenter.DoActionAccordingToCategory(kind, null, null, MaterialCallBack);
+
+            void MaterialCallBack()
+            {
+                var bagItem = ObjectPool.Get(_forgeBagItem, _srBagMaterials.content);
+                bagItem.SetData(bagItemData, OnBtnBagMaterial);
+                _bagMaterials.Add(bagItem);
+
+                void OnBtnBagMaterial()
+                {
+                    if (bagItem.Count == 0 || NowMaterialNum() == _maxMaterialNum)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        bagItem.UpdateItemCount(bagItem.Count - 1);
+                    }
+
+                    var bagItemName = bagItem.Data.Name;
+                    var bagItemUID = bagItem.Data.UID;
+                    if (_selectedMaterials.TryGetValue(bagItem, out var selectedItem))
+                    {
+                        selectedItem.SetData(bagItemName, bagItemUID, bagItemData.Count - bagItem.Count);
+                    }
+                    else
+                    {
+                        selectedItem = ObjectPool.Get(_forgeSelectedItem, _srSelectedMaterials.content);
+                        selectedItem.SetData(bagItemName, bagItemUID, 1);
+                        _selectedMaterials.Add(bagItem, selectedItem);
+                    }
+
+                    _textMaterialNum.text = $"已填入素材數:{NowMaterialNum()}/{_maxMaterialNum}";
+                }
+
+                var tempType = _toggleTypes.ElementAtOrDefault(0);
+                if (tempType != null)
+                    tempType.isOn = true;
+            }
+        }
     }
 
-    void Start()
+    void OnDisable() => Clear();
+
+    void Clear()
     {
-        btnForge.onClick.AddListener(OnForge);
-        btnReset.onClick.AddListener(OnReset);
+        foreach (var bagMaterial in _bagMaterials)
+            ObjectPool.Put(bagMaterial);
+        _bagMaterials.Clear();
+
+        foreach (var usedMaterial in _selectedMaterials.Values)
+            ObjectPool.Put(usedMaterial);
+        _selectedMaterials.Clear();
     }
 
     void OnForge()
     {
-        // if (nowMaterialNum < maxMaterialNum || string.IsNullOrWhiteSpace(inputItemName.text))
-        //     return;
+        if (NowMaterialNum() < _maxMaterialNum || string.IsNullOrWhiteSpace(_inputItemName.text) || _nowSelectedKind == EItemKind.None)
+            return;
 
-        // var newItem = PublicFunc.GetItem(itemTemplate);
-        // ItemBaseData.Get(newItem.itemID).name = inputItemName.text;
+        var materials = new List<long>();
+        foreach (var selectedItem in _selectedMaterials.Values)
+        {
+            for (int i = 0; i < selectedItem.Count; i++)
+                materials.Add(selectedItem.UID);
+        }
 
-        // foreach (var tempItem in usedMaterials.Keys)
-        // {
-        //     if (int.TryParse(tempItem.Count.text, out var count))
-        //     {
-        //         for (int i = 0; i < count; i++)
-        //             SaveDataCenter.SetEquipAbility(ItemBaseData.Get(tempItem.Data.itemID).ability, ItemBaseData.Get(newItem.itemID).ability);
+        var requestData = new SetForgeActionRequest
+        {
+            ItemName = _inputItemName.text,
+            ItemKind = _nowSelectedKind,
+            Materials = materials
+        };
+        ApiBridge.Send(requestData, CallBack);
 
-        //         tempItem.Data.count = count;
-        //         if (count == 0)
-        //         {
-        //             GameData.NowBagData.items.Remove(tempItem.Data);
-        //             bagMaterials.Remove(tempItem);
-        //             Destroy(tempItem.gameObject);
-        //         }
-        //     }
-        // }
+        void CallBack(SetForgeActionResponse response)
+        {
+            Clear();
+
+            InitPage(response.BagItemDatas);
+        }
     }
 
     void OnReset()
     {
-        foreach (var usedMaterial in usedMaterials.Values)
-            Destroy(usedMaterial.gameObject);
-        usedMaterials.Clear();
-        nowMaterialNum = 0;
+        foreach (var selectedMaterial in _selectedMaterials.Values)
+            ObjectPool.Put(selectedMaterial);
 
-        foreach (var bagMaterial in bagMaterials)
-            bagMaterial.ResetInfo();
+        _selectedMaterials.Clear();
 
-        textMaterialNum.text = $"已填入素材數:{nowMaterialNum}/{maxMaterialNum}";
+        foreach (var bagMaterial in _bagMaterials)
+            bagMaterial.UpdateItemCount();
+
+        _textMaterialNum.text = $"已填入素材數:{NowMaterialNum()}/{_maxMaterialNum}";
     }
 
-    void CheckItemType(int index, int index2)
+    int NowMaterialNum()
     {
-        // switch (index)
-        // {
-        //     case 0:
-        //         switch (index2)
-        //         {
-        //             case 0:
-        //                 itemTemplate.Kind = EquipType.One_Hand_Weapon.Sword;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 5 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     STR = 5 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 1:
-        //                 itemTemplate.Kind = EquipType.One_Hand_Weapon.Hammer;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 3 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     VIT = 5 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 2:
-        //                 itemTemplate.Kind = EquipType.One_Hand_Weapon.Spear;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     SPD = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEX = 5 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 3:
-        //                 itemTemplate.Kind = EquipType.One_Hand_Weapon.Staff;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     MATK = 5 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     INT = 5 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 4:
-        //                 itemTemplate.Kind = EquipType.One_Hand_Weapon.Rapier;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 3 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     CRIT = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     AGI = 5 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 5:
-        //                 itemTemplate.Kind = EquipType.One_Hand_Weapon.Dagger;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     LUK = 8 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //         }
-        //         break;
-        //     case 1:
-        //         switch (index2)
-        //         {
-        //             case 0:
-        //                 itemTemplate.Kind = EquipType.Two_Hand_Weapon.Axe;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 8 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     STR = 8 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 1:
-        //                 itemTemplate.Kind = EquipType.Two_Hand_Weapon.Aegis;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     VIT = 8 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 2:
-        //                 itemTemplate.Kind = EquipType.Two_Hand_Weapon.Bow;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 6 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     SPD = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     EVA = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEX = 8 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 3:
-        //                 itemTemplate.Kind = EquipType.Two_Hand_Weapon.Book;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     MATK = 8 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     INT = 8 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 4:
-        //                 itemTemplate.Kind = EquipType.Two_Hand_Weapon.Katana;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 6 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     CRIT = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     AGI = 8 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 5:
-        //                 itemTemplate.Kind = EquipType.Two_Hand_Weapon.Tarot;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     LUK = 12 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //         }
-        //         break;
-        //     case 2:
-        //         switch (index2)
-        //         {
-        //             case 0:
-        //                 itemTemplate.Kind = EquipType.Shield;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ATK = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 4 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 1:
-        //                 itemTemplate.Kind = EquipType.Helmet;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     ACC = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 4 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 2:
-        //                 itemTemplate.Kind = EquipType.Armor;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     DEF = 5 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 5 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 3:
-        //                 itemTemplate.Kind = EquipType.Greaves;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     STA = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 4 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 4:
-        //                 itemTemplate.Kind = EquipType.Shoes;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     SPD = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 4 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 5:
-        //                 itemTemplate.Kind = EquipType.Gloves;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     CRIT = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 4 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 6:
-        //                 itemTemplate.Kind = EquipType.Cape;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     EVA = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 4 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 4 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 7:
-        //                 itemTemplate.Kind = EquipType.Ring;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     STR = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     VIT = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEX = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     INT = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     AGI = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     LUK = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 2 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //             case 8:
-        //                 itemTemplate.Kind = EquipType.Pendant;
-        //                 itemTemplate.Ability = new()
-        //                 {
-        //                     HP = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MP = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     STA = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     ACC = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     EVA = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     CRIT = 1 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     DEF = 2 * GameData_Server.NowPlayerData.ForgeLevel,
-        //                     MDEF = 2 * GameData_Server.NowPlayerData.ForgeLevel
-        //                 };
-        //                 break;
-        //         }
-        //         break;
-        // }
+        var num = 0;
+        foreach (var item in _selectedMaterials.Values)
+            num += item.Count;
 
+        return num;
     }
 }

@@ -29,14 +29,12 @@ public class BagItem : MonoBehaviour
         if (equips != null)
             Equips = equips;
 
-        var itemData = ItemDataCenter.GetItemData(data.ItemID);
-
-        _itemName.text = itemData.Name;
+        _itemName.text = data.Name;
         _toggle.group = group;
         _refreshBagInfo = refreshBagInfo;
         _toggle.isOn = false;
 
-        ItemDataCenter.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+        ItemDataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
         IconEquip.SetActive(equips.Contains(data.UID));
 

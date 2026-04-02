@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 7484107358524350382}
   - component: {fileID: 7499113183201308948}
   - component: {fileID: 5182078600047841339}
+  - component: {fileID: 5355265215301740727}
   m_Layer: 5
-  m_Name: ItemBagMaterial
+  m_Name: ForgeSelectedItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79,3 +80,15 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: test
+--- !u!114 &5355265215301740727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000681060081687352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fef7dd1c29a127d44a3552caea00f008, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Client::ForgeSelectedItem

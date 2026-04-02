@@ -242,8 +242,7 @@ public static class BattleSystem
         foreach (var equipUID in GameData_Server.NowCharacterData.Equips)
         {
             var equip = bagItems.Find(x => x.UID == equipUID);
-            var itemData = ItemDataCenter_Server.GetItemData(equip.ItemID);
-            var kind = itemData.Kind;
+            var kind = equip.Kind;
             var isWeapon = ItemDataCenter_Server.IsWeapon(kind);
 
             if ((isAttack && isWeapon) || (!isAttack && !isWeapon))
@@ -253,7 +252,7 @@ public static class BattleSystem
                 {
                     GameData_Server.NowCharacterData.Equips.Remove(equipUID);
                     bagItems.Remove(equip);
-                    breakEquips.Add(itemData.Name);
+                    breakEquips.Add(equip.Name);
                 }
             }
         }
@@ -269,13 +268,13 @@ public static class BattleSystem
 
         characterData.CurrentExp += 1 << (target.CharacterData.Level - 1);
 
-        var MaxExp = PublicFunc.GetExp(characterData);
-        if (characterData.CurrentExp >= MaxExp)
+        var maxExp = PublicFunc.GetExp(characterData.Level);
+        if (characterData.CurrentExp >= maxExp)
         {
             result.IsUnitLevelUp = true;
             result.LevelUpUnit = characterData.Name;
             characterData.Level += 1;
-            characterData.CurrentExp -= MaxExp;
+            characterData.CurrentExp -= maxExp;
             playerData.SkillPoint += 1;
             CharacterDataCenter.InitCurrentData(characterData);
         }

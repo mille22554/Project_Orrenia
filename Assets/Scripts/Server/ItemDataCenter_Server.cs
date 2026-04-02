@@ -86,7 +86,6 @@ public static class ItemDataCenter_Server
         };
     }
 
-    public static ItemKind GetItemKindByItemID(int id) => GetItemKind(GetItemData(id).Kind);
     public static ItemKind GetItemKind(EItemKind kind)
     {
         ItemKind.TryGetValue(kind, out var itemKind);
@@ -98,17 +97,17 @@ public static class ItemDataCenter_Server
     {
         var target = new BagItemData
         {
-            ItemID = source.ID,
-            Durability = source.Durability,
             UID = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0)),
-            Count = source.Count
+            ID = source.ID,
+            Name = source.Name,
+            Kind = source.Kind,
+            Description = source.Description,
+            Ability = source.Ability,
+            Price = source.Price,
+            Durability = source.Durability,
+            Count = source.Count,
         };
         return target;
-    }
-
-    public static List<int> GetShopList()
-    {
-        return GameShopItem;
     }
 
     public static void DoActionAccordingToCategory(EItemKind kind, Action equipCallBack, Action useCallBack, Action materialCallBack)

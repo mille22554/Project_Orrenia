@@ -67,8 +67,7 @@ public class PageBag : MonoBehaviour
                 item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, datas.CharacterData.Equips);
                 bagItems.Add(item);
 
-                var itemData = ItemDataCenter.GetItemData(item.Info.ItemID);
-                var itemKind = ItemDataCenter.GetItemKind(itemData.Kind);
+                var itemKind = ItemDataCenter.GetItemKind(item.Info.Kind);
 
                 if (toggleEquip.isOn)
                     item.gameObject.SetActive(PublicFunc.IsEquipCategory(itemKind.Category));
@@ -95,7 +94,7 @@ public class PageBag : MonoBehaviour
         {
             PublicFunc.DoActionAccordingToCategory
             (
-                ItemDataCenter.GetItemKindByItemID(item.Info.ItemID).Category,
+                ItemDataCenter.GetItemKind(item.Info.Kind).Category,
                 EquipCallBack,
                 OtherCallBack,
                 OtherCallBack
@@ -113,7 +112,7 @@ public class PageBag : MonoBehaviour
         {
             PublicFunc.DoActionAccordingToCategory
             (
-                ItemDataCenter.GetItemKindByItemID(item.Info.ItemID).Category,
+                ItemDataCenter.GetItemKind(item.Info.Kind).Category,
                 OtherCallBack,
                 UseCallBack,
                 OtherCallBack
@@ -131,7 +130,7 @@ public class PageBag : MonoBehaviour
         {
             PublicFunc.DoActionAccordingToCategory
             (
-                ItemDataCenter.GetItemKindByItemID(item.Info.ItemID).Category,
+                ItemDataCenter.GetItemKind(item.Info.Kind).Category,
                 OtherCallBack,
                 OtherCallBack,
                 MaterialCallBack
@@ -148,12 +147,11 @@ public class PageBag : MonoBehaviour
         {
             selectedBagItem = item;
 
-            var itemData = ItemDataCenter.GetItemData(item.Info.ItemID);
-            var itemKind = ItemDataCenter.GetItemKind(itemData.Kind);
+            var itemKind = ItemDataCenter.GetItemKind(item.Info.Kind);
 
-            itemName.text = itemData.Name;
+            itemName.text = item.Info.Name;
             type.text = itemKind.Name;
-            description.text = itemData.Description;
+            description.text = item.Info.Description;
 
             PublicFunc.DoActionAccordingToCategory(itemKind.Category, EquipCallBack, UseCallBack, MaterialCallBack);
 
@@ -164,14 +162,14 @@ public class PageBag : MonoBehaviour
                 else
                     textUse.text = "裝備";
 
-                ability.text = itemData.GetAbilityString();
+                ability.text = item.Info.GetAbilityString();
                 btnUse.gameObject.SetActive(true);
             }
 
             void UseCallBack()
             {
                 textUse.text = "使用";
-                ability.text = itemData.GetAbilityString();
+                ability.text = item.Info.GetAbilityString();
                 btnUse.gameObject.SetActive(true);
             }
 

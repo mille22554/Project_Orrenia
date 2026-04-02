@@ -7,17 +7,24 @@ public static class ItemDataCenter
     static Dictionary<EItemKind, ItemKind> _itemKind;
     static List<int> _gameShopItem;
 
-    public static void RefreshData(Action callback)
+    static void RefreshData(Action callback)
     {
-        var requestData = new GetItemDataRequest();
-        ApiBridge.Send(requestData, CallBack);
-
-        void CallBack(GetItemDataResponse response)
+        if (_itemData == null || _itemKind == null || _gameShopItem == null)
         {
-            _itemData = response.ItemData;
-            _itemKind = response.ItemKind;
-            _gameShopItem = response.GameShopItem;
+            var requestData = new GetItemDataRequest();
+            ApiBridge.Send(requestData, CallBack);
 
+            void CallBack(GetItemDataResponse response)
+            {
+                _itemData = response.ItemData;
+                _itemKind = response.ItemKind;
+                _gameShopItem = response.GameShopItem;
+
+                callback?.Invoke();
+            }
+        }
+        else
+        {
             callback?.Invoke();
         }
     }
@@ -32,7 +39,6 @@ public static class ItemDataCenter
         void CallBack() => _itemData.TryGetValue(id, out item);
     }
 
-    public static ItemKind GetItemKindByItemID(int id) => GetItemKind(GetItemData(id).Kind);
     public static ItemKind GetItemKind(EItemKind kind)
     {
         ItemKind itemKind = null;
@@ -51,5 +57,12 @@ public static class ItemDataCenter
         RefreshData(null);
 
         return _gameShopItem;
+    }
+
+    public static Dictionary<EItemKind, ItemKind> GetItemKindList()
+    {
+        RefreshData(null);
+
+        return _itemKind;
     }
 }
