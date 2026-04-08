@@ -109,7 +109,7 @@ public static class CharacterDataCenter
         foreach (var equipUID in equips)
         {
             var item = GameData_Server.NowBagData.Items.Find(x => x.UID == equipUID);
-            var ability = item.Ability;
+            var ability = ItemDataCenter_Server.FinalAbilityProcess(item);
             var fields = typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
             foreach (var field in fields)
             {

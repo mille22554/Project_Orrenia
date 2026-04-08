@@ -99,4 +99,12 @@ public class PublicFunc
     {
         return category == EItemCategory.Material;
     }
+
+    public static Color SetColorFromHex(string hex)
+    {
+        if (ColorUtility.TryParseHtmlString(hex, out Color c))
+            return c;
+        else
+            return Color.white;
+    }
 }

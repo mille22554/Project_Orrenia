@@ -15,7 +15,8 @@ public class GetItemData_Server : IApiHandler_Server
             {
                 ItemData = ItemDataCenter_Server.ItemData,
                 ItemKind = ItemDataCenter_Server.ItemKind,
-                GameShopItem = ItemDataCenter_Server.GameShopItem
+                GameShopItem = ItemDataCenter_Server.GameShopItem,
+                QualityData = ItemDataCenter_Server.QualityData
             };
             var response = new ResponseData_Server
             {
@@ -43,4 +44,5 @@ public class GetItemData_ServerResponse
     public Dictionary<int, ItemData> ItemData;
     public Dictionary<EItemKind, ItemKind> ItemKind;
     public List<int> GameShopItem;
+    public List<QualityData> QualityData;
 }

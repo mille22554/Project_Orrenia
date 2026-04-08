@@ -209,7 +209,7 @@ public class PageBattle : MonoBehaviour
 
         if (result != null)
         {
-            ShowBattleLog(result);
+            ShowBattleLog(result, datas.CharacterData);
 
             if (result.IsAttackerDead && datas.CharacterData.Name != result.Attacker)
             {
@@ -227,7 +227,6 @@ public class PageBattle : MonoBehaviour
             {
                 OnGetBattleState();
             }
-
         }
     }
 
@@ -333,6 +332,10 @@ public class PageBattle : MonoBehaviour
                 btnRest.gameObject.SetActive(true);
                 btnAttack.gameObject.SetActive(false);
             }
+            else
+            {
+                enemyList.FirstOrDefault().Toggle.isOn = true;
+            }
         }
         else
         {
@@ -345,7 +348,7 @@ public class PageBattle : MonoBehaviour
         }
     }
 
-    void ShowBattleLog(BattleResult result)
+    void ShowBattleLog(BattleResult result, CharacterData characterData)
     {
         if (result.IsLuckyEventTrigger)
         {
@@ -362,7 +365,10 @@ public class PageBattle : MonoBehaviour
 
         if (result.IsDodge)
         {
-            panelLog.SetLog($"{result.Defenderer}閃避了{result.Attacker}的攻擊!");
+            if (result.Attacker == characterData.Name)
+                panelLog.SetLog($"{result.Defenderer}閃避了{result.Attacker}的攻擊!");
+            else
+                panelLog.SetLog($"{result.Defenderer}閃避了{result.Attacker}的攻擊!", Color.gray);
         }
 
         if (result.IsCritical)
@@ -372,7 +378,10 @@ public class PageBattle : MonoBehaviour
 
         if (result.BattleDamage > 0)
         {
-            panelLog.SetLog($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!", Color.gray);
+            if (result.Attacker == characterData.Name)
+                panelLog.SetLog($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!");
+            else
+                panelLog.SetLog($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!", Color.gray);
         }
 
         if (result.IsAttackerDead)

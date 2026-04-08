@@ -168,7 +168,7 @@ public static class BattleSystem
 
         for (int i = 0; i < 3; i++)
         {
-            if (GetEffectiveStat(attackerLUK) > GetEffectiveStat(defenderLUK * (result.LuckyEventLevel * 2 + 1) * 10))
+            if (GetEffectiveStat(attackerLUK) > GetEffectiveStat(defenderLUK * (result.LuckyEventLevel * 2 + 1) * 20))
                 result.LuckyEventLevel++;
             else
                 break; // 只要輸掉就結束
@@ -194,7 +194,7 @@ public static class BattleSystem
                     // Debug.Log($"一輛大卡車疾駛而來，撞飛了{result.LuckyEventTarget }!\n受到了{result.LuckyEventDamage}點傷害!");
                     break;
             }
-            result.LuckyEventDamage = Mathf.Max(1, (GetEffectiveStat(attackerLUK) - GetEffectiveStat(defenderLUK)) * damageMulti);
+            result.LuckyEventDamage = Mathf.Max(1, GetEffectiveStat(attackerLUK) - GetEffectiveStat(defenderLUK) + damageMulti);
 
             if (DamageProcess(hitter, result.LuckyEventDamage))
             {

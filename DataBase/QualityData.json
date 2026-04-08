@@ -1,0 +1,57 @@
+[
+  {
+    "Name": "傳說的",
+    "Multi": 1.5,
+    "Color": "#28FF28"
+  },
+  {
+    "Name": "史詩的",
+    "Multi": 1.4,
+    "Color": "#9F35FF"
+  },
+  {
+    "Name": "罕見的",
+    "Multi": 1.3,
+    "Color": "#FFDC35"
+  },
+  {
+    "Name": "非凡的",
+    "Multi": 1.2,
+    "Color": "#FF8000"
+  },
+  {
+    "Name": "特殊的",
+    "Multi": 1.1,
+    "Color": "#97CBFF"
+  },
+  {
+    "Name": "",
+    "Multi": 1,
+    "Color": "#FFFFFF"
+  },
+  {
+    "Name": "磨損的",
+    "Multi": 0.9,
+    "Color": "#BEBEBE"
+  },
+  {
+    "Name": "老舊的",
+    "Multi": 0.8,
+    "Color": "#AD5A5A"
+  },
+  {
+    "Name": "腐朽的",
+    "Multi": 0.7,
+    "Color": "#9F4D95"
+  },
+  {
+    "Name": "殘破的",
+    "Multi": 0.6,
+    "Color": "#5A5AAD"
+  },
+  {
+    "Name": "垃圾般的",
+    "Multi": 0.5,
+    "Color": "#5B5B5B"
+  }
+]

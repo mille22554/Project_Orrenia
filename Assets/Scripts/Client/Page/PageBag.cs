@@ -148,8 +148,11 @@ public class PageBag : MonoBehaviour
             selectedBagItem = item;
 
             var itemKind = ItemDataCenter.GetItemKind(item.Info.Kind);
+            var itemQuality = ItemDataCenter.GetQualityData(item.Info.Quality);
 
-            itemName.text = item.Info.Name;
+            itemName.text = itemQuality.Name + item.Info.Name;
+            itemName.color = PublicFunc.SetColorFromHex(itemQuality.Color);
+
             type.text = itemKind.Name;
             description.text = item.Info.Description;
 
@@ -162,14 +165,14 @@ public class PageBag : MonoBehaviour
                 else
                     textUse.text = "裝備";
 
-                ability.text = item.Info.GetAbilityString();
+                ability.text = ItemDataCenter.GetAbilityString(item.Info);
                 btnUse.gameObject.SetActive(true);
             }
 
             void UseCallBack()
             {
                 textUse.text = "使用";
-                ability.text = item.Info.GetAbilityString();
+                ability.text = ItemDataCenter.GetAbilityString(item.Info);
                 btnUse.gameObject.SetActive(true);
             }
 

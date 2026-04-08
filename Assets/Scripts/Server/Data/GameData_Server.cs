@@ -92,6 +92,19 @@ public static class GameData_Server
             return Path.Combine(databaseFolderPath, "EffectData.json");
         }
     }
+    public static string QualityDataPath
+    {
+        get
+        {
+            var databaseFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "DataBase");
+            if (!Directory.Exists(databaseFolderPath))
+            {
+                Debug.LogError("資料庫丟失!");
+            }
+
+            return Path.Combine(databaseFolderPath, "QualityData.json");
+        }
+    }
 
     public static string version = "0.0.16";
 

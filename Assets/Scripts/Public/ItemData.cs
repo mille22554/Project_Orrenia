@@ -5,6 +5,9 @@ public class BagItemData : ItemData
 {
     public long UID;
     public int ItemID => ID;
+    public EQuality Quality = EQuality.Common;
+    public List<int> Materials = new();
+    public int Seed;
 }
 
 public class ItemData
@@ -17,33 +20,19 @@ public class ItemData
     public int Price;
     public int Durability;
     public int Count;
-
-    public string GetAbilityString()
-    {
-        if (Ability == null)
-            return "";
-
-        var parts = new List<string>();
-
-        // 用反射抓 AbilityBase 的欄位
-        foreach (var field in typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
-        {
-            var value = (int)field.GetValue(Ability);
-            if (value != 0)
-            {
-                var sign = value > 0 ? "+" : "";
-                parts.Add($"{field.Name}{sign}{value}");
-            }
-        }
-
-        return string.Join(", ", parts);
-    }
 }
 
 public class ItemKind
 {
     public string Name;
     public EItemCategory Category;
+}
+
+public class QualityData
+{
+    public string Name;
+    public decimal Multi;
+    public string Color;
 }
 
 public enum EItemCategory
@@ -89,4 +78,19 @@ public enum EItemKind
     Pendant,
     Use,
     Material,
+}
+
+public enum EQuality
+{
+    Legendary,
+    Epic,
+    Rare,
+    Uncommon,
+    Special,
+    Common,
+    Worn,
+    Old,
+    Decay,
+    Broken,
+    Junk
 }

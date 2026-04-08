@@ -52,37 +52,26 @@ public class SetForgeAction_Server : IApiHandler_Server
         var newItem = CreateItem(request.ItemKind, baseParam);
         newItem.Name = request.ItemName;
         newItem.Description = $"Create by {GameData_Server.NowCharacterData.Name} at {DateTime.Now:yyyy/MM/dd HH:mm}";
-        newItem.Durability = baseParam * 100;
+        newItem.Durability = baseParam * 10;
         newItem.Count = 1;
+
+        var newBagItem = ItemDataCenter_Server.GetNewItem(newItem);
+        newBagItem.Seed = GetStableHashCode($"{DateTime.Now:yyyyMMdd}_{newItem.Name}");
 
         foreach (var material in request.Materials)
         {
             var bagItem = BagData.Items.Find(x => x.UID == material);
 
-            newItem.Ability.STR += bagItem.Ability.STR;
-            newItem.Ability.DEX += bagItem.Ability.DEX;
-            newItem.Ability.INT += bagItem.Ability.INT;
-            newItem.Ability.VIT += bagItem.Ability.VIT;
-            newItem.Ability.AGI += bagItem.Ability.AGI;
-            newItem.Ability.LUK += bagItem.Ability.LUK;
-            newItem.Ability.HP += bagItem.Ability.HP;
-            newItem.Ability.MP += bagItem.Ability.MP;
-            newItem.Ability.STA += bagItem.Ability.STA;
-            newItem.Ability.ATK += bagItem.Ability.ATK;
-            newItem.Ability.MATK += bagItem.Ability.MATK;
-            newItem.Ability.DEF += bagItem.Ability.DEF;
-            newItem.Ability.MDEF += bagItem.Ability.MDEF;
-            newItem.Ability.ACC += bagItem.Ability.ACC;
-            newItem.Ability.EVA += bagItem.Ability.EVA;
-            newItem.Ability.CRIT += bagItem.Ability.CRIT;
-            newItem.Ability.SPD += bagItem.Ability.SPD;
+            newBagItem.Materials.Add(bagItem.ItemID);
 
             bagItem.Count--;
             if (bagItem.Count == 0)
                 BagData.Items.Remove(bagItem);
         }
 
-        BagData.Items.Add(ItemDataCenter_Server.GetNewItem(newItem));
+        SetQuality(newBagItem);
+
+        BagData.Items.Add(newBagItem);
 
         ForgeExpProcess();
     }
@@ -306,6 +295,69 @@ public class SetForgeAction_Server : IApiHandler_Server
         item.Price = (int)(baseParam * 100 * ((float)forgeParam / 10 + 1));
 
         return item;
+    }
+
+    int GetStableHashCode(string str)
+    {
+        unchecked
+        {
+            int hash = 5381;
+            foreach (char c in str)
+            {
+                hash = (hash * 33) ^ c;
+            }
+            return hash;
+        }
+    }
+
+    void SetQuality(BagItemData item)
+    {
+        var prop = PublicFunc.Dice(1, 100);
+
+        if (prop == 1)//1,3,6,9,13,18
+        {
+            item.Quality = EQuality.Legendary;
+        }
+        else if (prop < 5)
+        {
+            item.Quality = EQuality.Epic;
+        }
+        else if (prop <= 10)
+        {
+            item.Quality = EQuality.Rare;
+        }
+        else if (prop < 20)
+        {
+            item.Quality = EQuality.Uncommon;
+        }
+        else if (prop <= 32)
+        {
+            item.Quality = EQuality.Special;
+        }
+        else if (prop <= 68)
+        {
+            item.Quality = EQuality.Common;
+        }
+        else if (prop <= 81)
+        {
+            item.Quality = EQuality.Worn;
+        }
+        else if (prop <= 90)
+        {
+            item.Quality = EQuality.Old;
+        }
+        else if (prop <= 96)
+        {
+            item.Quality = EQuality.Decay;
+        }
+        else if (prop <= 99)
+        {
+            item.Quality = EQuality.Broken;
+        }
+        else if (prop == 100)
+        {
+            item.Quality = EQuality.Junk;
+        }
     }
 
     void ForgeExpProcess()

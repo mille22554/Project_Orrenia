@@ -19,4 +19,5 @@ public class GetItemDataResponse
     public Dictionary<int, ItemData> ItemData;
     public Dictionary<EItemKind, ItemKind> ItemKind;
     public List<int> GameShopItem;
+    public List<QualityData> QualityData;
 }

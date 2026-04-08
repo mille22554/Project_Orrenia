@@ -151,7 +151,7 @@ public class PanelShop : MonoBehaviour
 
             ItemDataCenter.DoActionAccordingToCategory(item.Info.Kind, OtherCallBack, OtherCallBack, MaterialCallBack);
 
-            void MaterialCallBack() => _ability.text = item.Info.GetAbilityString();
+            void MaterialCallBack() => _ability.text = ItemDataCenter.GetAbilityString(item.Info.Ability, 0);
             void OtherCallBack() => _ability.text = "";
         }
         else
