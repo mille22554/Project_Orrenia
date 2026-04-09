@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -69,23 +70,30 @@ public static class BattleSystem
     public static BattleResult CheckNowActor()
     {
         var nowActor = RunSpeedProcess();
+        var datas = GameData_Server.SaveData.Datas;
+        var characterData = datas.CharacterData;
         BattleResult result = null;
 
         switch (nowActor.Role)
         {
             case ECharacterRole.Player:
-
+                if (characterData.Effects.Find(x => x.ID == EEffectID.Berserk) != null)
+                {
+                    result = RunBattle(nowActor, datas.EnemyData.Enemies.FirstOrDefault().CharacterData);
+                    CharacterDataCenter.STAProcess(nowActor, -1);
+                }
                 break;
             case ECharacterRole.Mob:
-                result = RunBattle(nowActor, GameData_Server.SaveData.Datas.CharacterData);
-                CharacterDataCenter.STAProcess(nowActor);
+                result = RunBattle(nowActor, characterData);
+                CharacterDataCenter.STAProcess(nowActor, -1);
                 break;
         }
 
         return result;
     }
 
-    public static BattleResult RunBattle(CharacterData character1, CharacterData character2)
+    public static BattleResult RunBattle(CharacterData character1, CharacterData character2) => RunBattle(character1, character2, null);
+    public static BattleResult RunBattle(CharacterData character1, CharacterData character2, SkillData skillData)
     {
         character1.CurrentTP -= GameData_Server.tpCost;
 
@@ -123,8 +131,9 @@ public static class BattleSystem
         var damageMulti = 1;
         var defenceMulti = 1;
         #region 爆擊判定
-        if (GetEffectiveStat(attacker.CRIT) > GetEffectiveStat(defender.EVA))
+        if (GetEffectiveStat(attacker.CRIT) > GetEffectiveStat(defender.EVA, 40))
         {
+            Debug.LogWarning($"爆擊判定: {attacker.CRIT}, {defender.EVA}");
             result.IsCritical = true;
 
             damageMulti = 2;
@@ -133,9 +142,16 @@ public static class BattleSystem
         }
         #endregion
 
-        result.BattleDamage = GetEffectiveStat(attacker.ATK) * damageMulti - GetEffectiveStat(defender.DEF) * defenceMulti;
-        if (result.BattleDamage <= 0)
-            result.BattleDamage = 1;
+        if (skillData == null)
+        {
+            result.BattleDamage = GetEffectiveStat(attacker.ATK) * damageMulti - GetEffectiveStat(defender.DEF) * defenceMulti;
+            if (result.BattleDamage <= 0)
+                result.BattleDamage = 1;
+        }
+        else
+        {
+
+        }
 
         Debug.Log($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!");
         if (DamageProcess(defender, result.BattleDamage))
@@ -185,13 +201,9 @@ public static class BattleSystem
             {
                 case 2:
                     damageMulti = 10;
-                    // result.LuckyEventDamage = Mathf.Max(GetEffectiveStat(attackerLUK), 1 * 10 - GetEffectiveStat(defenderLUK));
-                    // Debug.Log($"{result.LuckyEventTarget }突然抽筋了!\n受到了{result.LuckyEventDamage}點傷害!");
                     break;
                 case 3:
                     damageMulti = 50;
-                    // result.LuckyEventDamage = Mathf.Max(GetEffectiveStat(attackerLUK), 1 * 50 - GetEffectiveStat(defenderLUK));
-                    // Debug.Log($"一輛大卡車疾駛而來，撞飛了{result.LuckyEventTarget }!\n受到了{result.LuckyEventDamage}點傷害!");
                     break;
             }
             result.LuckyEventDamage = Mathf.Max(1, GetEffectiveStat(attackerLUK) - GetEffectiveStat(defenderLUK) + damageMulti);
@@ -223,14 +235,9 @@ public static class BattleSystem
     {
         character.HP -= damage;
         if (character.HP <= 0)
-        {
-            // Debug.Log($"{character.Name}倒下了!");
             return true;
-        }
         else
-        {
             return false;
-        }
     }
 
     static List<string> RunDurability(bool isAttack)
@@ -239,7 +246,7 @@ public static class BattleSystem
 
         var bagItems = GameData_Server.NowBagData.Items;
 
-        foreach (var equipUID in GameData_Server.NowCharacterData.Equips)
+        foreach (var equipUID in GameData_Server.NowCharacterData.Equips.ToList())
         {
             var equip = bagItems.Find(x => x.UID == equipUID);
             var kind = equip.Kind;
@@ -297,12 +304,10 @@ public static class BattleSystem
             {
                 if (existing == null)
                 {
-                    Debug.Log("1");
                     EquipCallBack();
                 }
                 else
                 {
-                    Debug.Log("2");
                     existing.Count++;
                 }
             }

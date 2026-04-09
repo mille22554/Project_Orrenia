@@ -52,7 +52,7 @@ public class SetForgeAction_Server : IApiHandler_Server
         var newItem = CreateItem(request.ItemKind, baseParam);
         newItem.Name = request.ItemName;
         newItem.Description = $"Create by {GameData_Server.NowCharacterData.Name} at {DateTime.Now:yyyy/MM/dd HH:mm}";
-        newItem.Durability = baseParam * 10;
+        newItem.Durability = baseParam * 20;
         newItem.Count = 1;
 
         var newBagItem = ItemDataCenter_Server.GetNewItem(newItem);

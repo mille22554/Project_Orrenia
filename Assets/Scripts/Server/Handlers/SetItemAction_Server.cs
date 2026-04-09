@@ -48,12 +48,14 @@ public class SetItemAction_Server : IApiHandler_Server
 
         ItemDataCenter_Server.DoActionAccordingToCategory(bagItemData.Kind, EquipCallBack, UseCallBack, null);
 
+        if (CharacterData.CurrentTP >= GameData_Server.tpCost)
+            CharacterData.CurrentTP -= GameData_Server.tpCost;
+
         response.ItemCategory = itemKind.Category;
         response.BagItemData = bagItemData;
         response.Enemies = GameData_Server.NowEnemyData.Enemies;
-
-        if (CharacterData.CurrentTP >= GameData_Server.tpCost)
-            CharacterData.CurrentTP -= GameData_Server.tpCost;
+        response.CharacterData = CharacterData;
+        response.FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData);
 
         return response;
 
@@ -61,23 +63,24 @@ public class SetItemAction_Server : IApiHandler_Server
 
         void UseCallBack()
         {
-            var item = BagData.Items.Find(x => x.UID == bagItemData.UID);
-            item.Count--;
+            bagItemData = BagData.Items.Find(x => x.UID == bagItemData.UID);
+            bagItemData.Count--;
 
-            if (item.Count == 0)
-                BagData.Items.Remove(item);
+            if (bagItemData.Count == 0)
+                BagData.Items.Remove(bagItemData);
 
-            if (bagItemData.Ability.HP != 0)
-                CharacterData.CurrentHP += bagItemData.Ability.HP;
+            CharacterDataCenter.MotifyCurrentAbility(CharacterData, bagItemData.Ability);
 
-            if (bagItemData.Ability.MP != 0)
-                CharacterData.CurrentMP += bagItemData.Ability.MP;
+            if (bagItemData.Effects != null)
+            {
+                foreach (var effect in bagItemData.Effects)
+                {
+                    Debug.Log($"ID: {effect.ID}, Value: {effect.Value}, Times: {effect.Times}");
+                    CharacterDataCenter.AddCharacterEffect(CharacterData, effect.ID, effect.Value, effect.Times);
+                }
+            }
 
-            if (bagItemData.Ability.STA != 0)
-                CharacterData.CurrentSTA += bagItemData.Ability.STA;
-
-            UseItemSpecial(bagItemData.Name);
-            CharacterDataCenter.EffectProcess(CharacterData);
+            // CharacterDataCenter.EffectProcess(CharacterData);
         }
     }
 
@@ -105,20 +108,10 @@ public class SetItemAction_Server : IApiHandler_Server
             equips.Add(uid);
         }
     }
-
-    void UseItemSpecial(string itemName)
-    {
-        // if (itemName == Use.BerserkPotion.Name)
-        // {
-        //     PublicFunc.AddCharacterEffect(CharacterData, EffectType.Buff.Berserk, 2, 100);
-        // }
-    }
-
 }
 
 public class SetItemAction_ServerRequest
 {
-
     public BagItemData BagItemData;
 }
 
@@ -128,4 +121,6 @@ public class SetItemAction_ServerResponse
     public BagItemData BagItemData;
     public bool IsEquipped;
     public List<MobData> Enemies;
+    public CharacterData CharacterData;
+    public FullAbilityBase FullAbility;
 }

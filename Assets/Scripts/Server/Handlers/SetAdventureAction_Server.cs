@@ -79,7 +79,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
     {
         var actionResult = new ActionResult();
 
-        CharacterDataCenter.STAProcess(CharacterData);
+        CharacterDataCenter.STAProcess(CharacterData,-1);
 
         PlayerData.Deep++;
 

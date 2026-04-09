@@ -20,6 +20,7 @@ public class SetItemActionResponse
     public EItemCategory ItemCategory;
     public BagItemData BagItemData;
     public bool IsEquipped;
-
     public List<MobData> Enemies;
+    public CharacterData CharacterData;
+    public FullAbilityBase FullAbility;
 }

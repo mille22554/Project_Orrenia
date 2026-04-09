@@ -105,6 +105,19 @@ public static class GameData_Server
             return Path.Combine(databaseFolderPath, "QualityData.json");
         }
     }
+    public static string SkillDataPath
+    {
+        get
+        {
+            var databaseFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "DataBase");
+            if (!Directory.Exists(databaseFolderPath))
+            {
+                Debug.LogError("資料庫丟失!");
+            }
+
+            return Path.Combine(databaseFolderPath, "SkillData.json");
+        }
+    }
 
     public static string version = "0.0.16";
 
@@ -122,18 +135,12 @@ public static class GameSkill
 {
     public static SkillData bite = new()
     {
-        name = "爪擊",
-        description = "使用銳利的爪子攻擊目標",
-        damage = ability => (int)(ability.ATK * 0.8 + 0.2 * (ability.ATK + ability.STR * 2 + ability.AGI)),
-        damageType = DamageType.physics,
-        cost = 3,
+        Name = "爪擊",
+        Description = "使用銳利的爪子攻擊目標",
+        // damage = ability => (int)(ability.ATK * 0.8 + 0.2 * (ability.ATK + ability.STR * 2 + ability.AGI)),
+        DamageType = EDamageType.Physics,
+        Cost = 3,
     };
-}
-
-public static class DamageType
-{
-    public const string physics = "物理傷害";
-    public const string magic = "魔法傷害";
 }
 
 public static class EffectType

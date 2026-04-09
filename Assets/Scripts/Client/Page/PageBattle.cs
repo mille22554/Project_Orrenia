@@ -211,12 +211,10 @@ public class PageBattle : MonoBehaviour
         {
             ShowBattleLog(result, datas.CharacterData);
 
-            if (result.IsAttackerDead && datas.CharacterData.Name != result.Attacker)
-            {
-                var target = enemyList.Find(x => x.Info.CharacterData.Name == result.Attacker);
+            var targetMob = result.Attacker != datas.CharacterData.Name ? result.Attacker : result.Defenderer;
+            var target = enemyList.Find(x => x.Info.CharacterData.Name == targetMob);
 
-                MobDeadCheck(result, target);
-            }
+            MobDeadCheck(result, target);
 
             if (result.IsAttackerDead && datas.CharacterData.Name == result.Attacker ||
                 result.IsDefenderDead && datas.CharacterData.Name == result.Defenderer)
@@ -303,7 +301,7 @@ public class PageBattle : MonoBehaviour
         var requestData = new SetBattleActionRequest
         {
             BattleAction = EBattleActionType.Attack,
-            AttackTarget = selectedEnemy.Info
+            ActionTarget = selectedEnemy.Info.CharacterData
         };
         ApiBridge.Send(requestData, CallBack);
 
@@ -344,7 +342,9 @@ public class PageBattle : MonoBehaviour
                 if (result.LuckyEventTarget == enemy.Info.CharacterData.Name)
                     enemy.GetDamage(result.LuckyEventDamage);
             }
-            enemy.GetDamage(result.BattleDamage);
+
+            if (result.Defenderer == enemy.Info.CharacterData.Name)
+                enemy.GetDamage(result.BattleDamage);
         }
     }
 

@@ -20,15 +20,17 @@ public class GetBattleStatus_Server : IApiHandler_Server
             {
                 battleResult = BattleSystem.CheckNowActor();
 
-                if (battleResult != null)
+                if (battleResult != null && (battleResult.IsAttackerDead || battleResult.IsDefenderDead))
                 {
-                    if (battleResult.IsDefenderDead)
+                    if (battleResult.IsAttackerDead && CharacterData.Name == battleResult.Attacker ||
+                        battleResult.IsDefenderDead && CharacterData.Name == battleResult.Defenderer)
                     {
                         OnLeave();
                     }
-                    else if (battleResult.IsAttackerDead)
+                    else
                     {
-                        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == battleResult.Attacker);
+                        var deadMob = battleResult.IsAttackerDead ? battleResult.Attacker : battleResult.Defenderer;
+                        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
                         BattleSystem.EnemyDeadProcess(target, battleResult);
                     }
                 }

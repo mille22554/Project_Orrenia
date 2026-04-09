@@ -122,6 +122,7 @@ public static class ItemDataCenter_Server
             Kind = source.Kind,
             Description = source.Description,
             Ability = source.Ability,
+            Effects = source.Effects,
             Price = source.Price,
             Durability = source.Durability,
             Count = source.Count,

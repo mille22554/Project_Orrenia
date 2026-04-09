@@ -12,7 +12,7 @@ public class SetBattleActionRequest : IRequestBase<SetBattleActionResponse>
 {
     public string Cmd => "SetBattleAction";
     public EBattleActionType BattleAction;
-    public MobData AttackTarget;
+    public CharacterData ActionTarget;
 }
 
 public class SetBattleActionResponse

@@ -119,6 +119,7 @@ public class PanelShop : MonoBehaviour
         void CallBack(SetTradeActionResponse response)
         {
             _gold.text = response.Gold.ToString();
+            _inputTradeNum.text = "0";
 
             if (_toggleSell.isOn)
             {
@@ -191,11 +192,11 @@ public class PanelShop : MonoBehaviour
             if (itemNum > haveNum)
                 _inputTradeNum.text = haveNum.ToString();
         }
-        else
-        {
-            _inputTradeNum.text = "0";
-            return;
-        }
+        // else
+        // {
+        //     _inputTradeNum.text = "0";
+        //     return;
+        // }
     }
 
     void ClearList()

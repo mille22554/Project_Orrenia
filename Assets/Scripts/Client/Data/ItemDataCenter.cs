@@ -122,6 +122,9 @@ public static class ItemDataCenter
 
     public static FullAbilityBase FinalAbilityProcess(BagItemData itemData)
     {
+        if (itemData.Ability == null)
+            return null;
+
         var final = new FullAbilityBase
         {
             STR = itemData.Ability.STR,

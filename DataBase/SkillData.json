@@ -1,0 +1,11 @@
+{
+  "1": {
+    "Name": "爪擊",
+    "Description": "使用銳利的爪子攻擊目標",
+    "DamageType": 1,
+    "Effect": 0,
+    "WeaponType": 0,
+    "Cost": 3,
+    "CoolDown": 0
+  }
+}

@@ -123,6 +123,13 @@
     "Kind": 21,
     "Description": "使全數值呈倍數上升，但會不受控。\n狂化－100回合",
     "Price": 1000,
+    "Effects": [
+      {
+        "ID": 22,
+        "Value": 2,
+        "Times": 100
+      }
+    ],
     "Count": 1
   },
   {

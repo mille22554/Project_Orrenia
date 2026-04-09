@@ -59,12 +59,11 @@ public static class CharacterDataCenter
 
     public static CharacterData InitCurrentData(CharacterData data)
     {
-        data.Effects.Clear();
 
         var fullAbility = GetCharacterAbility(data);
         data.CurrentHP = fullAbility.HP;
         data.CurrentMP = fullAbility.MP;
-        data.CurrentSTA = fullAbility.STA;
+        STAProcess(data, fullAbility.STA);
 
         return data;
     }
@@ -182,14 +181,25 @@ public static class CharacterDataCenter
         }
     }
 
-    public static void STAProcess(CharacterData characterData)
+    public static void STAProcess(CharacterData characterData, int value)
     {
-        characterData.CurrentSTA--;
+        characterData.CurrentSTA += value;
 
         if (characterData.CurrentSTA <= 0)
         {
             characterData.CurrentSTA = 0;
             AddCharacterEffect(characterData, EEffectID.Exhausted, 10, 1);
+        }
+        else
+        {
+            var fullAbility = GetCharacterAbility(characterData);
+            if (characterData.CurrentSTA > fullAbility.STA)
+                characterData.CurrentSTA = fullAbility.STA;
+
+            if (_effectDatas.TryGetValue(EEffectID.Exhausted, out var effect) && characterData.Effects.Contains(effect))
+            {
+                characterData.Effects.Remove(effect);
+            }
         }
 
         EffectProcess(characterData);
@@ -217,7 +227,21 @@ public static class CharacterDataCenter
                 });
             }
         }
+    }
 
+    public static void MotifyCurrentAbility(CharacterData characterData, FullAbilityBase ability)
+    {
+        if (ability == null)
+            return;
+
+        if (ability.HP != 0)
+            characterData.CurrentHP += ability.HP;
+
+        if (ability.MP != 0)
+            characterData.CurrentMP += ability.MP;
+
+        if (ability.STA != 0)
+            characterData.CurrentSTA += ability.STA;
     }
 }
 

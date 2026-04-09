@@ -49,16 +49,3 @@ public class BagData
         Items = new();
     }
 }
-
-public class SkillData
-{
-    public string name;
-    public string description;
-    public Func<FullAbilityBase, int> damage;
-    public string damageType;
-    public string effect;
-    public Action special;
-    public string weaponType;
-    public int cost;
-    public int cooldown;
-}

@@ -51,7 +51,10 @@ public class SetBattleAction_Server : IApiHandler_Server
         switch (data.BattleAction)
         {
             case EBattleActionType.Attack:
-                actionResult.BattleResult = OnAttack(data.AttackTarget);
+                actionResult.BattleResult = OnAttack(data.ActionTarget);
+                break;
+            case EBattleActionType.Skill:
+                OnSkill(data.ActionTarget, data.SkillID);
                 break;
             case EBattleActionType.Leave:
                 OnLeave();
@@ -60,9 +63,9 @@ public class SetBattleAction_Server : IApiHandler_Server
         return actionResult;
     }
 
-    BattleResult OnAttack(MobData mob)
+    BattleResult OnAttack(CharacterData characterData)
     {
-        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == mob.CharacterData.Name);
+        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == characterData.Name);
         if (target != null)
         {
             var result = BattleSystem.RunBattle(CharacterData, target.CharacterData);
@@ -76,13 +79,57 @@ public class SetBattleAction_Server : IApiHandler_Server
                 OnLeave();
             }
 
-            CharacterDataCenter.STAProcess(CharacterData);
+            CharacterDataCenter.STAProcess(CharacterData, -1);
             return result;
         }
         else
         {
             Debug.LogError("戰鬥對象不存在!");
             return null;
+        }
+    }
+
+    BattleResult OnSkill(CharacterData characterData, ESkillID skillID)
+    {
+        var skillData = SkillDataCenter.GetSkillData(skillID);
+        if (CharacterData.CurrentMP < skillData.Cost)
+        {
+            Debug.Log("MP不足!");
+            return null;
+        }
+
+        CharacterData.CurrentMP -= skillData.Cost;
+
+        if (characterData.Name == CharacterData.Name)
+        {
+
+            CharacterDataCenter.STAProcess(CharacterData, -1);
+            return null;
+        }
+        else
+        {
+            var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == characterData.Name);
+            if (target != null)
+            {
+                var result = BattleSystem.RunBattle(CharacterData, target.CharacterData, skillData);
+
+                if (result.IsDefenderDead)
+                {
+                    BattleSystem.EnemyDeadProcess(target, result);
+                }
+                else if (result.IsAttackerDead)
+                {
+                    OnLeave();
+                }
+
+                CharacterDataCenter.STAProcess(CharacterData, -1);
+                return result;
+            }
+            else
+            {
+                Debug.LogError("施法對象不存在!");
+                return null;
+            }
         }
     }
 
@@ -100,7 +147,8 @@ public class SetBattleAction_Server : IApiHandler_Server
 public class SetBattleAction_ServerRequest
 {
     public EBattleActionType BattleAction;
-    public MobData AttackTarget;
+    public CharacterData ActionTarget;
+    public ESkillID SkillID;
 }
 
 public class SetBattleAction_ServerResponse

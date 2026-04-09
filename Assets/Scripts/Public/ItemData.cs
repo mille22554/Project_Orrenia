@@ -17,6 +17,7 @@ public class ItemData
     public EItemKind Kind;
     public string Description;
     public FullAbilityBase Ability;
+    public List<EffectData> Effects;
     public int Price;
     public int Durability;
     public int Count;

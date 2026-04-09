@@ -199,25 +199,25 @@ public class PageBag : MonoBehaviour
 
     void OnUse()
     {
-        var requestData = new SetItemActionRequest
+        var setItemActionRequestData = new SetItemActionRequest
         {
             BagItemData = selectedBagItem.Info
         };
-        ApiBridge.Send(requestData, CallBack);
+        ApiBridge.Send(setItemActionRequestData, CallBack);
 
-        void CallBack(SetItemActionResponse response)
+        void CallBack(SetItemActionResponse setItemActionResponse)
         {
-            PublicFunc.DoActionAccordingToCategory(response.ItemCategory, EquipCallBack, UseCallBack, null);
+            PublicFunc.DoActionAccordingToCategory(setItemActionResponse.ItemCategory, EquipCallBack, UseCallBack, null);
 
-            if (response.Enemies.Count > 0)
+            if (setItemActionResponse.Enemies.Count > 0)
             {
-                var requestData = new GetBattleStatusRequest();
-                ApiBridge.Send(requestData, CallBack);
+                var getBattleStatusRequestData = new GetBattleStatusRequest();
+                ApiBridge.Send(getBattleStatusRequestData, CallBack);
 
-                void CallBack(GetBattleStatusResponse response)
+                void CallBack(GetBattleStatusResponse getBattleStatusResponse)
                 {
-                    var datas = response.SaveData.Datas;
-                    var result = response.BattleResult;
+                    var datas = getBattleStatusResponse.SaveData.Datas;
+                    var result = getBattleStatusResponse.BattleResult;
 
                     if (result != null)
                     {
@@ -228,17 +228,17 @@ public class PageBag : MonoBehaviour
                         }
                         else
                         {
-                            var requestData = new GetBattleStatusRequest();
-                            ApiBridge.Send(requestData, CallBack);
+                            ApiBridge.Send(getBattleStatusRequestData, CallBack);
                         }
                     }
 
                     MainController.Instance.RefreshUI(datas.CharacterData);
                 }
             }
+            MainController.Instance.RefreshUI(setItemActionResponse.CharacterData, setItemActionResponse.FullAbility);
 
-            void EquipCallBack() => SwitchEquipStatus(response.BagItemData.UID, response.IsEquipped);
-            void UseCallBack() => UseItem(requestData.BagItemData);
+            void EquipCallBack() => SwitchEquipStatus(setItemActionResponse.BagItemData.UID, setItemActionResponse.IsEquipped);
+            void UseCallBack() => UseItem(setItemActionResponse.BagItemData);
         }
     }
 
