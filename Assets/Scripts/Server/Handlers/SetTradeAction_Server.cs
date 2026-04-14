@@ -8,7 +8,6 @@ public class SetTradeAction_Server : IApiHandler_Server
 
     CharacterData CharacterData => GameData_Server.NowCharacterData;
     PlayerContextData PlayerData => GameData_Server.NowPlayerData;
-    BagData BagData => GameData_Server.NowBagData;
 
     public string Get(object request)
     {
@@ -62,14 +61,14 @@ public class SetTradeAction_Server : IApiHandler_Server
         {
             PlayerData.Gold -= itemData.Price * tradeNum;
 
-            var existing = BagData.Items.Find(item => item.ItemID == itemData.ID);
+            var existing = CharacterData.BagItems.Find(item => item.ItemID == itemData.ID);
 
             ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
             void EquipCallBack()
             {
                 for (int i = 0; i < tradeNum; i++)
-                    BagData.Items.Add(ItemDataCenter_Server.GetNewItem(itemData));
+                    CharacterData.BagItems.Add(ItemDataCenter_Server.GetNewItem(itemData));
             }
 
             void OtherCallBack()
@@ -78,7 +77,7 @@ public class SetTradeAction_Server : IApiHandler_Server
                 {
                     var buyItem = ItemDataCenter_Server.GetNewItem(itemData);
                     buyItem.Count = tradeNum;
-                    BagData.Items.Add(buyItem);
+                    CharacterData.BagItems.Add(buyItem);
                 }
                 else
                 {
@@ -90,7 +89,7 @@ public class SetTradeAction_Server : IApiHandler_Server
 
     public int OnSell(ItemData itemData, int tradeNum, long sellItemUID)
     {
-        var existing = BagData.Items.Find(item => item.UID == sellItemUID);
+        var existing = CharacterData.BagItems.Find(item => item.UID == sellItemUID);
         var sellItemSurplus = existing.Count;
 
         if (existing != null && existing.Count >= tradeNum)
@@ -102,7 +101,7 @@ public class SetTradeAction_Server : IApiHandler_Server
 
             void EquipCallBack()
             {
-                BagData.Items.Remove(existing);
+                CharacterData.BagItems.Remove(existing);
                 sellItemSurplus = 0;
             }
 
@@ -111,7 +110,7 @@ public class SetTradeAction_Server : IApiHandler_Server
                 sellItemSurplus = existing.Count;
 
                 if (sellItemSurplus == 0)
-                    BagData.Items.Remove(existing);
+                    CharacterData.BagItems.Remove(existing);
             }
         }
 

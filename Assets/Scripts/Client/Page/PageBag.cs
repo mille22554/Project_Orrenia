@@ -21,6 +21,7 @@ public class PageBag : MonoBehaviour
     ToggleGroup toggleItems;
     readonly List<BagItem> bagItems = new();
     BagItem selectedBagItem;
+    List<long> equips;
 
     public static void Create()
     {
@@ -56,18 +57,20 @@ public class PageBag : MonoBehaviour
         void CallBack(GetSaveDataResponse response)
         {
             var datas = response.SaveData.Datas;
+            var characterData = datas.CharacterData;
 
             ResetBagInfo();
             btnUse.gameObject.SetActive(false);
             gold.text = datas.PlayerData.Gold.ToString();
+            equips = characterData.Equips;
 
-            foreach (var itemInfo in datas.BagData.Items)
+            foreach (var itemInfo in characterData.BagItems)
             {
                 var item = ObjectPool.Get(bagItem, itemList.content);
-                item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, datas.CharacterData.Equips);
+                item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, equips.Contains(itemInfo.UID));
                 bagItems.Add(item);
 
-                var itemKind = ItemDataCenter.GetItemKind(item.Info.Kind);
+                var itemKind = DataCenter.GetItemKind(item.Info.Kind);
 
                 if (toggleEquip.isOn)
                     item.gameObject.SetActive(PublicFunc.IsEquipCategory(itemKind.Category));
@@ -94,7 +97,7 @@ public class PageBag : MonoBehaviour
         {
             PublicFunc.DoActionAccordingToCategory
             (
-                ItemDataCenter.GetItemKind(item.Info.Kind).Category,
+                DataCenter.GetItemKind(item.Info.Kind).Category,
                 EquipCallBack,
                 OtherCallBack,
                 OtherCallBack
@@ -112,7 +115,7 @@ public class PageBag : MonoBehaviour
         {
             PublicFunc.DoActionAccordingToCategory
             (
-                ItemDataCenter.GetItemKind(item.Info.Kind).Category,
+                DataCenter.GetItemKind(item.Info.Kind).Category,
                 OtherCallBack,
                 UseCallBack,
                 OtherCallBack
@@ -130,7 +133,7 @@ public class PageBag : MonoBehaviour
         {
             PublicFunc.DoActionAccordingToCategory
             (
-                ItemDataCenter.GetItemKind(item.Info.Kind).Category,
+                DataCenter.GetItemKind(item.Info.Kind).Category,
                 OtherCallBack,
                 OtherCallBack,
                 MaterialCallBack
@@ -147,8 +150,8 @@ public class PageBag : MonoBehaviour
         {
             selectedBagItem = item;
 
-            var itemKind = ItemDataCenter.GetItemKind(item.Info.Kind);
-            var itemQuality = ItemDataCenter.GetQualityData(item.Info.Quality);
+            var itemKind = DataCenter.GetItemKind(item.Info.Kind);
+            var itemQuality = DataCenter.GetQualityData(item.Info.Quality);
 
             itemName.text = itemQuality.Name + item.Info.Name;
             itemName.color = PublicFunc.SetColorFromHex(itemQuality.Color);
@@ -160,19 +163,19 @@ public class PageBag : MonoBehaviour
 
             void EquipCallBack()
             {
-                if (item.Equips.Contains(item.Info.UID))
+                if (equips.Contains(item.Info.UID))
                     textUse.text = "卸下";
                 else
                     textUse.text = "裝備";
 
-                ability.text = ItemDataCenter.GetAbilityString(item.Info);
+                ability.text = DataCenter.GetAbilityString(item.Info);
                 btnUse.gameObject.SetActive(true);
             }
 
             void UseCallBack()
             {
                 textUse.text = "使用";
-                ability.text = ItemDataCenter.GetAbilityString(item.Info);
+                ability.text = DataCenter.GetAbilityString(item.Info);
                 btnUse.gameObject.SetActive(true);
             }
 
@@ -207,6 +210,7 @@ public class PageBag : MonoBehaviour
 
         void CallBack(SetItemActionResponse setItemActionResponse)
         {
+            equips = setItemActionResponse.CharacterData.Equips;
             PublicFunc.DoActionAccordingToCategory(setItemActionResponse.ItemCategory, EquipCallBack, UseCallBack, null);
 
             if (setItemActionResponse.Enemies.Count > 0)
@@ -237,29 +241,34 @@ public class PageBag : MonoBehaviour
             }
             MainController.Instance.RefreshUI(setItemActionResponse.CharacterData, setItemActionResponse.FullAbility);
 
-            void EquipCallBack() => SwitchEquipStatus(setItemActionResponse.BagItemData.UID, setItemActionResponse.IsEquipped);
+            void EquipCallBack()
+            {
+                if (setItemActionResponse.IsEquipped)
+                {
+                    selectedBagItem.IconEquip.SetActive(false);
+
+                    textUse.text = "裝備";
+                }
+                else
+                {
+                    if (setItemActionResponse.UnEquiped.Count > 0)
+                    {
+                        foreach (var unEquiped in setItemActionResponse.UnEquiped)
+                        {
+                            var existingItem = bagItems.Find(x => x.Info.UID == unEquiped.UID);
+
+                            if (existingItem != null)
+                                existingItem.IconEquip.SetActive(false);
+                        }
+                    }
+
+                    selectedBagItem.IconEquip.SetActive(true);
+
+                    textUse.text = "卸下";
+                }
+            }
+
             void UseCallBack() => UseItem(setItemActionResponse.BagItemData);
-        }
-    }
-
-    void SwitchEquipStatus(long uid, bool isEquipped)
-    {
-        if (isEquipped)
-        {
-            selectedBagItem.IconEquip.SetActive(false);
-
-            textUse.text = "裝備";
-        }
-        else
-        {
-            var existingItem = bagItems.Find(x => x.Info.UID == uid);
-
-            if (existingItem != null)
-                existingItem.IconEquip.SetActive(false);
-
-            selectedBagItem.IconEquip.SetActive(true);
-
-            textUse.text = "卸下";
         }
     }
 

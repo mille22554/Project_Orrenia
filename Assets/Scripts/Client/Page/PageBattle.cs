@@ -12,6 +12,7 @@ public class PageBattle : MonoBehaviour
     [SerializeField] Button btnInto;
     [SerializeField] Button btnGoAhead;
     [SerializeField] Button btnAttack;
+    [SerializeField] Button btnSkill;
     [SerializeField] Button btnRest;
     [SerializeField] Button btnLeave;
     [SerializeField] Button btnShop;
@@ -20,6 +21,7 @@ public class PageBattle : MonoBehaviour
 
     [SerializeField] PanelShop panelShop;
     [SerializeField] PanelLog panelLog;
+    [SerializeField] PanelSkill _panelSkill;
 
     readonly List<ItemEnemy> enemyList = new();
     ItemEnemy selectedEnemy;
@@ -37,9 +39,12 @@ public class PageBattle : MonoBehaviour
         btnInto.onClick.AddListener(OnInto);
         btnGoAhead.onClick.AddListener(OnGoAhead);
         btnAttack.onClick.AddListener(OnAttack);
+        btnSkill.onClick.AddListener(_panelSkill.OnSwitch);
         btnRest.onClick.AddListener(OnRest);
         btnLeave.onClick.AddListener(OnLeave);
         btnShop.onClick.AddListener(panelShop.OnShop);
+
+        _panelSkill.SetInfo(OnSkill);
 
         foreach (Transform enemy in _enemies.transform)
             Destroy(enemy.gameObject);
@@ -160,11 +165,9 @@ public class PageBattle : MonoBehaviour
             deep.text = "深度 " + datas.PlayerData.Deep;
 
             if (enemies.Count != 0)
-            {
                 OnEnemyAppear(enemies);
 
-                RunBattleVisuals(response.ActionResult.BattleResult, datas, response.FullAbility);
-            }
+            RunBattleVisuals(response.ActionResult.BattleResult, datas, response.FullAbility);
         }
     }
 
@@ -294,7 +297,7 @@ public class PageBattle : MonoBehaviour
         }
     }
 
-    async void OnAttack()
+    void OnAttack()
     {
         selectedEnemy = enemyList.Find(x => x.Toggle.isOn);
 
@@ -316,8 +319,36 @@ public class PageBattle : MonoBehaviour
         }
     }
 
+    void OnSkill(ESkillID skillID)
+    {
+        selectedEnemy = enemyList.Find(x => x.Toggle.isOn);
+        if (selectedEnemy == null)
+            return;
+
+        var requestData = new SetBattleActionRequest
+        {
+            BattleAction = EBattleActionType.Attack,
+            ActionTarget = selectedEnemy.Info.CharacterData,
+            SkillID = skillID
+        };
+        ApiBridge.Send(requestData, CallBack);
+
+        void CallBack(SetBattleActionResponse response)
+        {
+            var battleResult = response.ActionResult.BattleResult;
+            var target = enemyList.Find(x => x.Info.CharacterData.Name == battleResult.Defenderer);
+
+            MobDeadCheck(battleResult, target);
+
+            RunBattleVisuals(battleResult, response.SaveData.Datas, response.FullAbility);
+        }
+    }
+
     void MobDeadCheck(BattleResult result, ItemEnemy enemy)
     {
+        if (result == null || enemy == null)
+            return;
+
         if (result.IsAttackerDead && enemy.Info.CharacterData.Name == result.Attacker ||
             result.IsDefenderDead && enemy.Info.CharacterData.Name == result.Defenderer)
         {
@@ -361,6 +392,14 @@ public class PageBattle : MonoBehaviour
                     panelLog.SetLog($"一輛大卡車疾駛而來，撞飛了{result.LuckyEventTarget}!\n受到了{result.LuckyEventDamage}點傷害!", Color.red);
                     break;
             }
+        }
+
+        if (result.IsSkill)
+        {
+            if (result.Attacker == characterData.Name)
+                panelLog.SetLog($"{result.Attacker}發動了{result.SkillName}!");
+            else
+                panelLog.SetLog($"{result.Attacker}發動了{result.SkillName}!", Color.gray);
         }
 
         if (result.IsDodge)

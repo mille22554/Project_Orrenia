@@ -13,6 +13,8 @@ public class CharacterData
     public AbilityBase Ability;
     public List<long> Equips;
     public List<EffectData> Effects;
+    public List<BagItemData> BagItems;
+    public Dictionary<ESkillID, SkillData> Skills;
 
     public static CharacterData CreateDefault()
     {
@@ -33,6 +35,8 @@ public class CharacterData
             },
             Equips = new(),
             Effects = new(),
+            BagItems = new(),
+            Skills = new(),
         };
     }
 }

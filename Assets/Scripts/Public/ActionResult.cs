@@ -23,6 +23,8 @@ public class BattleResult
     public string LevelUpUnit;
     public List<string> BreakEquips;
     public List<string> DropItems;
+    public bool IsSkill;
+    public string SkillName;
 }
 
 public class RestResult

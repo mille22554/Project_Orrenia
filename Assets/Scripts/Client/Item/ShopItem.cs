@@ -32,7 +32,7 @@ public class ShopItem : MonoBehaviour
 
         _itemName.text = data.Name;
 
-        ItemDataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+        DataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
         _toggle.isOn = false;
 

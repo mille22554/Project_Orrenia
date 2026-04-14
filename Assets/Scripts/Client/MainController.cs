@@ -28,6 +28,8 @@ public class MainController : MonoBehaviour
         PanelBtns.Create();
         _panelInfo = PanelInfo.Create();
         PageBattle.Create();
+
+        DataCenter.Init();
     }
 
     public void SwitchPage<T>(T page) where T : MonoBehaviour

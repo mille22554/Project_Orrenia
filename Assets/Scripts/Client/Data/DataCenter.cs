@@ -6,81 +6,57 @@ using System.Reflection;
 using UnityEngine;
 using Color = UnityEngine.Color;
 
-public static class ItemDataCenter
+public static class DataCenter
 {
+    public static Dictionary<EItemKind, ItemKind> ItemKind => _itemKind;
+    public static List<int> GameShopItem => _gameShopItem;
+
     static Dictionary<int, ItemData> _itemData;
     static Dictionary<EItemKind, ItemKind> _itemKind;
     static List<int> _gameShopItem;
     static List<QualityData> _qualityData;
+    static Dictionary<ESkillType, string> _damageTypes;
 
-    static void RefreshData(Action callback)
+    public static void Init()
     {
-        if (_itemData == null || _itemKind == null || _gameShopItem == null || _qualityData == null)
-        {
-            var requestData = new GetItemDataRequest();
-            ApiBridge.Send(requestData, CallBack);
+        var requestData = new GetDataBaseRequest();
+        ApiBridge.Send(requestData, CallBack);
 
-            void CallBack(GetItemDataResponse response)
-            {
-                _itemData = response.ItemData;
-                _itemKind = response.ItemKind;
-                _gameShopItem = response.GameShopItem;
-                _qualityData = response.QualityData;
-
-                callback?.Invoke();
-            }
-        }
-        else
+        void CallBack(GetDataBaseResponse response)
         {
-            callback?.Invoke();
+            _itemData = response.ItemData;
+            _itemKind = response.ItemKind;
+            _gameShopItem = response.GameShopItem;
+            _qualityData = response.QualityData;
+            _damageTypes = response.DamageTypes;
         }
     }
 
     public static ItemData GetItemData(int id)
     {
-        ItemData item = null;
-        RefreshData(CallBack);
+        _itemData.TryGetValue(id, out var item);
 
         return item;
-
-        void CallBack() => _itemData.TryGetValue(id, out item);
     }
 
     public static ItemKind GetItemKind(EItemKind kind)
     {
-        ItemKind itemKind = null;
-        RefreshData(CallBack);
+        _itemKind.TryGetValue(kind, out var itemKind);
 
         return itemKind;
-
-        void CallBack() => _itemKind.TryGetValue(kind, out itemKind);
     }
 
     public static void DoActionAccordingToCategory(EItemKind kind, Action equipCallBack, Action useCallBack, Action materialCallBack)
         => PublicFunc.DoActionAccordingToCategory(GetItemKind(kind).Category, equipCallBack, useCallBack, materialCallBack);
 
-    public static List<int> GetShopList()
+
+
+    public static QualityData GetQualityData(EQuality quality) => _qualityData.ElementAtOrDefault((int)quality);
+
+    public static string GetDamageType(ESkillType damageType)
     {
-        RefreshData(null);
-
-        return _gameShopItem;
-    }
-
-    public static Dictionary<EItemKind, ItemKind> GetItemKindList()
-    {
-        RefreshData(null);
-
-        return _itemKind;
-    }
-
-    public static QualityData GetQualityData(EQuality quality)
-    {
-        QualityData qualityData = null;
-        RefreshData(CallBack);
-
-        return qualityData;
-
-        void CallBack() => qualityData = _qualityData.ElementAtOrDefault((int)quality);
+        _damageTypes.TryGetValue(damageType, out var typeName);
+        return typeName;
     }
 
 

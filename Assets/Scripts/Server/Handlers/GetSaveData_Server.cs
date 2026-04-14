@@ -186,7 +186,7 @@ public class GetSaveData_Server : IApiHandler_Server
         var playerData = GameData_Server.NowPlayerData;
         if (!playerData.IsGetBasicDagger)
         {
-            GameData_Server.NowBagData.Items.Add(ItemDataCenter_Server.GetNewItemByItemID(1));
+            GameData_Server.NowCharacterData.BagItems.Add(ItemDataCenter_Server.GetNewItemByItemID(1));
             playerData.IsGetBasicDagger = true;
         }
         SaveDataCenter.SaveData();

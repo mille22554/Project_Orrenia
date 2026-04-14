@@ -79,7 +79,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
     {
         var actionResult = new ActionResult();
 
-        CharacterDataCenter.STAProcess(CharacterData,-1);
+        CharacterDataCenter.ActionEndProcess(CharacterData);
 
         PlayerData.Deep++;
 
@@ -150,15 +150,17 @@ public class SetAdventureAction_Server : IApiHandler_Server
         );
 
         var result = BattleSystem.CheckNowActor();
-        if (result != null)
+        if (result != null && (result.IsAttackerDead || result.IsDefenderDead))
         {
-            if (result.IsDefenderDead)
+            if (result.IsAttackerDead && CharacterData.Name == result.Attacker ||
+                result.IsDefenderDead && CharacterData.Name == result.Defenderer)
             {
                 OnLeave();
             }
-            else if (result.IsAttackerDead)
+            else
             {
-                var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == result.Attacker);
+                var deadMob = result.IsAttackerDead ? result.Attacker : result.Defenderer;
+                var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
                 BattleSystem.EnemyDeadProcess(target, result);
             }
         }

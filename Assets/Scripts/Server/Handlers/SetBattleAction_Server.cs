@@ -48,17 +48,21 @@ public class SetBattleAction_Server : IApiHandler_Server
     ActionResult DoAction(SetBattleAction_ServerRequest data)
     {
         var actionResult = new ActionResult();
-        switch (data.BattleAction)
+
+        if (CharacterData.CurrentTP >= GameData_Server.tpCost)
         {
-            case EBattleActionType.Attack:
-                actionResult.BattleResult = OnAttack(data.ActionTarget);
-                break;
-            case EBattleActionType.Skill:
-                OnSkill(data.ActionTarget, data.SkillID);
-                break;
-            case EBattleActionType.Leave:
-                OnLeave();
-                break;
+            switch (data.BattleAction)
+            {
+                case EBattleActionType.Attack:
+                    actionResult.BattleResult = OnAttack(data.ActionTarget);
+                    break;
+                case EBattleActionType.Skill:
+                    OnSkill(data.ActionTarget, data.SkillID);
+                    break;
+                case EBattleActionType.Leave:
+                    OnLeave();
+                    break;
+            }
         }
         return actionResult;
     }
@@ -79,7 +83,7 @@ public class SetBattleAction_Server : IApiHandler_Server
                 OnLeave();
             }
 
-            CharacterDataCenter.STAProcess(CharacterData, -1);
+            CharacterDataCenter.ActionEndProcess(CharacterData);
             return result;
         }
         else
@@ -103,7 +107,7 @@ public class SetBattleAction_Server : IApiHandler_Server
         if (characterData.Name == CharacterData.Name)
         {
 
-            CharacterDataCenter.STAProcess(CharacterData, -1);
+            CharacterDataCenter.ActionEndProcess(CharacterData);
             return null;
         }
         else
@@ -122,7 +126,7 @@ public class SetBattleAction_Server : IApiHandler_Server
                     OnLeave();
                 }
 
-                CharacterDataCenter.STAProcess(CharacterData, -1);
+                CharacterDataCenter.ActionEndProcess(CharacterData);
                 return result;
             }
             else

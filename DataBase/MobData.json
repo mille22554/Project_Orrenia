@@ -42,5 +42,36 @@
         "Prop": 80
       }
     ]
+  },
+  "4": {
+    "Name": "草原狼",
+    "Ability": {
+      "STR_Point": 2,
+      "VIT_Point": 1,
+      "DEX_Point": 2,
+      "AGI_Point": 1
+    },
+    "Skills": [1],
+    "DropItems": [
+      {
+        "Item": 204,
+        "Prop": 80
+      }
+    ]
+  },
+  "5": {
+    "Name": "小風靈",
+    "Ability": {
+      "DEX_Point": 1,
+      "INT_Point": 4,
+      "AGI_Point": 1
+    },
+    "Skills": [3],
+    "DropItems": [
+      {
+        "Item": 205,
+        "Prop": 80
+      }
+    ]
   }
 }

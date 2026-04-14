@@ -8,8 +8,10 @@ using Random = UnityEngine.Random;
 public class MobDataBase
 {
     public string Name;
-    public AbilityBase Ability;
-    public List<DropItem> DropItems;
+    public AbilityBase Ability = new();
+    public List<ESkillID> Skills = new();
+    public List<DropItem> DropItems = new();
+    public List<int> Equips = new();
 }
 
 public static class MobDataCenter
@@ -32,10 +34,11 @@ public static class MobDataCenter
         }
     }
 
-    public static MobData GetRandomMob(int area, int level)
+    public static MobData GetRandomMob(int area, int deep)
     {
+        var level = EnemySetting.GetEnemyLevel(area, deep);
         var mobList = AreaDataCenter.GetAreaData(area).MobList;
-        var index = Random.Range(0, mobList.Count);
+        var index = Random.Range(Mathf.Min(0 + deep / 300, mobList.Count - 4), Mathf.Min(mobList.Count, deep / 300 + 3));
         var mobID = mobList.ElementAtOrDefault(index);
 
         var mobData = MobData.CreateDefault();
@@ -55,6 +58,16 @@ public static class MobDataCenter
             CharacterDataCenter.InitCurrentData(mobData.CharacterData);
 
             mobData.DropItems = mob.DropItems;
+
+            foreach (var equipID in mob.Equips)
+            {
+                var equip = ItemDataCenter_Server.GetNewItemByItemID(equipID);
+                mobData.CharacterData.BagItems.Add(equip);
+                mobData.CharacterData.Equips.Add(equip.UID);
+            }
+
+            foreach (var skillID in mob.Skills)
+                mobData.CharacterData.Skills.Add(skillID, SkillDataCenter.GetSkillData(skillID));
         }
         else
         {
@@ -77,8 +90,7 @@ public static class EnemySetting
 
         for (int i = 0; i < enemyNum; i++)
         {
-            var level = GetEnemyLevel(deep);
-            var mob = MobDataCenter.GetRandomMob(area, level);
+            var mob = MobDataCenter.GetRandomMob(area, deep);
 
             if (!enemyIDCounter.ContainsKey(mob.CharacterData.Name))
                 enemyIDCounter[mob.CharacterData.Name] = 1;
@@ -127,18 +139,20 @@ public static class EnemySetting
             return 3;
     }
 
-    static int GetEnemyLevel(int deep)
+    public static int GetEnemyLevel(int area, int deep)
     {
+        var areaData = AreaDataCenter.GetAreaData(area);
+
         // 中心值
         float center = deep / 100f;
 
         // 範圍
-        int min = Mathf.Clamp(Mathf.FloorToInt(center) - 2, 1, 10);
-        int max = Mathf.Clamp(Mathf.CeilToInt(center) + 2, 1, 10);
+        int min = Mathf.Clamp(Mathf.FloorToInt(center) - 2, areaData.MinMobLevel, areaData.MaxMobLevel);
+        int max = Mathf.Clamp(Mathf.CeilToInt(center) + 2, areaData.MinMobLevel, areaData.MaxMobLevel);
 
         if (min > max)
         {
-            int safe = Mathf.Clamp(Mathf.RoundToInt(center), 1, 10);
+            int safe = Mathf.Clamp(Mathf.RoundToInt(center), areaData.MinMobLevel, areaData.MaxMobLevel);
             return safe;
         }
 

@@ -1,22 +1,35 @@
+using System.Collections.Generic;
+
 public class SkillData
 {
     public string Name;
     public ESkillID ID;
     public string Description;
-    public EDamageType DamageType;
+    public ESkillType SkillType;
+    public List<DamageFormat> Damage = new();
     public EEffectID Effect;
-    public int WeaponType;
+    public List<EItemKind> WeaponType = new();
     public int Cost;
     public int CoolDown;
+    public int CurrentCD;
 }
 
-public enum EDamageType
+public class DamageFormat
 {
-    Physics = 1,
-    Magic
+    public decimal Constant;
+    public FullAbilityBase Ability;
+}
+
+public enum ESkillType
+{
+    None,
+    PhysicsAttack,
+    MagicAttack,
+    Passive
 }
 
 public enum ESkillID
 {
-    爪擊 = 1,
+    None,
+    DualWield = 4,
 }

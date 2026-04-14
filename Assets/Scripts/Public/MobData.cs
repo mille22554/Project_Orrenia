@@ -6,15 +6,12 @@ public class MobData
 
     public List<DropItem> DropItems;
 
-    public List<EffectData> Effects;
-
     public static MobData CreateDefault()
     {
         var data = new MobData
         {
             CharacterData = CharacterData.CreateDefault(),
             DropItems = new(),
-            Effects = new(),
         };
 
         return data;

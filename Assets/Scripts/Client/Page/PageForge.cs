@@ -90,7 +90,7 @@ public class PageForge : MonoBehaviour
                     {
                         _maxMaterialNum = maxMaterialNum;
 
-                        foreach (var kindData in ItemDataCenter.GetItemKindList())
+                        foreach (var kindData in DataCenter.ItemKind)
                         {
                             foreach (var category in categories)
                             {
@@ -130,7 +130,7 @@ public class PageForge : MonoBehaviour
 
         void CallBack(GetSaveDataResponse response)
         {
-            InitPage(response.SaveData.Datas.BagData.Items);
+            InitPage(response.SaveData.Datas.CharacterData.BagItems);
         }
     }
 
@@ -142,7 +142,7 @@ public class PageForge : MonoBehaviour
         foreach (var bagItemData in bagItemDatas)
         {
             var kind = bagItemData.Kind;
-            ItemDataCenter.DoActionAccordingToCategory(kind, null, null, MaterialCallBack);
+            DataCenter.DoActionAccordingToCategory(kind, null, null, MaterialCallBack);
 
             void MaterialCallBack()
             {

@@ -66,9 +66,9 @@ public class PanelShop : MonoBehaviour
 
         ClearList();
 
-        foreach (var itemID in ItemDataCenter.GetShopList())
+        foreach (var itemID in DataCenter.GameShopItem)
         {
-            var itemInfo = ItemDataCenter.GetItemData(itemID);
+            var itemInfo = DataCenter.GetItemData(itemID);
             var item = ObjectPool.Get(_shopItem, _itemList.content);
             item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);
             _shopItemList.Add(item);
@@ -90,9 +90,7 @@ public class PanelShop : MonoBehaviour
 
         void CallBack(GetSaveDataResponse response)
         {
-            var bagData = response.SaveData.Datas.BagData;
-
-            foreach (var itemInfo in bagData.Items)
+            foreach (var itemInfo in response.SaveData.Datas.CharacterData.BagItems)
             {
                 var item = ObjectPool.Get(_shopItem, _itemList.content);
                 item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);
@@ -143,16 +141,16 @@ public class PanelShop : MonoBehaviour
         {
             _selectedShopItem = item;
             _itemName.text = item.Info.Name;
-            _type.text = ItemDataCenter.GetItemKind(item.Info.Kind).Name;
+            _type.text = DataCenter.GetItemKind(item.Info.Kind).Name;
             _price.transform.parent.gameObject.SetActive(true);
             var itemPrice = _toggleBuy.isOn ? item.Info.Price : item.Info.Price / 2;
             _price.text = $"{itemPrice}";
             _description.text = item.Info.Description;
             _inputTradeNum.text = "0";
 
-            ItemDataCenter.DoActionAccordingToCategory(item.Info.Kind, OtherCallBack, OtherCallBack, MaterialCallBack);
+            DataCenter.DoActionAccordingToCategory(item.Info.Kind, OtherCallBack, OtherCallBack, MaterialCallBack);
 
-            void MaterialCallBack() => _ability.text = ItemDataCenter.GetAbilityString(item.Info.Ability, 0);
+            void MaterialCallBack() => _ability.text = DataCenter.GetAbilityString(item.Info.Ability, 0);
             void OtherCallBack() => _ability.text = "";
         }
         else

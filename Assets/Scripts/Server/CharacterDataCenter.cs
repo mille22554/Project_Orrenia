@@ -95,7 +95,7 @@ public static class CharacterDataCenter
         if (data.Role == ECharacterRole.Mob)
             ability.HP /= 10;
 
-        CalculateEquipAbility(ability, data.Equips);
+        CalculateEquipAbility(ability, data);
         CalculateEffectAbility(ability, data.Effects);
 
         FixAbility(data, ability);
@@ -103,11 +103,11 @@ public static class CharacterDataCenter
         return ability;
     }
 
-    static void CalculateEquipAbility(FullAbilityBase data, List<long> equips)
+    static void CalculateEquipAbility(FullAbilityBase data, CharacterData characterData)
     {
-        foreach (var equipUID in equips)
+        foreach (var equipUID in characterData.Equips)
         {
-            var item = GameData_Server.NowBagData.Items.Find(x => x.UID == equipUID);
+            var item = characterData.BagItems.Find(x => x.UID == equipUID);
             var ability = ItemDataCenter_Server.FinalAbilityProcess(item);
             var fields = typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
             foreach (var field in fields)
@@ -170,7 +170,7 @@ public static class CharacterDataCenter
 
     }
 
-    public static void EffectProcess(CharacterData characterData)
+    static void EffectProcess(CharacterData characterData)
     {
         foreach (var effect in characterData.Effects.ToList())
         {
@@ -201,8 +201,22 @@ public static class CharacterDataCenter
                 characterData.Effects.Remove(effect);
             }
         }
+    }
 
+    static void SkillCDProcess(CharacterData characterData)
+    {
+        foreach (var skill in characterData.Skills.Values)
+        {
+            if (skill.CurrentCD > 0)
+                skill.CurrentCD--;
+        }
+    }
+
+    public static void ActionEndProcess(CharacterData characterData)
+    {
+        STAProcess(characterData, -1);
         EffectProcess(characterData);
+        SkillCDProcess(characterData);
     }
 
     public static void AddCharacterEffect(CharacterData characterData, EEffectID effectID, int effectValue, int effectTimes)

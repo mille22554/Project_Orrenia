@@ -19,6 +19,7 @@ public class SetItemActionResponse
 {
     public EItemCategory ItemCategory;
     public BagItemData BagItemData;
+    public List<BagItemData> UnEquiped;
     public bool IsEquipped;
     public List<MobData> Enemies;
     public CharacterData CharacterData;

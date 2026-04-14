@@ -2,10 +2,71 @@
   "1": {
     "Name": "爪擊",
     "Description": "使用銳利的爪子攻擊目標",
-    "DamageType": 1,
-    "Effect": 0,
-    "WeaponType": 0,
-    "Cost": 3,
-    "CoolDown": 0
+    "SkillType": 1,
+    "Damage": [
+      {
+        "Constant": 0.8,
+        "Ability": {
+          "ATK": 1
+        }
+      },
+      {
+        "Constant": 0.2,
+        "Ability": {
+          "VIT": 1,
+          "STR": 3,
+          "AGI": 1
+        }
+      }
+    ],
+    "WeaponType": [0],
+    "Cost": 5
+  },
+  "2": {
+    "Name": "火球術",
+    "Description": "使用小火球攻擊目標",
+    "SkillType": 2,
+    "Damage": [
+      {
+        "Constant": 0.8,
+        "Ability": {
+          "MATK": 1
+        }
+      },
+      {
+        "Constant": 0.2,
+        "Ability": {
+          "INT": 5
+        }
+      }
+    ],
+    "WeaponType": [4, 10],
+    "Cost": 5
+  },
+  "3": {
+    "Name": "風刃",
+    "Description": "颳起如刀刃般銳利的風攻擊目標",
+    "SkillType": 2,
+    "Damage": [
+      {
+        "Constant": 0.8,
+        "Ability": {
+          "MATK": 1
+        }
+      },
+      {
+        "Constant": 0.2,
+        "Ability": {
+          "INT": 5
+        }
+      }
+    ],
+    "WeaponType": [4, 10],
+    "Cost": 5
+  },
+  "4": {
+    "Name": "雙持",
+    "Description": "可以裝備兩把單手武器",
+    "SkillType": 3
   }
 }

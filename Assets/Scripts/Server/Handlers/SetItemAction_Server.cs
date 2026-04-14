@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -8,7 +9,6 @@ public class SetItemAction_Server : IApiHandler_Server
     public string Cmd => "SetItemAction";
 
     CharacterData CharacterData => GameData_Server.NowCharacterData;
-    BagData BagData => GameData_Server.NowBagData;
 
     public string Get(object request)
     {
@@ -59,15 +59,63 @@ public class SetItemAction_Server : IApiHandler_Server
 
         return response;
 
-        void EquipCallBack() => RefreshEquipState(bagItemData.Kind, bagItemData.UID);
+        void EquipCallBack()
+        {
+            var equips = CharacterData.Equips;
+
+            if (equips.Contains(bagItemData.UID))
+            {
+                equips.Remove(bagItemData.UID);
+                response.IsEquipped = true;
+            }
+            else
+            {
+                var ringCounter = 0;
+                var dualWieldCounter = 0;
+                var twoHandCounter = 0;
+
+                foreach (var equipUID in equips.ToList())
+                {
+                    var equip = CharacterData.BagItems.Find(x => x.UID == equipUID);
+                    var equipCategory = ItemDataCenter_Server.GetItemKind(equip.Kind).Category;
+
+                    if (equipCategory == itemKind.Category || ItemDataCenter_Server.IsWeapon(equipCategory) || equip.Kind == EItemKind.Shield)
+                    {
+                        if (equip.Kind == EItemKind.Ring && ringCounter < 9)
+                        {
+                            ringCounter++;
+                            continue;
+                        }
+                        else if (CharacterData.Skills.ContainsKey(ESkillID.DualWield) && itemKind.Category == EItemCategory.One_Hand && dualWieldCounter < 1)
+                        {
+                            if (equipCategory != EItemCategory.Two_Hand)
+                            {
+                                dualWieldCounter++;
+                                continue;
+                            }
+                        }
+
+                        equips.Remove(equip.UID);
+                        response.UnEquiped.Add(equip);
+
+                        if (itemKind.Category == EItemCategory.Two_Hand && twoHandCounter < 1)
+                        {
+                            twoHandCounter++;
+                            continue;
+                        }
+
+                        break;
+                    }
+                }
+
+                equips.Add(bagItemData.UID);
+                response.IsEquipped = false;
+            }
+        }
 
         void UseCallBack()
         {
-            bagItemData = BagData.Items.Find(x => x.UID == bagItemData.UID);
-            bagItemData.Count--;
-
-            if (bagItemData.Count == 0)
-                BagData.Items.Remove(bagItemData);
+            bagItemData = CharacterData.BagItems.Find(x => x.UID == bagItemData.UID);
 
             CharacterDataCenter.MotifyCurrentAbility(CharacterData, bagItemData.Ability);
 
@@ -80,32 +128,18 @@ public class SetItemAction_Server : IApiHandler_Server
                 }
             }
 
-            // CharacterDataCenter.EffectProcess(CharacterData);
-        }
-    }
-
-    void RefreshEquipState(EItemKind kind, long uid)
-    {
-        var equips = CharacterData.Equips;
-
-        if (equips.Contains(uid))
-        {
-            equips.Remove(uid);
-        }
-        else
-        {
-            foreach (var equipUID in equips)
+            if (bagItemData.Skill != ESkillID.None)
             {
-                var equip = BagData.Items.Find(x => x.UID == equipUID);
+                if (CharacterData.Skills.ContainsKey(bagItemData.Skill))
+                    return;
 
-                if (equip.Kind == kind)
-                {
-                    equips.Remove(equip.UID);
-                    break;
-                }
+                CharacterData.Skills.Add(bagItemData.Skill, SkillDataCenter.GetSkillData(bagItemData.Skill));
             }
 
-            equips.Add(uid);
+            bagItemData.Count--;
+
+            if (bagItemData.Count == 0)
+                CharacterData.BagItems.Remove(bagItemData);
         }
     }
 }
@@ -119,6 +153,7 @@ public class SetItemAction_ServerResponse
 {
     public EItemCategory ItemCategory;
     public BagItemData BagItemData;
+    public List<BagItemData> UnEquiped = new();
     public bool IsEquipped;
     public List<MobData> Enemies;
     public CharacterData CharacterData;

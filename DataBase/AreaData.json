@@ -4,6 +4,8 @@
   },
   "2": {
     "Name": "第一層 露米亞草原",
-    "MobList": [1, 2, 3]
+    "MobList": [1, 2, 3, 4, 5],
+    "MinMobLevel": 1,
+    "MaxMobLevel": 1
   }
 }

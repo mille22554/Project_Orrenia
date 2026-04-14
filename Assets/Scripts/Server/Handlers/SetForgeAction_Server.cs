@@ -8,7 +8,7 @@ public class SetForgeAction_Server : IApiHandler_Server
     public string Cmd => "SetForgeAction";
 
     PlayerContextData PlayerData => GameData_Server.NowPlayerData;
-    BagData BagData => GameData_Server.NowBagData;
+    CharacterData CharacterData => GameData_Server.NowCharacterData;
 
     public string Get(object request)
     {
@@ -21,7 +21,7 @@ public class SetForgeAction_Server : IApiHandler_Server
 
             var responseData = new SetForgeAction_ServerResponse
             {
-                BagItemDatas = BagData.Items
+                BagItemDatas = CharacterData.BagItems
             };
             var response = new ResponseData_Server
             {
@@ -60,18 +60,18 @@ public class SetForgeAction_Server : IApiHandler_Server
 
         foreach (var material in request.Materials)
         {
-            var bagItem = BagData.Items.Find(x => x.UID == material);
+            var bagItem = CharacterData.BagItems.Find(x => x.UID == material);
 
             newBagItem.Materials.Add(bagItem.ItemID);
 
             bagItem.Count--;
             if (bagItem.Count == 0)
-                BagData.Items.Remove(bagItem);
+                CharacterData.BagItems.Remove(bagItem);
         }
 
         SetQuality(newBagItem);
 
-        BagData.Items.Add(newBagItem);
+        CharacterData.BagItems.Add(newBagItem);
 
         ForgeExpProcess();
     }
@@ -140,7 +140,7 @@ public class SetForgeAction_Server : IApiHandler_Server
                     DEX = 5 + forgeParam
                 };
                 break;
-            case EItemKind.Staff:
+            case EItemKind.Book:
                 item.Ability = new()
                 {
                     MATK = 5 + forgeParam,
@@ -187,7 +187,7 @@ public class SetForgeAction_Server : IApiHandler_Server
                     DEX = 8 + forgeParam
                 };
                 break;
-            case EItemKind.Book:
+            case EItemKind.Staff:
                 item.Ability = new()
                 {
                     MATK = 8 + forgeParam,

@@ -14,7 +14,6 @@ public class Datas
     public PlayerContextData PlayerData;
     public CharacterData CharacterData;
     public EnemyData EnemyData;
-    public BagData BagData;
 
     public static Datas CreateDefault()
     {
@@ -22,8 +21,7 @@ public class Datas
         {
             PlayerData = PlayerContextData.CreateDefault(),
             CharacterData = CharacterData.CreateDefault(),
-            EnemyData = new(),
-            BagData = new()
+            EnemyData = new()
         };
 
         return datas;
@@ -37,15 +35,5 @@ public class EnemyData
     public EnemyData()
     {
         Enemies = new();
-    }
-}
-
-public class BagData
-{
-    public List<BagItemData> Items;
-
-    public BagData()
-    {
-        Items = new();
     }
 }

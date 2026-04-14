@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class BagItem : MonoBehaviour
 {
-    public List<long> Equips;
     public GameObject IconEquip;
     [NonSerialized] public BagItemData Info;
 
@@ -23,20 +22,18 @@ public class BagItem : MonoBehaviour
         _toggle.onValueChanged.AddListener(OnToggleValueChange);
     }
 
-    public void SetInfo(BagItemData data, ToggleGroup group, Action<BagItem, bool> refreshBagInfo, List<long> equips)
+    public void SetInfo(BagItemData data, ToggleGroup group, Action<BagItem, bool> refreshBagInfo,bool isEquiped)
     {
         Info = data;
-        if (equips != null)
-            Equips = equips;
 
         _itemName.text = data.Name;
         _toggle.group = group;
         _refreshBagInfo = refreshBagInfo;
         _toggle.isOn = false;
 
-        ItemDataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+        DataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
-        IconEquip.SetActive(equips.Contains(data.UID));
+        IconEquip.SetActive(isEquiped);
 
         void EquipCallBack() => _count.text = data.Durability.ToString();
         void OtherCallBack() => _count.text = data.Count.ToString();

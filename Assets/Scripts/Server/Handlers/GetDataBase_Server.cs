@@ -1,23 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public class GetItemData_Server : IApiHandler_Server
+public class GetDataBase_Server : IApiHandler_Server
 {
-    public string Cmd => "GetItemData";
+    public string Cmd => "GetDataBase";
 
     public string Get(object request)
     {
         try
         {
-            var responseData = new GetItemData_ServerResponse
+            var responseData = new GetDataBase_ServerResponse
             {
                 ItemData = ItemDataCenter_Server.ItemData,
                 ItemKind = ItemDataCenter_Server.ItemKind,
                 GameShopItem = ItemDataCenter_Server.GameShopItem,
-                QualityData = ItemDataCenter_Server.QualityData
+                QualityData = ItemDataCenter_Server.QualityData,
+                DamageTypes = SkillDataCenter.SkillTypes,
             };
+
             var response = new ResponseData_Server
             {
                 Code = 0,
@@ -27,7 +30,7 @@ public class GetItemData_Server : IApiHandler_Server
         }
         catch (Exception ex)
         {
-            var errorMessage = $"獲取道具資料時發生錯誤: {ex.Message}, {ex.StackTrace}";
+            var errorMessage = $"獲取資料庫時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
             var responseData = new ResponseData_Server
             {
@@ -39,10 +42,11 @@ public class GetItemData_Server : IApiHandler_Server
     }
 }
 
-public class GetItemData_ServerResponse
+public class GetDataBase_ServerResponse
 {
     public Dictionary<int, ItemData> ItemData;
     public Dictionary<EItemKind, ItemKind> ItemKind;
     public List<int> GameShopItem;
     public List<QualityData> QualityData;
+    public Dictionary<ESkillType, string> DamageTypes;
 }

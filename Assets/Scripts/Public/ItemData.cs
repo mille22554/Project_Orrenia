@@ -18,6 +18,7 @@ public class ItemData
     public string Description;
     public FullAbilityBase Ability;
     public List<EffectData> Effects;
+    public ESkillID Skill;
     public int Price;
     public int Durability;
     public int Count;
@@ -55,17 +56,17 @@ public enum EItemCategory
 
 public enum EItemKind
 {
-    None = -1,
+    None,
     Sword,
     Hammer,
     Spear,
-    Staff,
+    Book,
     Rapier,
     Dagger,
     Axe,
     Aegis,
     Bow,
-    Book,
+    Staff,
     Katana,
     Tarot,
     Shield,

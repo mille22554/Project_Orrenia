@@ -123,6 +123,7 @@ public static class ItemDataCenter_Server
             Description = source.Description,
             Ability = source.Ability,
             Effects = source.Effects,
+            Skill = source.Skill,
             Price = source.Price,
             Durability = source.Durability,
             Count = source.Count,

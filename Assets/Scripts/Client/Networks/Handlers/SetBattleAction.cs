@@ -13,6 +13,7 @@ public class SetBattleActionRequest : IRequestBase<SetBattleActionResponse>
     public string Cmd => "SetBattleAction";
     public EBattleActionType BattleAction;
     public CharacterData ActionTarget;
+    public ESkillID SkillID;
 }
 
 public class SetBattleActionResponse

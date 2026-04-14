@@ -117,14 +117,14 @@ public class PanelLog : MonoBehaviour
 
                 foreach (var enemy in enemies)
                 {
-                    if (enemy.Effects.Count > 0)
+                    if (enemy.CharacterData.Effects.Count > 0)
                     {
                         textLog = ObjectPool.Get(itemLog, effectContent);
                         itemEffectLogs.Add(textLog);
                         textLog.text = $"{enemy.CharacterData.Name}:";
                         textLog.color = Color.white;
 
-                        foreach (var effect in enemy.Effects)
+                        foreach (var effect in enemy.CharacterData.Effects)
                         {
                             textLog = ObjectPool.Get(itemLog, effectContent);
                             itemEffectLogs.Add(textLog);
