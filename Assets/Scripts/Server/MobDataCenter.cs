@@ -38,7 +38,8 @@ public static class MobDataCenter
     {
         var level = EnemySetting.GetEnemyLevel(area, deep);
         var mobList = AreaDataCenter.GetAreaData(area).MobList;
-        var index = Random.Range(Mathf.Min(0 + deep / 300, mobList.Count - 4), Mathf.Min(mobList.Count, deep / 300 + 3));
+        var deepParam = Mathf.Max(0, deep - 300);
+        var index = Random.Range(Mathf.Min(deepParam / 100, mobList.Count - 4), Mathf.Min(mobList.Count, deepParam / 100 + 3));
         var mobID = mobList.ElementAtOrDefault(index);
 
         var mobData = MobData.CreateDefault();
