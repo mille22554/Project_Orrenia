@@ -55,23 +55,23 @@ public class PanelInfo : MonoBehaviour
             _exp = data.PlayerExp;
 
         playerName.text = data.PlayerName;
-        playerHp.text = $"HP {data.PlayerCurrentHP}/{_fullAbility.HP}";
-        playerMp.text = $"MP {data.PlayerCurrentMP}/{_fullAbility.MP}";
-        playerSTA.text = $"體力 {data.PlayerCurrentSTA}/{_fullAbility.STA}";
-        playerLv.text = $"Lv {data.PlayerLv}";
-        playerExp.text = $"ExP {data.PlayerCurrentExp}/{_exp}";
+        playerHp.text = $"HP {data.PlayerCurrentHP:0}/{_fullAbility.HP:0}";
+        playerMp.text = $"MP {data.PlayerCurrentMP:0}/{_fullAbility.MP:0}";
+        playerSTA.text = $"體力 {data.PlayerCurrentSTA:0}/{_fullAbility.STA:0}";
+        playerLv.text = $"Lv {data.PlayerLv:0}";
+        playerExp.text = $"ExP {data.PlayerCurrentExp:0}/{_exp:0}";
     }
 }
 
 public class RefreshInfoData
 {
     public string PlayerName;
-    public int PlayerCurrentHP;
-    public int PlayerHP;
-    public int PlayerCurrentMP;
-    public int PlayerMP;
-    public int PlayerCurrentSTA;
-    public int PlayerSTA;
+    public decimal PlayerCurrentHP;
+    public decimal PlayerHP;
+    public decimal PlayerCurrentMP;
+    public decimal PlayerMP;
+    public decimal PlayerCurrentSTA;
+    public decimal PlayerSTA;
     public int PlayerLv;
     public int PlayerCurrentExp;
     public int PlayerExp;

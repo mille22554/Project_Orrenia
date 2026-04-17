@@ -86,7 +86,7 @@ public class SetItemAction_Server : IApiHandler_Server
                             ringCounter++;
                             continue;
                         }
-                        else if (CharacterData.Skills.ContainsKey(ESkillID.DualWield) && itemKind.Category == EItemCategory.One_Hand && dualWieldCounter < 1)
+                        else if (CharacterData.Skills.ContainsKey(ESkillID.雙持) && itemKind.Category == EItemCategory.One_Hand && dualWieldCounter < 1)
                         {
                             if (equipCategory != EItemCategory.Two_Hand)
                             {
@@ -124,7 +124,7 @@ public class SetItemAction_Server : IApiHandler_Server
                 foreach (var effect in bagItemData.Effects)
                 {
                     Debug.Log($"ID: {effect.ID}, Value: {effect.Value}, Times: {effect.Times}");
-                    CharacterDataCenter.AddCharacterEffect(CharacterData, effect.ID, effect.Value, effect.Times);
+                    CharacterDataCenter.AddCharacterEffect(CharacterData, effect);
                 }
             }
 

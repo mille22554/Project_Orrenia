@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using Random = UnityEngine.Random;
 public class MobDataBase
 {
     public string Name;
+    public int ID;
     public AbilityBase Ability = new();
     public List<ESkillID> Skills = new();
     public List<DropItem> DropItems = new();
@@ -16,9 +18,16 @@ public class MobDataBase
 
 public static class MobDataCenter
 {
-    static readonly Dictionary<int, MobDataBase> _datas = new();
+    static Dictionary<int, MobDataBase> _datas;
+    readonly static Dictionary<int, IMobHandler> _mobHandlers = new();
 
     static MobDataCenter()
+    {
+        LoadMobData();
+        RegisterHandlers();
+    }
+
+    static void LoadMobData()
     {
         string path = GameData_Server.MobDataPath;
         Debug.Log($"從 {path} 讀取怪物資料");
@@ -27,10 +36,33 @@ public static class MobDataCenter
         {
             string json = File.ReadAllText(path);
             _datas = JsonConvert.DeserializeObject<Dictionary<int, MobDataBase>>(json);
+
+            foreach (var (id, mob) in _datas)
+                mob.ID = id;
         }
         else
         {
             Debug.LogError("MobData檔案丟失!");
+        }
+    }
+
+    static void RegisterHandlers()
+    {
+        var types = typeof(CharacterDataCenter).Assembly.GetTypes();
+
+        foreach (var type in types)
+        {
+            if (type.IsInterface || type.IsAbstract)
+                continue;
+
+            if (!typeof(IMobHandler).IsAssignableFrom(type))
+                continue;
+
+            var instance = (IMobHandler)Activator.CreateInstance(type);
+
+            Debug.Log($"Register effect handler: {instance.ID} -> {type.Name}");
+
+            _mobHandlers[instance.ID] = instance;
         }
     }
 
@@ -46,6 +78,7 @@ public static class MobDataCenter
         if (_datas.TryGetValue(mobID, out var mob))
         {
             mobData.CharacterData.Name = mob.Name;
+            mobData.MobID = mob.ID;
             mobData.CharacterData.Level = level;
             mobData.CharacterData.Role = ECharacterRole.Mob;
 
@@ -76,6 +109,14 @@ public static class MobDataCenter
         }
 
         return mobData;
+    }
+
+    public static SkillData SetMobAction(CharacterData mob, int mobID)
+    {
+        if (_mobHandlers.TryGetValue(mobID, out var mobHandler))
+            return mobHandler.Handler(mob);
+
+        return null;
     }
 }
 
@@ -179,5 +220,10 @@ public static class EnemySetting
 
         return max;
     }
+}
 
+public interface IMobHandler
+{
+    int ID { get; }
+    SkillData Handler(CharacterData mob);
 }

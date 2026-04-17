@@ -19,6 +19,7 @@ public class ItemData
     public FullAbilityBase Ability;
     public List<EffectData> Effects;
     public ESkillID Skill;
+    public Trait Trait;
     public int Price;
     public int Durability;
     public int Count;
@@ -35,6 +36,11 @@ public class QualityData
     public string Name;
     public decimal Multi;
     public string Color;
+}
+
+public class Trait
+{
+    public int Poisoning;
 }
 
 public enum EItemCategory

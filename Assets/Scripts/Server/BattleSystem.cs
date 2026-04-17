@@ -36,15 +36,17 @@ public static class BattleSystem
         return battleData;
     }
 
-    public static CharacterData RunSpeedProcess()
+    public static (CharacterData characterData, int mobID) RunSpeedProcess()
     {
         var playerCharacterData = GameData_Server.NowCharacterData;
+        var enemies = GameData_Server.NowEnemyData.Enemies;
+
         var units = new Dictionary<BattleData, CharacterData>
         {
             { CreateBattleData(playerCharacterData), playerCharacterData }
         };
 
-        foreach (var mob in GameData_Server.NowEnemyData.Enemies)
+        foreach (var mob in enemies)
         {
             units.Add(CreateBattleData(mob.CharacterData), mob.CharacterData);
         }
@@ -68,22 +70,26 @@ public static class BattleSystem
             unit.Value.CurrentTP += unit.Key.SPD * minTime;
         }
 
-        return units[next];
+        var actMob = enemies.Find(x => x.CharacterData.Name == units[next].Name);
+        var mobID = actMob != null ? actMob.MobID : -1;
+
+        return (units[next], mobID);
     }
 
-    public static BattleResult CheckNowActor()
+    public static (BattleResult battleResult, EffectResult.Result effectResult) CheckNowActor()
     {
         var debugSwitch = false;
         debugSwitch = true;
 
-        var nowActor = RunSpeedProcess();
+        var (nowActor, mobID) = RunSpeedProcess();
         if (debugSwitch)
             Debug.Log($"當前行動單位: {nowActor.Name}");
 
         var datas = GameData_Server.SaveData.Datas;
         var characterData = datas.CharacterData;
 
-        BattleResult result = null;
+        BattleResult battleResult = null;
+        EffectResult.Result effectResult = null;
 
         switch (nowActor.Role)
         {
@@ -100,39 +106,43 @@ public static class BattleSystem
                         if (debugSwitch && skill != null)
                             Debug.Log($"施放技能: {skill.Name}");
 
-                        result = RunBattle(nowActor, datas.EnemyData.Enemies.FirstOrDefault().CharacterData, skill);
-                        CharacterDataCenter.ActionEndProcess(nowActor);
+                        battleResult = RunBattle(nowActor, new() { datas.EnemyData.Enemies.FirstOrDefault().CharacterData }, skill);
+                        effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
                     }
                 }
                 break;
             case ECharacterRole.Mob:
                 {
-                    var skillList = nowActor.Skills.Values
-                        .Where(x => SkillWeaponCheck(characterData, x, true))
-                        .ToList();
-
-                    var skill = skillList.ElementAtOrDefault(Random.Range(0, skillList.Count));
+                    var skill = MobDataCenter.SetMobAction(nowActor, mobID);
 
                     if (debugSwitch && skill != null)
                         Debug.Log($"施放技能: {skill.Name}");
 
-                    result = RunBattle(nowActor, characterData, skill);
+                    switch (skill.SkillType)
+                    {
+                        case ESkillType.SinglePhysicsAttack:
+                        case ESkillType.SingleMagicAttack:
+                            battleResult = RunBattle(nowActor, new() { characterData }, skill);
+                            break;
+                        case ESkillType.SingleBuff:
 
-                    CharacterDataCenter.ActionEndProcess(nowActor);
+                            break;
+                    }
+
+                    effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
                 }
                 break;
         }
 
-        return result;
+        return (battleResult, effectResult);
     }
 
-    static bool SkillWeaponCheck(CharacterData characterData, SkillData skillData) => SkillWeaponCheck(characterData, skillData, false);
-    static bool SkillWeaponCheck(CharacterData characterData, SkillData skillData, bool isMob)
+    static bool SkillWeaponCheck(CharacterData characterData, SkillData skillData)
     {
-        if (skillData.Cost > characterData.CurrentMP || skillData.SkillType == ESkillType.Passive)
+        if (skillData.Cost > characterData.CurrentMP || skillData.SkillType == ESkillType.Passive || skillData.CurrentCD != 0)
             return false;
 
-        if (skillData.WeaponType.Count == 0 || isMob)
+        if (skillData.WeaponType.Count == 0)
             return true;
 
         var isWeaponTypeError = true;
@@ -164,93 +174,195 @@ public static class BattleSystem
         return !isWeaponTypeError;
     }
 
-    public static BattleResult RunBattle(CharacterData character1, CharacterData character2) => RunBattle(character1, character2, null);
-    public static BattleResult RunBattle(CharacterData character1, CharacterData character2, SkillData skillData)
+    public static BattleResult RunBattle(CharacterData actor, List<CharacterData> targets) => RunBattle(actor, targets, null);
+    public static BattleResult RunBattle(CharacterData actor, List<CharacterData> targets, SkillData skillData)
     {
-        character1.CurrentTP -= GameData_Server.tpCost;
+        actor.CurrentTP -= GameData_Server.tpCost;
 
-        var result = new BattleResult
+        var battleResult = new BattleResult
         {
             BreakEquips = new(),
             DropItems = new()
         };
 
-        var attacker = CreateBattleData(character1);
-        var defender = CreateBattleData(character2);
-
-        result.Attacker = attacker.Name;
-        result.Defenderer = defender.Name;
-
-        LuckyEventCheck(attacker, defender, result);
-        if (result.IsAttackerDead || result.IsDefenderDead)
+        var incapacitatedEffect = actor.Effects.Find(x => x.ID == EEffectID.Stun);
+        if (incapacitatedEffect != null)
         {
-            RefreshCharacterData(attacker, character1);
-            RefreshCharacterData(defender, character2);
-            return result;
+            battleResult.IsAttakerIncapacitated = true;
+            battleResult.IncapacitatedEffect = incapacitatedEffect.Name;
         }
 
-        #region 迴避判定
-        if (!(GetEffectiveStat(attacker.ACC, 40) > GetEffectiveStat(defender.EVA)))
-        {
-            Debug.Log($"迴避判定: {defender.EVA}, {attacker.ACC}");
-            result.IsDodge = true;
-            RefreshCharacterData(attacker, character1);
-            RefreshCharacterData(defender, character2);
-            return result;
-        }
-        #endregion
+        var attacker = CreateBattleData(actor);
+        var defenders = new Dictionary<BattleData, CharacterData>();
+        foreach (var target in targets)
+            defenders.Add(CreateBattleData(target), target);
 
-        var damageMulti = 1;
-        var defenceMulti = 1;
-        #region 爆擊判定
-        if (GetEffectiveStat(attacker.CRIT) > GetEffectiveStat(defender.EVA, 40))
-        {
-            Debug.LogWarning($"爆擊判定: {attacker.CRIT}, {defender.EVA}");
-            result.IsCritical = true;
+        battleResult.Attacker = attacker.Name;
+        battleResult.Results = new List<BattleResult.Result>();
 
-            damageMulti = 2;
-            defenceMulti = 0;
-            Debug.Log($"{result.Attacker}命中了要害!");
-        }
-        #endregion
+        foreach (var (defender, target) in defenders.ToList())
+        {
+            var result = new BattleResult.Result
+            {
+                Defenderer = defender.Name
+            };
 
-        if (skillData == null)
-        {
-            result.BattleDamage = GetEffectiveStat(attacker.ATK) * damageMulti - GetEffectiveStat(defender.DEF) * defenceMulti;
-            if (result.BattleDamage <= 0)
-                result.BattleDamage = 1;
+            battleResult.IsAttackerDead = LuckyEventCheck(attacker, defender, result);
+
+            if (result.IsDefenderDead)
+            {
+                RefreshCharacterData(defender, target);
+                defenders.Remove(defender);
+            }
         }
-        else
+
+        if (battleResult.IsAttackerDead || defenders.Count == 0)
         {
-            result.IsSkill = true;
-            result.SkillName = skillData.Name;
+            RefreshCharacterData(attacker, actor);
+            foreach (var (defender, target) in defenders)
+                RefreshCharacterData(defender, target);
+
+            return battleResult;
+        }
+
+        if (skillData != null)
+        {
+            battleResult.IsSkill = true;
+            battleResult.SkillName = skillData.Name;
 
             attacker.MP -= skillData.Cost;
             skillData.CurrentCD = skillData.CoolDown;
-
-            var skillDamage = SkillDataCenter.SkillDamage(attacker, skillData);
-            var defence = skillData.SkillType switch
-            {
-                ESkillType.PhysicsAttack => defender.DEF,
-                ESkillType.MagicAttack => defender.MDEF,
-                _ => 0
-            };
-
-            result.BattleDamage = GetEffectiveStat(skillDamage) * damageMulti - GetEffectiveStat(defence) * defenceMulti;
-            if (result.BattleDamage <= 0)
-                result.BattleDamage = 1;
         }
 
-        Debug.Log($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!");
-        if (DamageProcess(defender, result.BattleDamage))
+        #region 迴避判定
+        var attackerACC = GetEffectiveStat(attacker.ACC, 40);
+        foreach (var (defender, target) in defenders)
         {
-            result.IsDefenderDead = true;
-        }
-        result.BreakEquips.AddRange(RunDurability(attacker.Role == ECharacterRole.Player));
+            if (!(attackerACC > GetEffectiveStat(defender.EVA)))
+            {
+                Debug.Log($"迴避判定: {defender.EVA}, {attacker.ACC}");
+                var result = battleResult.Results.Find(x => x.Defenderer == defender.Name);
 
-        RefreshCharacterData(attacker, character1);
-        RefreshCharacterData(defender, character2);
-        return result;
+                result.IsDodge = true;
+                RefreshCharacterData(defender, target);
+                defenders.Remove(defender);
+            }
+        }
+
+        if (defenders.Count == 0)
+        {
+            RefreshCharacterData(attacker, actor);
+            return battleResult;
+        }
+        #endregion
+
+        foreach (var (defender, target) in defenders)
+        {
+            var result = battleResult.Results.Find(x => x.Defenderer == defender.Name);
+            var counterEffect = target.Effects.Find(x => x.ID == EEffectID.Counter);
+
+            var damageMulti = 1;
+            var defenceMulti = 1;
+
+            #region 爆擊判定
+            if (counterEffect == null)
+            {
+                if (GetEffectiveStat(attacker.CRIT) > GetEffectiveStat(defender.EVA, 40))
+                {
+                    Debug.LogWarning($"爆擊判定: {attacker.CRIT}, {defender.EVA}");
+                    result.IsCritical = true;
+
+                    damageMulti = 2;
+                    defenceMulti = 0;
+                }
+            }
+            #endregion
+
+            #region 攻守計算
+            var attackValue = 0m;
+            var defenceValue = 0m;
+            if (skillData == null)
+            {
+                attackValue = GetEffectiveStat(attacker.ATK) * damageMulti;
+                defenceValue = GetEffectiveStat(defender.DEF) * defenceMulti;
+            }
+            else
+            {
+                var skillDamage = CharacterDataCenter.ParamCalculate(attacker, skillData.Damage);
+                var defence = skillData.SkillType switch
+                {
+                    ESkillType.SinglePhysicsAttack => defender.DEF,
+                    ESkillType.SingleMagicAttack => defender.MDEF,
+                    _ => 0
+                };
+
+                attackValue = GetEffectiveStat(skillDamage) * damageMulti;
+                defenceValue = GetEffectiveStat(defence) * defenceMulti;
+            }
+            #endregion
+
+            if (counterEffect != null && (skillData == null || skillData.SkillType == ESkillType.SinglePhysicsAttack))
+            {
+                result.IsCounter = true;
+                result.BattleDamage = attackValue * CharacterDataCenter.ParamCalculate(defender, counterEffect.Value);
+
+                if (DamageProcess(attacker, result.BattleDamage))
+                {
+                    battleResult.IsAttackerDead = true;
+                }
+
+                battleResult.BreakEquips.AddRange(RunDurability(actor, defender.Role == ECharacterRole.Player));
+            }
+            else
+            {
+                result.BattleDamage = attackValue - defenceValue;
+                if (result.BattleDamage <= 0)
+                    result.BattleDamage = 1;
+
+                if (skillData != null)
+                {
+                    foreach (var buff in skillData.Buffs)
+                        CharacterDataCenter.AddCharacterEffect(actor, buff);
+
+                    foreach (var debuff in skillData.DeBuffs)
+                    {
+                        if (PublicFunc.Dice(1, 100) < debuff.Prop)
+                            CharacterDataCenter.AddCharacterEffect(target, debuff.Effect);
+                    }
+                }
+
+                if (skillData == null || skillData.SkillType == ESkillType.SinglePhysicsAttack)
+                {
+                    foreach (var equipUID in actor.Equips)
+                    {
+                        var equip = actor.BagItems.Find(x => x.UID == equipUID);
+                        if (ItemDataCenter_Server.IsWeapon(equip.Kind))
+                        {
+                            if (equip.Trait != null)
+                            {
+                                if (equip.Trait.Poisoning > 0)
+                                {
+                                    var effectValue = new List<ParamFormat> { new() { Constant = 1 } };
+                                    CharacterDataCenter.AddCharacterEffect(target, EEffectID.Poisoning, effectValue, equip.Trait.Poisoning);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (DamageProcess(defender, result.BattleDamage))
+                {
+                    result.IsDefenderDead = true;
+                }
+
+            }
+
+            RefreshCharacterData(defender, target);
+        }
+
+        battleResult.BreakEquips.AddRange(RunDurability(actor, attacker.Role == ECharacterRole.Player));
+        RefreshCharacterData(attacker, actor);
+        return battleResult;
     }
 
     static void RefreshCharacterData(BattleData battleData, CharacterData characterData)
@@ -259,14 +371,14 @@ public static class BattleSystem
         characterData.CurrentMP = battleData.MP;
     }
 
-    static void LuckyEventCheck(BattleData character1, BattleData character2, BattleResult result)
+    static bool LuckyEventCheck(BattleData actor, BattleData target, BattleResult.Result result)
     {
         //先比誰觸發
-        bool isCharacter1Attack = GetEffectiveStat(character1.LUK) > GetEffectiveStat(character2.LUK);
+        bool isActorAttack = GetEffectiveStat(actor.LUK) > GetEffectiveStat(target.LUK);
 
         // 攻擊者與被攻擊者的參考
-        int attackerLUK = isCharacter1Attack ? character1.LUK : character2.LUK;
-        int defenderLUK = isCharacter1Attack ? character2.LUK : character1.LUK;
+        decimal attackerLUK = isActorAttack ? actor.LUK : target.LUK;
+        decimal defenderLUK = isActorAttack ? target.LUK : actor.LUK;
 
         result.LuckyEventLevel = 0; // 0~3
 
@@ -283,7 +395,7 @@ public static class BattleSystem
             Debug.Log($"幸運判定: {attackerLUK}, {defenderLUK}");
             result.IsLuckyEventTrigger = true;
 
-            var hitter = isCharacter1Attack ? character2 : character1;
+            var hitter = isActorAttack ? target : actor;
             result.LuckyEventTarget = hitter.Name;
             var damageMulti = 0;
             switch (result.LuckyEventLevel)
@@ -295,20 +407,22 @@ public static class BattleSystem
                     damageMulti = 50;
                     break;
             }
-            result.LuckyEventDamage = Mathf.Max(1, GetEffectiveStat(attackerLUK) - GetEffectiveStat(defenderLUK) + damageMulti);
+            result.LuckyEventDamage = (decimal)Mathf.Max(1, (float)(GetEffectiveStat(attackerLUK) - GetEffectiveStat(defenderLUK) + damageMulti));
 
             if (DamageProcess(hitter, result.LuckyEventDamage))
             {
-                if (isCharacter1Attack)
+                if (isActorAttack)
                     result.IsDefenderDead = true;
                 else
-                    result.IsAttackerDead = true;
+                    return true;
             }
         }
+
+        return false;
     }
 
-    public static int GetEffectiveStat(int times) => GetEffectiveStat(times, 20);
-    public static int GetEffectiveStat(int times, int prop)
+    public static decimal GetEffectiveStat(decimal times) => GetEffectiveStat(times, 20);
+    public static decimal GetEffectiveStat(decimal times, decimal prop)
     {
         int count = 0;
         for (int i = 0; i < times; i++)
@@ -320,7 +434,7 @@ public static class BattleSystem
         return count;
     }
 
-    static bool DamageProcess(BattleData character, int damage)
+    static bool DamageProcess(BattleData character, decimal damage)
     {
         character.HP -= damage;
         if (character.HP <= 0)
@@ -329,13 +443,13 @@ public static class BattleSystem
             return false;
     }
 
-    static List<string> RunDurability(bool isAttack)
+    static List<string> RunDurability(CharacterData characterData, bool isAttack)
     {
         var breakEquips = new List<string>();
 
-        var bagItems = GameData_Server.NowCharacterData.BagItems;
+        var bagItems = characterData.BagItems;
 
-        foreach (var equipUID in GameData_Server.NowCharacterData.Equips.ToList())
+        foreach (var equipUID in characterData.Equips.ToList())
         {
             var equip = bagItems.Find(x => x.UID == equipUID);
             var kind = equip.Kind;
@@ -346,7 +460,7 @@ public static class BattleSystem
                 equip.Durability--;
                 if (equip.Durability <= 0)
                 {
-                    GameData_Server.NowCharacterData.Equips.Remove(equipUID);
+                    characterData.Equips.Remove(equipUID);
                     bagItems.Remove(equip);
                     breakEquips.Add(equip.Name);
                 }
@@ -356,7 +470,7 @@ public static class BattleSystem
         return breakEquips;
     }
 
-    public static void EnemyDeadProcess(MobData target, BattleResult result)
+    public static void EnemyDeadProcess(MobData target, BattleResult.Result result, List<string> dropItems)
     {
         var characterData = GameData_Server.SaveData.Datas.CharacterData;
         var playerData = GameData_Server.SaveData.Datas.PlayerData;
@@ -386,7 +500,7 @@ public static class BattleSystem
 
             ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
-            result.DropItems.Add(itemData.Name);
+            dropItems.Add(itemData.Name);
 
             void EquipCallBack() => bagItems.Add(ItemDataCenter_Server.GetNewItem(itemData));
 

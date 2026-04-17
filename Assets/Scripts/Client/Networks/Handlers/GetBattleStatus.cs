@@ -14,7 +14,8 @@ public class GetBattleStatusRequest : IRequestBase<GetBattleStatusResponse>
 }
 
 public class GetBattleStatusResponse
-{    
+{
     public SaveDataFormat SaveData;
     public BattleResult BattleResult;
+    public EffectResult EffectResult;
 }

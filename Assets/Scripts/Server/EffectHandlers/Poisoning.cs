@@ -1,6 +1,6 @@
-public class HP_Regen : IEffectHandler
+public class Poisoning : IEffectHandler
 {
-    public EEffectID ID => EEffectID.HP_Regen;
+    public EEffectID ID => EEffectID.Poisoning;
 
     public void Passive(FullAbilityBase baseAbility, EffectData effectData, FullAbilityBase afterAbility)
     {
@@ -14,10 +14,11 @@ public class HP_Regen : IEffectHandler
             EffectName = effectData.Name,
             MofityAbility = new()
             {
-                HP = CharacterDataCenter.ParamCalculate(CharacterDataCenter.GetCharacterAbility(characterData), effectData.Value)
+                HP = -effectData.Times
             }
         };
         result.Infos.Add(info);
+
         characterData.CurrentHP += info.MofityAbility.HP;
 
         effectData.Times--;
@@ -26,6 +27,11 @@ public class HP_Regen : IEffectHandler
         {
             characterData.Effects.Remove(effectData);
             info.IsTimeUp = true;
+        }
+
+        if (characterData.CurrentHP <= 0)
+        {
+            result.IsDead = true;
         }
     }
 }

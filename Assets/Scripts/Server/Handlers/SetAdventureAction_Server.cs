@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -78,15 +79,22 @@ public class SetAdventureAction_Server : IApiHandler_Server
     ActionResult OnGoAhead()
     {
         var actionResult = new ActionResult();
+        var playerEffectResult = CharacterDataCenter.ActionEndProcess(CharacterData);
+        actionResult.EffectResult.Results.Add(playerEffectResult);
 
-        CharacterDataCenter.ActionEndProcess(CharacterData);
+        if (playerEffectResult.IsDead)
+        {
+            CharacterData.Effects.Clear();
+            OnLeave();
+            return actionResult;
+        }
 
         PlayerData.Deep++;
 
         var prop = PublicFunc.Dice(1, 100);
         if (prop <= enemyProp)
         {
-            actionResult.BattleResult = OnEnemyAppear();
+            actionResult.BattleResult = OnEnemyAppear(actionResult.EffectResult);
         }
 
         return actionResult;
@@ -96,7 +104,8 @@ public class SetAdventureAction_Server : IApiHandler_Server
     {
         var actionResult = new ActionResult
         {
-            RestResult = new RestResult()
+            RestResult = new(),
+            EffectResult = new()
         };
 
         var fullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData);
@@ -108,26 +117,40 @@ public class SetAdventureAction_Server : IApiHandler_Server
             CharacterData.CurrentSTA + actionResult.RestResult.RecoverSTA < fullAbility.STA
         )
         {
-            if (CharacterData.CurrentHP + actionResult.RestResult.RecoverHP < fullAbility.HP)
+            if (CharacterData.CurrentHP < fullAbility.HP)
+            {
                 actionResult.RestResult.RecoverHP++;
+                CharacterData.CurrentHP++;
+            }
 
-            if (CharacterData.CurrentMP + actionResult.RestResult.RecoverMP < fullAbility.MP)
+            if (CharacterData.CurrentMP < fullAbility.MP)
+            {
                 actionResult.RestResult.RecoverMP++;
+                CharacterData.CurrentMP++;
+            }
 
-            if (CharacterData.CurrentSTA + actionResult.RestResult.RecoverSTA < fullAbility.STA)
+            if (CharacterData.CurrentSTA < fullAbility.STA)
+            {
                 actionResult.RestResult.RecoverSTA++;
+                CharacterData.CurrentSTA++;
+            }
+
+            var playerEffectResult = CharacterDataCenter.ActionEndProcess(CharacterData, true);
+            actionResult.EffectResult.Results.Add(playerEffectResult);
+
+            foreach (var info in playerEffectResult.Infos)
+            {
+                if (info.MofityAbility.HP < 0)
+                    break;
+            }
 
             prop = PublicFunc.Dice(1, 100);
             if (prop <= 3)
             {
-                actionResult.BattleResult = OnEnemyAppear();
+                actionResult.BattleResult = OnEnemyAppear(actionResult.EffectResult);
                 break;
             }
         }
-
-        CharacterData.CurrentHP += actionResult.RestResult.RecoverHP;
-        CharacterData.CurrentMP += actionResult.RestResult.RecoverMP;
-        CharacterData.CurrentSTA += actionResult.RestResult.RecoverSTA;
 
         return actionResult;
     }
@@ -142,30 +165,34 @@ public class SetAdventureAction_Server : IApiHandler_Server
         CharacterDataCenter.InitCurrentData(CharacterData);
     }
 
-    BattleResult OnEnemyAppear()
+    BattleResult OnEnemyAppear(EffectResult effectResult)
     {
         EnemyData.Enemies = EnemySetting.SetEnemy(
             PlayerData.Area,
             PlayerData.Deep
         );
 
-        var result = BattleSystem.CheckNowActor();
-        if (result != null && (result.IsAttackerDead || result.IsDefenderDead))
+        var (battleResult, nowActorEffectResult) = BattleSystem.CheckNowActor();
+        if (battleResult != null && (battleResult.IsAttackerDead || battleResult.Results.Any(x => x.IsDefenderDead)))
         {
-            if (result.IsAttackerDead && CharacterData.Name == result.Attacker ||
-                result.IsDefenderDead && CharacterData.Name == result.Defenderer)
+            if (battleResult.IsAttackerDead && CharacterData.Name == battleResult.Attacker ||
+                battleResult.Results.Any(x => x.IsDefenderDead && CharacterData.Name == x.Defenderer))
             {
                 OnLeave();
             }
             else
             {
-                var deadMob = result.IsAttackerDead ? result.Attacker : result.Defenderer;
-                var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
-                BattleSystem.EnemyDeadProcess(target, result);
+                foreach (var result in battleResult.Results)
+                {
+                    var deadMob = battleResult.IsAttackerDead ? battleResult.Attacker : result.Defenderer;
+                    var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
+                    BattleSystem.EnemyDeadProcess(target, result, battleResult.DropItems);
+                }
             }
         }
 
-        return result;
+        effectResult.Results.Add(nowActorEffectResult);
+        return battleResult;
     }
 }
 

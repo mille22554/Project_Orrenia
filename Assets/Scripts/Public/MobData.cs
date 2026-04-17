@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 public class MobData
 {
+    public int MobID;
     public CharacterData CharacterData;
 
     public List<DropItem> DropItems;

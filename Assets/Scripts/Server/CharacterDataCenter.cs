@@ -9,7 +9,7 @@ using UnityEngine;
 public static class CharacterDataCenter
 {
     static Dictionary<EEffectID, EffectData> _effectDatas;
-    readonly static Dictionary<int, IEffectHandler> _effectHandlers = new();
+    readonly static Dictionary<EEffectID, IEffectHandler> _effectHandlers = new();
 
     static CharacterDataCenter()
     {
@@ -51,16 +51,16 @@ public static class CharacterDataCenter
 
             var instance = (IEffectHandler)Activator.CreateInstance(type);
 
-            Debug.Log($"Register effect handler: {instance.Type} -> {type.Name}");
+            Debug.Log($"Register effect handler: {instance.ID} -> {type.Name}");
 
-            _effectHandlers[instance.Type] = instance;
+            _effectHandlers[instance.ID] = instance;
         }
     }
 
     public static CharacterData InitCurrentData(CharacterData data)
     {
-
         var fullAbility = GetCharacterAbility(data);
+
         data.CurrentHP = fullAbility.HP;
         data.CurrentMP = fullAbility.MP;
         STAProcess(data, fullAbility.STA);
@@ -80,27 +80,27 @@ public static class CharacterDataCenter
             LUK = data.Ability.LUK_Point
         };
 
-        ability.HP = ability.VIT * 10 + ability.STR * 5 + 85;
-        ability.MP = ability.INT * 10 + ability.VIT * 5 + 35;
-        ability.STA = ability.VIT * 5 + 95;
-        ability.ATK = ability.STR * 2 + ability.VIT;
-        ability.MATK = ability.INT * 2 + ability.VIT;
-        ability.DEF = ability.VIT * 2 + ability.STR;
-        ability.MDEF = ability.VIT * 2 + ability.INT;
-        ability.ACC = ability.AGI * 3 + ability.DEX * 2 + ability.LUK;
-        ability.EVA = ability.DEX * 3 + ability.AGI * 2 + ability.LUK;
-        ability.CRIT = ability.AGI * 2 + ability.LUK;
-        ability.SPD = ability.DEX;
+        CalculateEquipAbility(ability, data);
+        CalculateEffectAbility(ability, data.Effects, out var afterAbility);
+
+        afterAbility.HP = afterAbility.VIT * 10 + afterAbility.STR * 5 + 85;
+        afterAbility.MP = afterAbility.INT * 10 + afterAbility.VIT * 5 + 35;
+        afterAbility.STA = afterAbility.VIT * 5 + 95;
+        afterAbility.ATK = afterAbility.STR * 2 + afterAbility.VIT;
+        afterAbility.MATK = afterAbility.INT * 2 + afterAbility.VIT;
+        afterAbility.DEF = afterAbility.VIT * 2 + afterAbility.STR;
+        afterAbility.MDEF = afterAbility.VIT * 2 + afterAbility.INT;
+        afterAbility.ACC = afterAbility.AGI * 3 + afterAbility.DEX * 2 + afterAbility.LUK;
+        afterAbility.EVA = afterAbility.DEX * 3 + afterAbility.AGI * 2 + afterAbility.LUK;
+        afterAbility.CRIT = afterAbility.AGI * 2 + afterAbility.LUK;
+        afterAbility.SPD = afterAbility.DEX;
 
         if (data.Role == ECharacterRole.Mob)
-            ability.HP /= 10;
+            afterAbility.HP /= 10;
 
-        CalculateEquipAbility(ability, data);
-        CalculateEffectAbility(ability, data.Effects);
+        FixAbility(data, afterAbility);
 
-        FixAbility(data, ability);
-
-        return ability;
+        return afterAbility;
     }
 
     static void CalculateEquipAbility(FullAbilityBase data, CharacterData characterData)
@@ -112,23 +112,44 @@ public static class CharacterDataCenter
             var fields = typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
             foreach (var field in fields)
             {
-                int valueB = (int)field.GetValue(ability);
+                decimal valueB = (decimal)field.GetValue(ability);
                 if (valueB != 0)
                 {
-                    int valueA = (int)field.GetValue(data);
+                    decimal valueA = (decimal)field.GetValue(data);
                     field.SetValue(data, valueA + valueB);
                 }
             }
         }
     }
 
-    static void CalculateEffectAbility(FullAbilityBase data, List<EffectData> effects)
+    static void CalculateEffectAbility(FullAbilityBase baseAbility, List<EffectData> effects, out FullAbilityBase afterAbility)
     {
+        afterAbility = new FullAbilityBase
+        {
+            STR = baseAbility.STR,
+            DEX = baseAbility.DEX,
+            INT = baseAbility.INT,
+            VIT = baseAbility.VIT,
+            AGI = baseAbility.AGI,
+            LUK = baseAbility.LUK,
+            HP = baseAbility.HP,
+            MP = baseAbility.MP,
+            STA = baseAbility.STA,
+            ATK = baseAbility.ATK,
+            MATK = baseAbility.MATK,
+            DEF = baseAbility.DEF,
+            MDEF = baseAbility.MDEF,
+            ACC = baseAbility.ACC,
+            EVA = baseAbility.EVA,
+            CRIT = baseAbility.CRIT,
+            SPD = baseAbility.SPD,
+        };
+
         foreach (var effect in effects)
         {
-            if (_effectHandlers.TryGetValue(effect.Type, out var effectHandler))
+            if (_effectHandlers.TryGetValue(effect.ID, out var effectHandler))
             {
-                effectHandler.Passive(data, effect);
+                effectHandler.Passive(baseAbility, effect, afterAbility);
             }
         }
     }
@@ -170,25 +191,32 @@ public static class CharacterDataCenter
 
     }
 
-    static void EffectProcess(CharacterData characterData)
+    static EffectResult.Result EffectProcess(CharacterData characterData)
     {
+        var result = new EffectResult.Result()
+        {
+            CharacterName = characterData.Name
+        };
+
         foreach (var effect in characterData.Effects.ToList())
         {
-            if (_effectHandlers.TryGetValue(effect.Type, out var effectHandler))
+            if (_effectHandlers.TryGetValue(effect.ID, out var effectHandler))
             {
-                effectHandler.Proc(characterData, effect);
+                effectHandler.Proc(characterData, effect, result);
             }
         }
+        return result;
     }
 
-    public static void STAProcess(CharacterData characterData, int value)
+    public static void STAProcess(CharacterData characterData, decimal value)
     {
         characterData.CurrentSTA += value;
 
         if (characterData.CurrentSTA <= 0)
         {
             characterData.CurrentSTA = 0;
-            AddCharacterEffect(characterData, EEffectID.Exhausted, 10, 1);
+            var effectValue = new List<ParamFormat> { new() { Constant = -0.9m } };
+            AddCharacterEffect(characterData, EEffectID.Exhausted, effectValue, 1);
         }
         else
         {
@@ -212,22 +240,39 @@ public static class CharacterDataCenter
         }
     }
 
-    public static void ActionEndProcess(CharacterData characterData)
+    public static EffectResult.Result ActionEndProcess(CharacterData characterData) => ActionEndProcess(characterData, false);
+    public static EffectResult.Result ActionEndProcess(CharacterData characterData, bool isRest)
     {
-        STAProcess(characterData, -1);
-        EffectProcess(characterData);
+        if (!isRest)
+            STAProcess(characterData, -1);
+
+        var result = EffectProcess(characterData);
         SkillCDProcess(characterData);
+
+        return result;
     }
 
-    public static void AddCharacterEffect(CharacterData characterData, EEffectID effectID, int effectValue, int effectTimes)
+    public static void AddCharacterEffect(CharacterData characterData, EffectData effectData)
+        => AddCharacterEffect(characterData, effectData.ID, effectData.Value, effectData.Times);
+    public static void AddCharacterEffect(CharacterData characterData, EEffectID effectID, List<ParamFormat> effectValue, int effectTimes)
     {
         if (_effectDatas.TryGetValue(effectID, out var effect))
         {
             var exist = characterData.Effects.Find(x => x.ID == effect.ID);
 
-            if (exist != null && exist.Value == effectValue)
+            if (exist != null)
             {
-                exist.Times += effectTimes;
+                if (exist.Value.Count == effectValue.Count &&
+                    exist.Value
+                        .GroupBy(x => x)
+                        .ToDictionary(g => g.Key, g => g.Count())
+                        .SequenceEqual(
+                            effectValue
+                                .GroupBy(x => x)
+                                .ToDictionary(g => g.Key, g => g.Count())
+                        )
+                    )
+                    exist.Times += effectTimes;
             }
             else
             {
@@ -235,7 +280,6 @@ public static class CharacterDataCenter
                 {
                     Name = effect.Name,
                     ID = effect.ID,
-                    Type = effect.Type,
                     Value = effectValue,
                     Times = effectTimes
                 });
@@ -257,11 +301,48 @@ public static class CharacterDataCenter
         if (ability.STA != 0)
             characterData.CurrentSTA += ability.STA;
     }
+
+    public static int ParamCalculate(FullAbilityBase ability, List<ParamFormat> paramFormats)
+    {
+        var damage = 0m;
+        foreach (var format in paramFormats)
+        {
+            if (format.Ability != null)
+            {
+                damage += format.Constant *
+                (
+                    format.Ability.STR * ability.STR +
+                    format.Ability.DEX * ability.DEX +
+                    format.Ability.INT * ability.INT +
+                    format.Ability.VIT * ability.VIT +
+                    format.Ability.AGI * ability.AGI +
+                    format.Ability.LUK * ability.LUK +
+                    format.Ability.HP * ability.HP +
+                    format.Ability.MP * ability.MP +
+                    format.Ability.STA * ability.STA +
+                    format.Ability.ATK * ability.ATK +
+                    format.Ability.MATK * ability.MATK +
+                    format.Ability.DEF * ability.DEF +
+                    format.Ability.MDEF * ability.MDEF +
+                    format.Ability.ACC * ability.ACC +
+                    format.Ability.EVA * ability.EVA +
+                    format.Ability.CRIT * ability.CRIT +
+                    format.Ability.SPD * ability.SPD
+                );
+            }
+            else
+            {
+                damage += format.Constant;
+            }
+        }
+
+        return (int)damage;
+    }
 }
 
 public interface IEffectHandler
 {
-    int Type { get; }
-    void Passive(FullAbilityBase fullAbility, EffectData effectData);
-    void Proc(CharacterData characterData, EffectData effectData);
+    EEffectID ID { get; }
+    void Passive(FullAbilityBase baseAbility, EffectData effectData, FullAbilityBase afterAbility);
+    void Proc(CharacterData characterData, EffectData effectData, EffectResult.Result result);
 }

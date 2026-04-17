@@ -62,40 +62,11 @@ public static class SkillDataCenter
             Description = skillData.Description,
             SkillType = skillData.SkillType,
             Damage = skillData.Damage,
-            Effect = skillData.Effect,
+            Buffs = skillData.Buffs,
+            DeBuffs = skillData.DeBuffs,
             WeaponType = skillData.WeaponType,
             Cost = skillData.Cost,
             CoolDown = skillData.CoolDown,
         };
-    }
-
-    public static int SkillDamage(BattleData battleData, SkillData skillData)
-    {
-        var damage = 0m;
-        foreach (var format in skillData.Damage)
-        {
-            damage += format.Constant *
-            (
-                format.Ability.STR * battleData.STR +
-                format.Ability.DEX * battleData.DEX +
-                format.Ability.INT * battleData.INT +
-                format.Ability.VIT * battleData.VIT +
-                format.Ability.AGI * battleData.AGI +
-                format.Ability.LUK * battleData.LUK +
-                format.Ability.HP * battleData.HP +
-                format.Ability.MP * battleData.MP +
-                format.Ability.STA * battleData.STA +
-                format.Ability.ATK * battleData.ATK +
-                format.Ability.MATK * battleData.MATK +
-                format.Ability.DEF * battleData.DEF +
-                format.Ability.MDEF * battleData.MDEF +
-                format.Ability.ACC * battleData.ACC +
-                format.Ability.EVA * battleData.EVA +
-                format.Ability.CRIT * battleData.CRIT +
-                format.Ability.SPD * battleData.SPD
-            );
-        }
-
-        return (int)damage;
     }
 }

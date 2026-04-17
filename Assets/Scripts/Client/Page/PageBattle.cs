@@ -160,19 +160,29 @@ public class PageBattle : MonoBehaviour
         void CallBack(SetAdventureActionResponse response)
         {
             var datas = response.SaveData.Datas;
+            var actionResult = response.ActionResult;
             var enemies = datas.EnemyData.Enemies;
 
             deep.text = "深度 " + datas.PlayerData.Deep;
 
+            var playerEffectResult = actionResult.EffectResult.Results.Find(x => x.CharacterName == datas.CharacterData.Name);
+            ShowEffectLog(playerEffectResult);
+            if (playerEffectResult.IsDead)
+            {
+                LeaveDungon(datas.PlayerData.Area, datas.CharacterData, response.FullAbility);
+                return;
+            }
+
             if (enemies.Count != 0)
                 OnEnemyAppear(enemies);
 
-            RunBattleVisuals(response.ActionResult.BattleResult, datas, response.FullAbility);
+            RunBattleVisuals(actionResult.BattleResult, actionResult.EffectResult, datas, response.FullAbility);
         }
     }
 
     void OnEnemyAppear(List<MobData> enemies)
     {
+        panelLog.SetLog($"--------------------");
         foreach (var enemy in enemies)
         {
             var obj = ObjectPool.Get(itemEnemy, _enemies.transform);
@@ -199,28 +209,35 @@ public class PageBattle : MonoBehaviour
         void CallBack(GetBattleStatusResponse response)
         {
             var datas = response.SaveData.Datas;
-            var result = response.BattleResult;
+            var battleResult = response.BattleResult;
+            var effectResult = response.EffectResult;
 
-            RunBattleVisuals(result, datas);
+            RunBattleVisuals(battleResult, effectResult, datas);
         }
     }
 
-    void RunBattleVisuals(BattleResult result, Datas datas) => RunBattleVisuals(result, datas, null);
-    void RunBattleVisuals(BattleResult result, Datas datas, FullAbilityBase fullAbility)
+    void RunBattleVisuals(BattleResult battleResult, EffectResult effectResult, Datas datas) => RunBattleVisuals(battleResult, effectResult, datas, null);
+    void RunBattleVisuals(BattleResult battleResult, EffectResult effectResult, Datas datas, FullAbilityBase fullAbility)
     {
         MainController.Instance.RefreshUI(datas.CharacterData, fullAbility);
 
-        if (result != null)
+        if (battleResult != null)
         {
-            ShowBattleLog(result, datas.CharacterData);
+            ShowBattleLog(battleResult, datas.CharacterData);
+            var attackerEffectResult = effectResult.Results.Find(x => x.CharacterName == battleResult.Attacker);
+            ShowEffectLog(attackerEffectResult);
 
-            var targetMob = result.Attacker != datas.CharacterData.Name ? result.Attacker : result.Defenderer;
-            var target = enemyList.Find(x => x.Info.CharacterData.Name == targetMob);
+            foreach (var result in battleResult.Results)
+            {
+                var targetMob = battleResult.Attacker != datas.CharacterData.Name ? battleResult.Attacker : result.Defenderer;
+                var target = enemyList.Find(x => x.Info.CharacterData.Name == targetMob);
 
-            MobDeadCheck(result, target);
+                MobDeadCheck(battleResult, attackerEffectResult, target);
+            }
 
-            if (result.IsAttackerDead && datas.CharacterData.Name == result.Attacker ||
-                result.IsDefenderDead && datas.CharacterData.Name == result.Defenderer)
+            if (battleResult.IsAttackerDead && datas.CharacterData.Name == battleResult.Attacker ||
+                battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == datas.CharacterData.Name) ||
+                attackerEffectResult.IsDead && datas.CharacterData.Name == attackerEffectResult.CharacterName)
             {
                 LeaveDungon(datas.PlayerData.Area, datas.CharacterData, fullAbility);
             }
@@ -282,18 +299,31 @@ public class PageBattle : MonoBehaviour
         {
             var datas = response.SaveData.Datas;
             var characterData = datas.CharacterData;
-            var restResult = response.ActionResult.RestResult;
+            var actionResult = response.ActionResult;
+            var restResult = actionResult.RestResult;
 
             panelLog.ClearBattleLog();
 
             panelLog.SetLog($"恢復了{restResult.RecoverHP}HP, {restResult.RecoverMP}MP, {restResult.RecoverSTA}體力");
 
-            if (datas.EnemyData.Enemies.Count != 0)
+            foreach (var result in actionResult.EffectResult.Results)
             {
-                OnEnemyAppear(datas.EnemyData.Enemies);
+                if (result.CharacterName == characterData.Name)
+                {
+                    ShowEffectLog(result);
+
+                    if (result.IsDead)
+                    {
+                        LeaveDungon(datas.PlayerData.Area, datas.CharacterData, response.FullAbility);
+                        return;
+                    }
+                }
             }
 
-            RunBattleVisuals(response.ActionResult.BattleResult, datas, response.FullAbility);
+            if (datas.EnemyData.Enemies.Count != 0)
+                OnEnemyAppear(datas.EnemyData.Enemies);
+
+            RunBattleVisuals(actionResult.BattleResult, actionResult.EffectResult, datas, response.FullAbility);
         }
     }
 
@@ -304,18 +334,17 @@ public class PageBattle : MonoBehaviour
         var requestData = new SetBattleActionRequest
         {
             BattleAction = EBattleActionType.Attack,
-            ActionTarget = selectedEnemy.Info.CharacterData
+            ActionTarget = new() { selectedEnemy.Info.CharacterData }
         };
         ApiBridge.Send(requestData, CallBack);
 
         void CallBack(SetBattleActionResponse response)
         {
-            var battleResult = response.ActionResult.BattleResult;
-            var target = enemyList.Find(x => x.Info.CharacterData.Name == battleResult.Defenderer);
+            var actionResult = response.ActionResult;
+            var battleResult = actionResult.BattleResult;
+            var effectResult = actionResult.EffectResult;
 
-            MobDeadCheck(battleResult, target);
-
-            RunBattleVisuals(battleResult, response.SaveData.Datas, response.FullAbility);
+            RunBattleVisuals(battleResult, effectResult, response.SaveData.Datas, response.FullAbility);
         }
     }
 
@@ -328,29 +357,29 @@ public class PageBattle : MonoBehaviour
         var requestData = new SetBattleActionRequest
         {
             BattleAction = EBattleActionType.Attack,
-            ActionTarget = selectedEnemy.Info.CharacterData,
+            ActionTarget = new() { selectedEnemy.Info.CharacterData },
             SkillID = skillID
         };
         ApiBridge.Send(requestData, CallBack);
 
         void CallBack(SetBattleActionResponse response)
         {
-            var battleResult = response.ActionResult.BattleResult;
-            var target = enemyList.Find(x => x.Info.CharacterData.Name == battleResult.Defenderer);
+            var actionResult = response.ActionResult;
+            var battleResult = actionResult.BattleResult;
+            var effectResult = actionResult.EffectResult;
 
-            MobDeadCheck(battleResult, target);
-
-            RunBattleVisuals(battleResult, response.SaveData.Datas, response.FullAbility);
+            RunBattleVisuals(battleResult, effectResult, response.SaveData.Datas, response.FullAbility);
         }
     }
 
-    void MobDeadCheck(BattleResult result, ItemEnemy enemy)
+    void MobDeadCheck(BattleResult battleResult, EffectResult.Result effectResult, ItemEnemy enemy)
     {
-        if (result == null || enemy == null)
+        if (battleResult == null || enemy == null)
             return;
 
-        if (result.IsAttackerDead && enemy.Info.CharacterData.Name == result.Attacker ||
-            result.IsDefenderDead && enemy.Info.CharacterData.Name == result.Defenderer)
+        if (battleResult.IsAttackerDead && enemy.Info.CharacterData.Name == battleResult.Attacker ||
+            battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == enemy.Info.CharacterData.Name) ||
+            effectResult.IsDead && enemy.Info.CharacterData.Name == effectResult.CharacterName)
         {
             enemyList.Remove(enemy);
             ObjectPool.Put(enemy);
@@ -368,85 +397,90 @@ public class PageBattle : MonoBehaviour
         }
         else
         {
-            if (result.IsLuckyEventTrigger)
+            foreach (var result in battleResult.Results)
             {
-                if (result.LuckyEventTarget == enemy.Info.CharacterData.Name)
-                    enemy.GetDamage(result.LuckyEventDamage);
+                if (result.IsLuckyEventTrigger)
+                {
+                    if (result.LuckyEventTarget == enemy.Info.CharacterData.Name)
+                        enemy.GetDamage(result.LuckyEventDamage);
+                }
+
+                if (result.Defenderer == enemy.Info.CharacterData.Name)
+                    enemy.GetDamage(result.BattleDamage);
             }
 
-            if (result.Defenderer == enemy.Info.CharacterData.Name)
-                enemy.GetDamage(result.BattleDamage);
+            if (effectResult.CharacterName == enemy.Info.CharacterData.Name)
+            {
+                foreach (var info in effectResult.Infos)
+                {
+                    if (info.MofityAbility.HP != 0)
+                        enemy.GetDamage(-1 * info.MofityAbility.HP);
+                }
+            }
         }
     }
 
-    void ShowBattleLog(BattleResult result, CharacterData characterData)
+    void ShowBattleLog(BattleResult battleResult, CharacterData characterData)
     {
-        if (result.IsLuckyEventTrigger)
+        panelLog.SetLog($"--------------------");
+        var commonColor = battleResult.Attacker == characterData.Name ? Color.white : Color.gray;
+
+        if (battleResult.IsAttakerIncapacitated)
+            panelLog.SetLog($"{battleResult.Attacker}因{battleResult.IncapacitatedEffect}而無法行動!", commonColor);
+
+        foreach (var result in battleResult.Results)
         {
-            switch (result.LuckyEventLevel)
+            if (result.IsLuckyEventTrigger)
             {
-                case 2:
-                    panelLog.SetLog($"{result.LuckyEventTarget}突然抽筋了!\n受到了{result.LuckyEventDamage}點傷害!", Color.magenta);
-                    break;
-                case 3:
-                    panelLog.SetLog($"一輛大卡車疾駛而來，撞飛了{result.LuckyEventTarget}!\n受到了{result.LuckyEventDamage}點傷害!", Color.red);
-                    break;
+                switch (result.LuckyEventLevel)
+                {
+                    case 2:
+                        panelLog.SetLog($"{result.LuckyEventTarget}突然抽筋了!\n受到了{result.LuckyEventDamage:0}點傷害!", Color.magenta);
+                        break;
+                    case 3:
+                        panelLog.SetLog($"一輛大卡車疾駛而來，撞飛了{result.LuckyEventTarget}!\n受到了{result.LuckyEventDamage:0}點傷害!", Color.red);
+                        break;
+                }
             }
         }
 
-        if (result.IsSkill)
+        if (battleResult.IsSkill)
+            panelLog.SetLog($"{battleResult.Attacker}發動了{battleResult.SkillName}!", commonColor);
+
+        foreach (var result in battleResult.Results)
         {
-            if (result.Attacker == characterData.Name)
-                panelLog.SetLog($"{result.Attacker}發動了{result.SkillName}!");
+            if (result.IsDodge)
+                panelLog.SetLog($"{result.Defenderer}閃避了{battleResult.Attacker}的攻擊!", commonColor);
+
+            if (result.IsCritical)
+                panelLog.SetLog($"{battleResult.Attacker}命中了要害!", Color.yellow);
+
+            if (result.IsCounter)
+            {
+                panelLog.SetLog($"{result.Defenderer}反擊了!", commonColor);
+                panelLog.SetLog($"{result.Defenderer}對{battleResult.Attacker}造成了{result.BattleDamage:0}點傷害!", commonColor);
+            }
             else
-                panelLog.SetLog($"{result.Attacker}發動了{result.SkillName}!", Color.gray);
+            {
+                if (result.BattleDamage > 0)
+                    panelLog.SetLog($"{battleResult.Attacker}對{result.Defenderer}造成了{result.BattleDamage:0}點傷害!", commonColor);
+            }
+
+            if (result.IsDefenderDead)
+                panelLog.SetLog($"{result.Defenderer}倒下了!");
+
+            if (result.IsUnitLevelUp)
+                panelLog.SetLog($"{result.LevelUpUnit}升級了!");
         }
 
-        if (result.IsDodge)
-        {
-            if (result.Attacker == characterData.Name)
-                panelLog.SetLog($"{result.Defenderer}閃避了{result.Attacker}的攻擊!");
-            else
-                panelLog.SetLog($"{result.Defenderer}閃避了{result.Attacker}的攻擊!", Color.gray);
-        }
+        if (battleResult.IsAttackerDead)
+            panelLog.SetLog($"{battleResult.Attacker}倒下了!");
 
-        if (result.IsCritical)
-        {
-            panelLog.SetLog($"{result.Attacker}命中了要害!", Color.yellow);
-        }
-
-        if (result.BattleDamage > 0)
-        {
-            if (result.Attacker == characterData.Name)
-                panelLog.SetLog($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!");
-            else
-                panelLog.SetLog($"{result.Attacker}對{result.Defenderer}造成了{result.BattleDamage}點傷害!", Color.gray);
-        }
-
-        if (result.IsAttackerDead)
-        {
-            panelLog.SetLog($"{result.Attacker}倒下了!");
-        }
-
-        if (result.IsDefenderDead)
-        {
-            panelLog.SetLog($"{result.Defenderer}倒下了!");
-        }
-
-        if (result.IsUnitLevelUp)
-        {
-            panelLog.SetLog($"{result.LevelUpUnit}升級了!");
-        }
-
-        foreach (var breakEquip in result.BreakEquips)
-        {
+        foreach (var breakEquip in battleResult.BreakEquips)
             panelLog.SetLog($"{breakEquip}毀損了", Color.yellow);
-        }
 
-        foreach (var dropItem in result.DropItems)
-        {
-            panelLog.SetLog($"{result.Attacker}獲得了{dropItem}!");
-        }
+        foreach (var dropItem in battleResult.DropItems)
+            panelLog.SetLog($"{battleResult.Attacker}獲得了{dropItem}!");
     }
 
     AreaData GetAreaData(int areaID)
@@ -461,5 +495,42 @@ public class PageBattle : MonoBehaviour
         {
             _areaDatas = response.AreaData;
         }
+    }
+
+    void ShowEffectLog(EffectResult.Result result)
+    {
+        if (result.Infos.Count > 0)
+            panelLog.SetLog($"--------------------");
+
+        foreach (var info in result.Infos)
+        {
+            if (info.MofityAbility.HP != 0)
+            {
+                if (info.MofityAbility.HP > 0)
+                    panelLog.SetLog($"{result.CharacterName}因{info.EffectName}的效果回復了{info.MofityAbility.HP:0}點HP");
+                else
+                    panelLog.SetLog($"{result.CharacterName}因{info.EffectName}的效果失去了{-1 * info.MofityAbility.HP:0}點HP");
+            }
+            if (info.MofityAbility.MP != 0)
+            {
+                if (info.MofityAbility.MP > 0)
+                    panelLog.SetLog($"{result.CharacterName}因{info.EffectName}的效果回復了{info.MofityAbility.MP:0}點MP");
+                else
+                    panelLog.SetLog($"{result.CharacterName}因{info.EffectName}的效果失去了{-1 * info.MofityAbility.MP:0}點MP");
+            }
+            if (info.MofityAbility.STA != 0)
+            {
+                if (info.MofityAbility.STA > 0)
+                    panelLog.SetLog($"{result.CharacterName}因{info.EffectName}的效果回復了{info.MofityAbility.STA:0}點STA");
+                else
+                    panelLog.SetLog($"{result.CharacterName}因{info.EffectName}的效果失去了{-1 * info.MofityAbility.STA:0}點STA");
+            }
+
+            if (info.IsTimeUp)
+                panelLog.SetLog($"{result.CharacterName}的{info.EffectName}狀態已解除");
+        }
+
+        if (result.IsDead)
+            panelLog.SetLog($"{result.CharacterName}倒下了!");
     }
 }

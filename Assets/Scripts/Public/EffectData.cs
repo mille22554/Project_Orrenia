@@ -1,9 +1,10 @@
+using System.Collections.Generic;
+
 public class EffectData
 {
     public string Name;
     public EEffectID ID;
-    public int Type;
-    public int Value;
+    public List<ParamFormat> Value;
     public int Times;
 }
 
@@ -52,4 +53,6 @@ public enum EEffectID
     Silence,
     Confusion,
     Exhausted,
+    Poisoning,
+    DEX_UP,
 }

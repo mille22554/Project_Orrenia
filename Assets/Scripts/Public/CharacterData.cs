@@ -6,9 +6,9 @@ public class CharacterData
     public ECharacterRole Role;
     public int Level;
     public int CurrentExp;
-    public int CurrentHP;
-    public int CurrentMP;
-    public int CurrentSTA;
+    public decimal CurrentHP;
+    public decimal CurrentMP;
+    public decimal CurrentSTA;
     public decimal CurrentTP;
     public AbilityBase Ability;
     public List<long> Equips;
@@ -53,24 +53,24 @@ public class AbilityBase
 
 public class FullAbilityBase
 {
-    public int STR;
-    public int DEX;
-    public int INT;
-    public int VIT;
-    public int AGI;
-    public int LUK;
+    public decimal STR;
+    public decimal DEX;
+    public decimal INT;
+    public decimal VIT;
+    public decimal AGI;
+    public decimal LUK;
 
-    public int HP;
-    public int MP;
-    public int STA;
-    public int ATK;
-    public int MATK;
-    public int DEF;
-    public int MDEF;
-    public int ACC;
-    public int EVA;
-    public int CRIT;
-    public int SPD;
+    public decimal HP;
+    public decimal MP;
+    public decimal STA;
+    public decimal ATK;
+    public decimal MATK;
+    public decimal DEF;
+    public decimal MDEF;
+    public decimal ACC;
+    public decimal EVA;
+    public decimal CRIT;
+    public decimal SPD;
 }
 
 public enum ECharacterRole

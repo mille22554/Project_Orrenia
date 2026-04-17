@@ -68,5 +68,110 @@
     "Name": "雙持",
     "Description": "可以裝備兩把單手武器",
     "SkillType": 3
+  },
+  "5": {
+    "Name": "衝撞",
+    "Description": "加速衝刺撞擊目標，因慣性無法連續使用。被攻擊的目標有機率陷入昏迷。",
+    "SkillType": 1,
+    "Damage": [
+      {
+        "Constant": 0.8,
+        "Ability": {
+          "ATK": 1
+        }
+      },
+      {
+        "Constant": 0.3,
+        "Ability": {
+          "VIT": 3,
+          "STR": 2
+        }
+      },
+      {
+        "Constant": 0.4,
+        "Ability": {
+          "ATK": 1
+        }
+      }
+    ],
+    "DeBuffs": [
+      {
+        "Effect": {
+          "ID": 40,
+          "Times": 1
+        },
+        "Prop": 30
+      }
+    ],
+    "Cost": 5,
+    "CoolDown": 1
+  },
+  "6": {
+    "Name": "招架",
+    "Description": "被物理攻擊時可以無效該次攻擊，並返還傷害",
+    "SkillType": 1,
+    "Buffs": [
+      {
+        "Effect": {
+          "ID": 21,
+          "Value": [
+            {
+              "Constant": 0.008,
+              "Ability": {
+                "AGI": 5
+              }
+            }
+          ],
+          "Times": 1
+        }
+      }
+    ],
+    "Cost": 5,
+    "CoolDown": 3
+  },
+  "7": {
+    "Name": "毒咬",
+    "Description": "帶有中毒效果的物理攻擊",
+    "SkillType": 1,
+    "DeBuffs": [
+      {
+        "Effect": {
+          "ID": 44,
+          "Times": 1
+        },
+        "Prop": 100
+      }
+    ],
+    "Cost": 5
+  },
+  "8": {
+    "Name": "響尾",
+    "Description": "提升速度",
+    "SkillType": 4,
+    "Buffs": [
+      {
+        "Effect": {
+          "ID": 11,
+          "Value": [
+            {
+              "Constant": 1
+            }
+          ],
+          "Times": 5
+        }
+      },
+      {
+        "Effect": {
+          "ID": 45,
+          "Value": [
+            {
+              "Constant": 5
+            }
+          ],
+          "Times": 5
+        }
+      }
+    ],
+    "Cost": 5
   }
 }

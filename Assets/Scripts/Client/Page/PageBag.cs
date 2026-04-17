@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -221,12 +222,12 @@ public class PageBag : MonoBehaviour
                 void CallBack(GetBattleStatusResponse getBattleStatusResponse)
                 {
                     var datas = getBattleStatusResponse.SaveData.Datas;
-                    var result = getBattleStatusResponse.BattleResult;
+                    var battleResult = getBattleStatusResponse.BattleResult;
 
-                    if (result != null)
+                    if (battleResult != null)
                     {
-                        if (result.IsAttackerDead && datas.CharacterData.Name == result.Attacker ||
-                            result.IsDefenderDead && datas.CharacterData.Name == result.Defenderer)
+                        if (battleResult.IsAttackerDead && datas.CharacterData.Name == battleResult.Attacker ||
+                            battleResult.Results.Any(x => x.IsDefenderDead && datas.CharacterData.Name == x.Defenderer))
                         {
                             // LeaveDungon(datas.PlayerData.Area, datas.CharacterData);
                         }

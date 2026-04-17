@@ -124,6 +124,7 @@ public static class ItemDataCenter_Server
             Ability = source.Ability,
             Effects = source.Effects,
             Skill = source.Skill,
+            Trait = source.Trait,
             Price = source.Price,
             Durability = source.Durability,
             Count = source.Count,

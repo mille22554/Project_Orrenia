@@ -6,30 +6,33 @@ public class SkillData
     public ESkillID ID;
     public string Description;
     public ESkillType SkillType;
-    public List<DamageFormat> Damage = new();
-    public EEffectID Effect;
+    public List<ParamFormat> Damage = new();
+    public List<EffectData> Buffs = new();
+    public List<DeBuffFormat> DeBuffs = new();
     public List<EItemKind> WeaponType = new();
     public int Cost;
     public int CoolDown;
     public int CurrentCD;
 }
 
-public class DamageFormat
-{
-    public decimal Constant;
-    public FullAbilityBase Ability;
-}
-
 public enum ESkillType
 {
     None,
-    PhysicsAttack,
-    MagicAttack,
-    Passive
+    SinglePhysicsAttack,
+    SingleMagicAttack,
+    Passive,
+    SingleBuff,
 }
 
 public enum ESkillID
 {
     None,
-    DualWield = 4,
+    雙持 = 4,
+    響尾 = 8,
+}
+
+public class DeBuffFormat
+{
+    public EffectData Effect;
+    public int Prop;
 }

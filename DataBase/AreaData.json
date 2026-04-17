@@ -4,8 +4,14 @@
   },
   "2": {
     "Name": "第一層 露米亞草原",
-    "MobList": [1, 2, 3, 4, 5],
+    "MobList": [1, 2, 3, 4, 5, 6],
     "MinMobLevel": 1,
-    "MaxMobLevel": 1
+    "MaxMobLevel": 10
+  },
+  "3": {
+    "Name": "第一層 深處 艾蒙之森",
+    "MobList": [],
+    "MinMobLevel": 5,
+    "MaxMobLevel": 30
   }
 }

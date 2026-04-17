@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -54,10 +56,10 @@ public class SetBattleAction_Server : IApiHandler_Server
             switch (data.BattleAction)
             {
                 case EBattleActionType.Attack:
-                    actionResult.BattleResult = OnAttack(data.ActionTarget);
+                    (actionResult.BattleResult, actionResult.EffectResult) = OnAttack(data.ActionTarget);
                     break;
                 case EBattleActionType.Skill:
-                    OnSkill(data.ActionTarget, data.SkillID);
+                    (actionResult.BattleResult, actionResult.EffectResult) = OnSkill(data.ActionTarget, data.SkillID);
                     break;
                 case EBattleActionType.Leave:
                     OnLeave();
@@ -67,72 +69,90 @@ public class SetBattleAction_Server : IApiHandler_Server
         return actionResult;
     }
 
-    BattleResult OnAttack(CharacterData characterData)
+    (BattleResult battleResult, EffectResult effectResult) OnAttack(List<CharacterData> characterData)
     {
-        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == characterData.Name);
-        if (target != null)
+        var targets = EnemyData.Enemies.Where(x => characterData.Any(y => x.CharacterData.Name == y.Name)).ToList();
+        if (targets != null)
         {
-            var result = BattleSystem.RunBattle(CharacterData, target.CharacterData);
+            var battleResult = BattleSystem.RunBattle(CharacterData, targets.Select(x => x.CharacterData).ToList());
 
-            if (result.IsDefenderDead)
+            foreach (var result in battleResult.Results)
             {
-                BattleSystem.EnemyDeadProcess(target, result);
+                if (result.IsDefenderDead)
+                    BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, battleResult.DropItems);
             }
-            else if (result.IsAttackerDead)
+
+            if (battleResult.IsAttackerDead)
+                OnLeave();
+
+            var effectResult = new EffectResult();
+            var playerEffectResult = CharacterDataCenter.ActionEndProcess(CharacterData);
+
+            effectResult.Results.Add(playerEffectResult);
+
+            if (playerEffectResult.IsDead)
             {
+                CharacterData.Effects.Clear();
                 OnLeave();
             }
 
-            CharacterDataCenter.ActionEndProcess(CharacterData);
-            return result;
+            return (battleResult, effectResult);
         }
         else
         {
             Debug.LogError("戰鬥對象不存在!");
-            return null;
+            return (null, null);
         }
     }
 
-    BattleResult OnSkill(CharacterData characterData, ESkillID skillID)
+    (BattleResult battleResult, EffectResult effectResult) OnSkill(List<CharacterData> skillTargets, ESkillID skillID)
     {
         var skillData = SkillDataCenter.GetSkillData(skillID);
         if (CharacterData.CurrentMP < skillData.Cost)
         {
             Debug.Log("MP不足!");
-            return null;
+            return (null, null);
         }
 
         CharacterData.CurrentMP -= skillData.Cost;
 
-        if (characterData.Name == CharacterData.Name)
+        if (skillTargets.All(x => x.Name == CharacterData.Name))
         {
-
             CharacterDataCenter.ActionEndProcess(CharacterData);
-            return null;
+
+            return (null, null);
         }
         else
         {
-            var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == characterData.Name);
-            if (target != null)
+            var targets = EnemyData.Enemies.Where(x => skillTargets.Any(y => x.CharacterData.Name == y.Name)).ToList();
+            if (targets != null)
             {
-                var result = BattleSystem.RunBattle(CharacterData, target.CharacterData, skillData);
+                var battleResult = BattleSystem.RunBattle(CharacterData, targets.Select(x => x.CharacterData).ToList(), skillData);
 
-                if (result.IsDefenderDead)
+                foreach (var result in battleResult.Results)
                 {
-                    BattleSystem.EnemyDeadProcess(target, result);
+                    if (result.IsDefenderDead)
+                        BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, battleResult.DropItems);
                 }
-                else if (result.IsAttackerDead)
+
+                if (battleResult.IsAttackerDead)
+                    OnLeave();
+
+                var effectResult = new EffectResult();
+                var playerEffectResult = CharacterDataCenter.ActionEndProcess(CharacterData);
+                effectResult.Results.Add(playerEffectResult);
+                if (playerEffectResult.IsDead)
                 {
+                    CharacterData.Effects.Clear();
                     OnLeave();
                 }
 
-                CharacterDataCenter.ActionEndProcess(CharacterData);
-                return result;
+                return (battleResult, effectResult);
             }
             else
             {
                 Debug.LogError("施法對象不存在!");
-                return null;
+                return (null, null);
             }
         }
     }
@@ -151,7 +171,7 @@ public class SetBattleAction_Server : IApiHandler_Server
 public class SetBattleAction_ServerRequest
 {
     public EBattleActionType BattleAction;
-    public CharacterData ActionTarget;
+    public List<CharacterData> ActionTarget;
     public ESkillID SkillID;
 }
 

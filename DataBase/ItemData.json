@@ -121,12 +121,12 @@
     "Name": "狂暴藥水",
     "ID": 104,
     "Kind": 22,
-    "Description": "使全數值呈倍數上升，但會不受控。\n狂化－100回合",
+    "Description": "使全數值上升一倍，但會不受控。\n狂化－100回合",
     "Price": 1000,
     "Effects": [
       {
         "ID": 22,
-        "Value": 2,
+        "Value": [{ "Constant": 1 }],
         "Times": 100
       }
     ],
@@ -202,6 +202,39 @@
     "Price": 10,
     "Ability": {
       "INT": 1
+    },
+    "Count": 1
+  },
+  {
+    "Name": "水牛角",
+    "ID": 206,
+    "Kind": 23,
+    "Description": "水牛的角，強而有力",
+    "Price": 10,
+    "Ability": {
+      "STR": 1
+    },
+    "Count": 1
+  },
+  {
+    "Name": "羚羊角",
+    "ID": 207,
+    "Kind": 23,
+    "Description": "羚羊的角，是其生存技藝的關鍵",
+    "Price": 10,
+    "Ability": {
+      "AGI": 1
+    },
+    "Count": 1
+  },
+  {
+    "Name": "毒牙",
+    "ID": 208,
+    "Kind": 23,
+    "Description": "響尾蛇的牙，毒毒的",
+    "Price": 10,
+    "Trait": {
+      "Poisoning": 1
     },
     "Count": 1
   }

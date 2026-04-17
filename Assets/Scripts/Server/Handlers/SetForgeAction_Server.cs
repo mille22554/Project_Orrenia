@@ -64,6 +64,11 @@ public class SetForgeAction_Server : IApiHandler_Server
 
             newBagItem.Materials.Add(bagItem.ItemID);
 
+            if (newBagItem.Trait != null && bagItem.Trait != null)
+            {
+                newBagItem.Trait.Poisoning += bagItem.Trait.Poisoning;
+            }
+
             bagItem.Count--;
             if (bagItem.Count == 0)
                 CharacterData.BagItems.Remove(bagItem);

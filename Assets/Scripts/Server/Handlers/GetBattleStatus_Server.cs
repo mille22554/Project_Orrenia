@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -16,22 +17,29 @@ public class GetBattleStatus_Server : IApiHandler_Server
         try
         {
             BattleResult battleResult = null;
+            var effectResult = new EffectResult();
             if (EnemyData.Enemies.Count > 0)
             {
-                battleResult = BattleSystem.CheckNowActor();
+                EffectResult.Result nowActorEffectResult;
+                (battleResult, nowActorEffectResult) = BattleSystem.CheckNowActor();
+                effectResult.Results.Add(nowActorEffectResult);
 
-                if (battleResult != null && (battleResult.IsAttackerDead || battleResult.IsDefenderDead))
+                if (battleResult != null && (battleResult.IsAttackerDead || battleResult.Results.Any(x => x.IsDefenderDead)))
                 {
-                    if (battleResult.IsAttackerDead && CharacterData.Name == battleResult.Attacker ||
-                        battleResult.IsDefenderDead && CharacterData.Name == battleResult.Defenderer)
+                    var playerDeadAtDefence = battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == CharacterData.Name);
+
+                    if (battleResult.IsAttackerDead && CharacterData.Name == battleResult.Attacker || playerDeadAtDefence)
                     {
                         OnLeave();
                     }
                     else
                     {
-                        var deadMob = battleResult.IsAttackerDead ? battleResult.Attacker : battleResult.Defenderer;
-                        var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
-                        BattleSystem.EnemyDeadProcess(target, battleResult);
+                        foreach (var result in battleResult.Results)
+                        {
+                            var deadMob = battleResult.IsAttackerDead ? battleResult.Attacker : result.Defenderer;
+                            var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
+                            BattleSystem.EnemyDeadProcess(target, result, battleResult.DropItems);
+                        }
                     }
                 }
 
@@ -41,7 +49,8 @@ public class GetBattleStatus_Server : IApiHandler_Server
             var responseData = new GetBattleStatus_ServerResponse
             {
                 SaveData = GameData_Server.SaveData,
-                BattleResult = battleResult
+                BattleResult = battleResult,
+                EffectResult = effectResult,
             };
             var response = new ResponseData_Server
             {
@@ -78,4 +87,5 @@ public class GetBattleStatus_ServerResponse
 {
     public SaveDataFormat SaveData;
     public BattleResult BattleResult;
+    public EffectResult EffectResult;
 }

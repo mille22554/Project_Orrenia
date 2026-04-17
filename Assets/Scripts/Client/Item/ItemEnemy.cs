@@ -33,7 +33,7 @@ public class ItemEnemy : MonoBehaviour
         iconSelected.SetActive(isOn);
     }
 
-    public void GetDamage(int damage)
+    public void GetDamage(decimal damage)
     {
         Info.CharacterData.CurrentHP -= damage;
         if (Info.CharacterData.CurrentHP < 0)

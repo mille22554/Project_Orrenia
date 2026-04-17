@@ -1,10 +1,10 @@
-public class HP_UP : IEffectHandler
+public class Counter : IEffectHandler
 {
-    public EEffectID ID => EEffectID.HP_UP;
+    public EEffectID ID => EEffectID.Counter;
 
     public void Passive(FullAbilityBase baseAbility, EffectData effectData, FullAbilityBase afterAbility)
     {
-        baseAbility.HP += baseAbility.HP * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value);
+
     }
 
     public void Proc(CharacterData characterData, EffectData effectData, EffectResult.Result result)

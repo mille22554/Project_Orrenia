@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class SetBattleAction : IApiHandler<SetBattleActionResponse>
@@ -12,7 +13,7 @@ public class SetBattleActionRequest : IRequestBase<SetBattleActionResponse>
 {
     public string Cmd => "SetBattleAction";
     public EBattleActionType BattleAction;
-    public CharacterData ActionTarget;
+    public List<CharacterData> ActionTarget;
     public ESkillID SkillID;
 }
 
