@@ -118,15 +118,22 @@ public static class BattleSystem
                     if (debugSwitch && skill != null)
                         Debug.Log($"施放技能: {skill.Name}");
 
-                    switch (skill.SkillType)
+                    if (skill == null)
                     {
-                        case ESkillType.SinglePhysicsAttack:
-                        case ESkillType.SingleMagicAttack:
-                            battleResult = RunBattle(nowActor, new() { characterData }, skill);
-                            break;
-                        case ESkillType.SingleBuff:
+                        battleResult = RunBattle(nowActor, new() { characterData }, skill);
+                    }
+                    else
+                    {
+                        switch (skill.SkillType)
+                        {
+                            case ESkillType.SinglePhysicsAttack:
+                            case ESkillType.SingleMagicAttack:
+                                battleResult = RunBattle(nowActor, new() { characterData }, skill);
+                                break;
+                            case ESkillType.SingleBuff:
 
-                            break;
+                                break;
+                        }
                     }
 
                     effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
@@ -194,6 +201,7 @@ public static class BattleSystem
 
         var attacker = CreateBattleData(actor);
         var defenders = new Dictionary<BattleData, CharacterData>();
+
         foreach (var target in targets)
             defenders.Add(CreateBattleData(target), target);
 
@@ -206,6 +214,7 @@ public static class BattleSystem
             {
                 Defenderer = defender.Name
             };
+            battleResult.Results.Add(result);
 
             battleResult.IsAttackerDead = LuckyEventCheck(attacker, defender, result);
 
@@ -236,7 +245,7 @@ public static class BattleSystem
 
         #region 迴避判定
         var attackerACC = GetEffectiveStat(attacker.ACC, 40);
-        foreach (var (defender, target) in defenders)
+        foreach (var (defender, target) in defenders.ToList())
         {
             if (!(attackerACC > GetEffectiveStat(defender.EVA)))
             {

@@ -111,11 +111,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
         var fullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData);
 
         int prop;
-        while (
-            CharacterData.CurrentHP + actionResult.RestResult.RecoverHP < fullAbility.HP ||
-            CharacterData.CurrentMP + actionResult.RestResult.RecoverMP < fullAbility.MP ||
-            CharacterData.CurrentSTA + actionResult.RestResult.RecoverSTA < fullAbility.STA
-        )
+        while (CharacterData.CurrentHP < fullAbility.HP || CharacterData.CurrentMP < fullAbility.MP || CharacterData.CurrentSTA < fullAbility.STA)
         {
             if (CharacterData.CurrentHP < fullAbility.HP)
             {
@@ -136,7 +132,8 @@ public class SetAdventureAction_Server : IApiHandler_Server
             }
 
             var playerEffectResult = CharacterDataCenter.ActionEndProcess(CharacterData, true);
-            actionResult.EffectResult.Results.Add(playerEffectResult);
+            if (playerEffectResult.Infos.Count > 0)
+                actionResult.EffectResult.Results.Add(playerEffectResult);
 
             foreach (var info in playerEffectResult.Infos)
             {

@@ -80,20 +80,20 @@ public static class CharacterDataCenter
             LUK = data.Ability.LUK_Point
         };
 
+        ability.HP = ability.VIT * 10 + ability.STR * 5 + 85;
+        ability.MP = ability.INT * 10 + ability.VIT * 5 + 35;
+        ability.STA = ability.VIT * 5 + 95;
+        ability.ATK = ability.STR * 2 + ability.VIT;
+        ability.MATK = ability.INT * 2 + ability.VIT;
+        ability.DEF = ability.VIT * 2 + ability.STR;
+        ability.MDEF = ability.VIT * 2 + ability.INT;
+        ability.ACC = ability.AGI * 3 + ability.DEX * 2 + ability.LUK;
+        ability.EVA = ability.DEX * 3 + ability.AGI * 2 + ability.LUK;
+        ability.CRIT = ability.AGI * 2 + ability.LUK;
+        ability.SPD = ability.DEX;
+
         CalculateEquipAbility(ability, data);
         CalculateEffectAbility(ability, data.Effects, out var afterAbility);
-
-        afterAbility.HP = afterAbility.VIT * 10 + afterAbility.STR * 5 + 85;
-        afterAbility.MP = afterAbility.INT * 10 + afterAbility.VIT * 5 + 35;
-        afterAbility.STA = afterAbility.VIT * 5 + 95;
-        afterAbility.ATK = afterAbility.STR * 2 + afterAbility.VIT;
-        afterAbility.MATK = afterAbility.INT * 2 + afterAbility.VIT;
-        afterAbility.DEF = afterAbility.VIT * 2 + afterAbility.STR;
-        afterAbility.MDEF = afterAbility.VIT * 2 + afterAbility.INT;
-        afterAbility.ACC = afterAbility.AGI * 3 + afterAbility.DEX * 2 + afterAbility.LUK;
-        afterAbility.EVA = afterAbility.DEX * 3 + afterAbility.AGI * 2 + afterAbility.LUK;
-        afterAbility.CRIT = afterAbility.AGI * 2 + afterAbility.LUK;
-        afterAbility.SPD = afterAbility.DEX;
 
         if (data.Role == ECharacterRole.Mob)
             afterAbility.HP /= 10;
