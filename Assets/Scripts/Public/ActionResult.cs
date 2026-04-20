@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 public class ActionResult
 {
-    public BattleResult BattleResult;
-    public RestResult RestResult;
+    public BattleResult BattleResult = new();
+    public RestResult RestResult = new();
     public EffectResult EffectResult = new();
 }
 
@@ -12,8 +12,8 @@ public class BattleResult
     public List<Result> Results = new();
     public string Attacker;
     public bool IsAttackerDead;
-    public List<string> BreakEquips;
-    public List<string> DropItems;
+    public List<string> BreakEquips = new();
+    public List<string> DropItems = new();
     public bool IsSkill;
     public string SkillName;
     public bool IsAttakerIncapacitated;

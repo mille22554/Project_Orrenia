@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -34,8 +35,11 @@ public static class ServerController
         }
     }
 
-    static void Get(string request, Action<string> callback)
+    static async void Get(string request, Action<string> callback)
     {
+        await UniTask.NextFrame();
+        // await UniTask.WaitForSeconds(0.5f);
+
         var requestData = JsonConvert.DeserializeObject<RequestData_Server>(request);
 
         if (handlerBases.TryGetValue(requestData.cmd, out var handlerBase))

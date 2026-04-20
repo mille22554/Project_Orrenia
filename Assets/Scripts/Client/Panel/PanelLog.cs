@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class PanelLog : MonoBehaviour
 {
+    const string _line = "--------------------";
     [SerializeField] ScrollRect log;
     [SerializeField] Toggle toggleBattleLog;
     [SerializeField] Toggle toggleEffect;
@@ -47,11 +48,17 @@ public class PanelLog : MonoBehaviour
         ClearEffectLog();
     }
 
-    public void SetLog(string message) => SetLog(message, Color.white);
-    public void SetLog(string message, Color color) => SetLogAsync(message, color).Forget();
-    public async UniTask SetLogAsync(string message) => await SetLogAsync(message, Color.white);
-    public async UniTask SetLogAsync(string message, Color color)
+    public void SetLine()
     {
+        if (toggleBattleLog.isOn && itemBattleLogs.Count > 0 || toggleEffect.isOn && itemEffectLogs.Count > 0)
+            SetLog(_line);
+    }
+
+    public void SetLog(string message) => SetLog(message, Color.white);
+    public void SetLog(string message, Color color) => SetLogAsync(message, color);
+    public async void SetLogAsync(string message, Color color)
+    {
+        Debug.Log(message);
         block.SetActive(true);
         var textLog = ObjectPool.Get(itemLog, battleLogContent);
         itemBattleLogs.Add(textLog);

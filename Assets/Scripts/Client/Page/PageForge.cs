@@ -127,10 +127,12 @@ public class PageForge : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(GetSaveDataResponse response)
         {
             InitPage(response.SaveData.Datas.CharacterData.BagItems);
+            PanelLoading.Close();
         }
     }
 
@@ -216,12 +218,14 @@ public class PageForge : MonoBehaviour
             Materials = materials
         };
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(SetForgeActionResponse response)
         {
             Clear();
 
             InitPage(response.BagItemDatas);
+            PanelLoading.Close();
         }
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -20,13 +21,6 @@ public static class ApiBridge
         RegisterHandlers();
 
         IsLocal = string.IsNullOrEmpty(_serverUrl);
-
-        //         _server = new()
-        //         {
-        //             TempFunc =
-        // };
-
-
     }
 
     static void RegisterHandlers()
@@ -77,9 +71,15 @@ public static class ApiBridge
             var responseJson = "";
             if (IsLocal)
             {
+                var isDataBack = false;
                 EventMng.EmitEvent(EventName.ServerRequest, requestJson, (Action<string>)CallBack);
+                await UniTask.WaitUntil(() => isDataBack);
 
-                void CallBack(string response) => responseJson = response;
+                void CallBack(string response)
+                {
+                    responseJson = response;
+                    isDataBack = true;
+                }
             }
             else
             {

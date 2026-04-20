@@ -33,6 +33,7 @@ public class PageCharacter : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(GetSaveDataResponse response)
         {
@@ -49,6 +50,7 @@ public class PageCharacter : MonoBehaviour
             abilityPoint.text = response.AbilityPoint.ToString();
 
             MainController.Instance.RefreshUI(response);
+            PanelLoading.Close();
         }
     }
 
@@ -69,10 +71,12 @@ public class PageCharacter : MonoBehaviour
             Ability = ability
         };
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(SetPlayerAbilityResponse response)
         {
             RefreshInfo();
+            PanelLoading.Close();
         }
     }
 
@@ -93,10 +97,12 @@ public class PageCharacter : MonoBehaviour
             Ability = ability
         };
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(SetPlayerAbilityResponse response)
         {
             RefreshInfo();
+            PanelLoading.Close();
         }
     }
 }

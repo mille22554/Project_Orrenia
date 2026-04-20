@@ -6,8 +6,10 @@ public class MainController : MonoBehaviour
 
     public Transform PageContent;
     public Transform InfoContent;
-    public MonoBehaviour CurrentPage;
+    public Transform Loading;
+    public Transform SystemMessage;
 
+    MonoBehaviour CurrentPage;
     PanelInfo _panelInfo;
 
     void Awake()

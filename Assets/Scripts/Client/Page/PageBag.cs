@@ -54,6 +54,7 @@ public class PageBag : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(GetSaveDataResponse response)
         {
@@ -80,6 +81,8 @@ public class PageBag : MonoBehaviour
                 else if (toggleMaterial.isOn)
                     item.gameObject.SetActive(PublicFunc.IsMaterialCategory(itemKind.Category));
             }
+
+            PanelLoading.Close();
         }
     }
 
@@ -208,6 +211,7 @@ public class PageBag : MonoBehaviour
             BagItemData = selectedBagItem.Info
         };
         ApiBridge.Send(setItemActionRequestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(SetItemActionResponse setItemActionResponse)
         {
@@ -241,6 +245,7 @@ public class PageBag : MonoBehaviour
                 }
             }
             MainController.Instance.RefreshUI(setItemActionResponse.CharacterData, setItemActionResponse.FullAbility);
+            PanelLoading.Close();
 
             void EquipCallBack()
             {

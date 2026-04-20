@@ -72,7 +72,7 @@ public static class DataCenter
         // 用反射抓 AbilityBase 的欄位
         foreach (var field in typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
         {
-            var value = (int)field.GetValue(ability);
+            var value = (decimal)field.GetValue(ability);
             var color = ColorUtility.ToHtmlStringRGB(Color.white);
 
             if (nameRandom != null)

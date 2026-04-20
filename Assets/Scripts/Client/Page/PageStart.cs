@@ -21,6 +21,7 @@ public class PageStart : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(GetSaveDataResponse response)
         {
@@ -30,6 +31,8 @@ public class PageStart : MonoBehaviour
                 PageRegister.Create();
             else
                 MainController.Instance.Login();
+
+            PanelLoading.Close();
         }
     }
 }

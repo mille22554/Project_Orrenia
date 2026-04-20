@@ -28,10 +28,12 @@ public class PageRegister : MonoBehaviour
 
         var requestData = new SetPlayerNameRequest { PlayerName = inputUsername.text };
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create();
 
         void CallBack(SetPlayerNameResponse response)
         {
             MainController.Instance.Login();
+            PanelLoading.Close();
         }
 
     }
