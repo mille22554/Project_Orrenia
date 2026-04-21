@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -5,6 +6,16 @@ using Random = UnityEngine.Random;
 
 public static class BattleSystem
 {
+    static BattleData _lastActor;
+
+    public static void InitNewBattle(List<CharacterData> characters)
+    {
+        _lastActor = null;
+
+        foreach (var character in characters)
+            character.CurrentTP = 0;
+    }
+
     public static BattleData CreateBattleData(CharacterData characterData)
     {
         var ability = CharacterDataCenter.GetCharacterAbility(characterData);
@@ -28,10 +39,10 @@ public static class BattleSystem
             MATK = ability.MATK,
             DEF = ability.DEF,
             MDEF = ability.MDEF,
-            ACC = ability.ACC,
-            EVA = ability.EVA,
-            CRIT = ability.CRIT,
-            SPD = ability.SPD,
+            ACC = (decimal)Math.Pow((double)ability.ACC, 1.0 / 4.0) * 100,
+            EVA = (decimal)Math.Pow((double)ability.EVA, 1.0 / 4.0) * 100,
+            CRIT = (decimal)Math.Pow((double)ability.CRIT, 1.0 / 4.0) * 100,
+            SPD = (decimal)Math.Pow((double)ability.SPD, 1.0 / 4.0) * 100,
         };
         return battleData;
     }
@@ -64,6 +75,11 @@ public static class BattleSystem
                 next = unit;
             }
         }
+
+        if (_lastActor != null && _lastActor.Name == next.Name)
+            next.Combo = _lastActor.Combo + 1;
+
+        _lastActor = next;
 
         foreach (var unit in units)
         {
@@ -197,6 +213,7 @@ public static class BattleSystem
         {
             battleResult.IsAttakerIncapacitated = true;
             battleResult.IncapacitatedEffect = incapacitatedEffect.Name;
+            return battleResult;
         }
 
         var attacker = CreateBattleData(actor);
@@ -260,6 +277,7 @@ public static class BattleSystem
 
         if (defenders.Count == 0)
         {
+            _lastActor.Combo = 0;
             RefreshCharacterData(attacker, actor);
             return battleResult;
         }
@@ -331,12 +349,28 @@ public static class BattleSystem
                 if (skillData != null)
                 {
                     foreach (var buff in skillData.Buffs)
+                    {
                         CharacterDataCenter.AddCharacterEffect(actor, buff);
+                        buff.Name = CharacterDataCenter.GetEffectData(buff.ID).Name;
+                        if (battleResult.NewEffects.TryGetValue(actor.Name, out var effects))
+                            effects.Add(buff.Name);
+                        else
+                            battleResult.NewEffects.Add(actor.Name, new() { buff.Name });
+                    }
 
                     foreach (var debuff in skillData.DeBuffs)
                     {
-                        if (PublicFunc.Dice(1, 100) < debuff.Prop)
+                        var prop = PublicFunc.Dice(1, 100);
+                        // Debug.Log($"Debuff判定: {prop}");
+                        if (prop < debuff.Prop)
+                        {
                             CharacterDataCenter.AddCharacterEffect(target, debuff.Effect);
+                            debuff.Effect.Name = CharacterDataCenter.GetEffectData(debuff.Effect.ID).Name;
+                            if (battleResult.NewEffects.TryGetValue(target.Name, out var effects))
+                                effects.Add(debuff.Effect.Name);
+                            else
+                                battleResult.NewEffects.Add(target.Name, new() { debuff.Effect.Name });
+                        }
                     }
                 }
 
@@ -359,7 +393,7 @@ public static class BattleSystem
                     }
                 }
 
-                if (DamageProcess(defender, result.BattleDamage))
+                if (DamageProcess(defender, result.BattleDamage * (attacker.Combo * 0.1m + 1)))
                 {
                     result.IsDefenderDead = true;
                 }
@@ -445,7 +479,8 @@ public static class BattleSystem
 
     static bool DamageProcess(BattleData character, decimal damage)
     {
-        character.HP -= damage;
+        character.HP -= (int)damage;
+
         if (character.HP <= 0)
             return true;
         else

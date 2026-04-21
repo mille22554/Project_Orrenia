@@ -461,7 +461,7 @@ public class PageBattle : MonoBehaviour
 
     void ShowBattleLog(BattleResult battleResult, CharacterData characterData)
     {
-        if (battleResult == null || battleResult.Results.Count == 0)
+        if (battleResult == null)
             return;
 
         panelLog.SetLine();
@@ -470,7 +470,10 @@ public class PageBattle : MonoBehaviour
         if (battleResult.IsAttakerIncapacitated)
             panelLog.SetLog($"{battleResult.Attacker}因{battleResult.IncapacitatedEffect}而無法行動!", commonColor);
 
-        foreach (var result in battleResult.Results)
+        if (battleResult.Results.Count == 0)
+            return;
+
+            foreach (var result in battleResult.Results)
         {
             if (result.IsLuckyEventTrigger)
             {
@@ -509,14 +512,28 @@ public class PageBattle : MonoBehaviour
             }
 
             if (result.IsDefenderDead)
+            {
                 panelLog.SetLog($"{result.Defenderer}倒下了!");
+            }
+            else if (battleResult.NewEffects.TryGetValue(result.Defenderer, out var effects))
+            {
+                foreach (var effect in effects)
+                    panelLog.SetLog($"{result.Defenderer}獲得了{effect}!");
+            }
 
             if (result.IsUnitLevelUp)
                 panelLog.SetLog($"{result.LevelUpUnit}升級了!");
         }
 
         if (battleResult.IsAttackerDead)
+        {
             panelLog.SetLog($"{battleResult.Attacker}倒下了!");
+        }
+        else if (battleResult.NewEffects.TryGetValue(battleResult.Attacker, out var effects))
+        {
+            foreach (var effect in effects)
+                panelLog.SetLog($"{battleResult.Attacker}獲得了{effect}!");
+        }
 
         foreach (var breakEquip in battleResult.BreakEquips)
             panelLog.SetLog($"{breakEquip}毀損了", Color.yellow);

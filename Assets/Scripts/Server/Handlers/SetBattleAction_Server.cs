@@ -62,7 +62,7 @@ public class SetBattleAction_Server : IApiHandler_Server
                     (actionResult.BattleResult, actionResult.EffectResult) = OnSkill(data.ActionTarget, data.SkillID);
                     break;
                 case EBattleActionType.Leave:
-                    OnLeave();
+                    OnLeave(true);
                     break;
             }
         }
@@ -157,12 +157,15 @@ public class SetBattleAction_Server : IApiHandler_Server
         }
     }
 
-    void OnLeave()
+    void OnLeave() => OnLeave(false);
+    void OnLeave(bool isNotDead)
     {
         PlayerData.Area = 1;
         PlayerData.Deep = 0;
 
         EnemyData.Enemies.Clear();
+        if (!isNotDead)
+            CharacterData.Effects.Clear();
 
         CharacterDataCenter.InitCurrentData(CharacterData);
     }

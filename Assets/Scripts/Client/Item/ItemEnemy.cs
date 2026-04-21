@@ -24,8 +24,8 @@ public class ItemEnemy : MonoBehaviour
     {
         Info = data;
         enemyName.text = data.CharacterData.Name;
-        level.text = "Lv " + data.CharacterData.Level;
-        hp.text = "HP " + data.CharacterData.CurrentHP;
+        level.text = $"Lv {data.CharacterData.Level}";
+        hp.text = $"HP {data.CharacterData.CurrentHP:0}";
     }
 
     public void SetToggle(bool isOn)
@@ -39,6 +39,6 @@ public class ItemEnemy : MonoBehaviour
         if (Info.CharacterData.CurrentHP < 0)
             Info.CharacterData.CurrentHP = 0;
 
-        hp.text = "HP " + Info.CharacterData.CurrentHP;
+        hp.text = $"HP {Info.CharacterData.CurrentHP:0}";
     }
 }

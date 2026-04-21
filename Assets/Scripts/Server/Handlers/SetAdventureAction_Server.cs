@@ -80,7 +80,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
     ActionResult OnGoAhead()
     {
         var actionResult = new ActionResult();
-        var playerEffectResult = ActionEndProcess(CharacterData, true, actionResult.EffectResult.Results);
+        var playerEffectResult = ActionEndProcess(CharacterData, false, actionResult.EffectResult.Results);
 
         if (playerEffectResult.IsDead)
         {
@@ -158,39 +158,18 @@ public class SetAdventureAction_Server : IApiHandler_Server
     }
 
     void OnEnemyAppear(EffectResult effectResult)
-    // BattleResult OnEnemyAppear(EffectResult effectResult)
     {
         EnemyData.Enemies = EnemySetting.SetEnemy(
             PlayerData.Area,
             PlayerData.Deep
         );
 
-        // var (battleResult, nowActorEffectResult) = BattleSystem.CheckNowActor();
-        // if (battleResult != null && (battleResult.IsAttackerDead || battleResult.Results.Any(x => x.IsDefenderDead)))
-        // {
-        //     if (battleResult.IsAttackerDead && CharacterData.Name == battleResult.Attacker ||
-        //         battleResult.Results.Any(x => x.IsDefenderDead && CharacterData.Name == x.Defenderer))
-        //     {
-        //         OnLeave();
-        //     }
-        //     else
-        //     {
-        //         foreach (var result in battleResult.Results)
-        //         {
-        //             var deadMob = battleResult.IsAttackerDead ? battleResult.Attacker : result.Defenderer;
-        //             var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
-        //             BattleSystem.EnemyDeadProcess(target, result, battleResult.DropItems);
-        //         }
-        //     }
-        // }
-
-        // effectResult.Results.Add(nowActorEffectResult);
-        // return battleResult;
+        BattleSystem.InitNewBattle(new() { CharacterData });
     }
 
     EffectResult.Result ActionEndProcess(CharacterData characterData, bool isRest, List<EffectResult.Result> results)
     {
-        var playerEffectResult = CharacterDataCenter.ActionEndProcess(CharacterData, true);
+        var playerEffectResult = CharacterDataCenter.ActionEndProcess(characterData, isRest);
         if (playerEffectResult.Infos.Count > 0)
             results.Add(playerEffectResult);
 

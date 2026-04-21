@@ -78,6 +78,7 @@ public class GetBattleStatus_Server : IApiHandler_Server
         PlayerData.Deep = 0;
 
         EnemyData.Enemies.Clear();
+        CharacterData.Effects.Clear();
 
         CharacterDataCenter.InitCurrentData(CharacterData);
     }

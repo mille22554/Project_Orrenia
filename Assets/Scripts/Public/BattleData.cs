@@ -4,4 +4,5 @@ public class BattleData : FullAbilityBase
     public ECharacterRole Role;
     public int Exp;
     public decimal TP;
+    public int Combo;
 }

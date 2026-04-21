@@ -18,6 +18,7 @@ public class BattleResult
     public string SkillName;
     public bool IsAttakerIncapacitated;
     public string IncapacitatedEffect;
+    public Dictionary<string, List<string>> NewEffects = new();
 
     public class Result
     {
