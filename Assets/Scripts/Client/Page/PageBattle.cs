@@ -466,7 +466,7 @@ public class PageBattle : MonoBehaviour
 
     void ShowBattleLog(BattleResult battleResult, CharacterData characterData)
     {
-        if (battleResult == null)
+        if (battleResult == null || battleResult.Results.Count == 0)
             return;
 
         panelLog.SetLine();
