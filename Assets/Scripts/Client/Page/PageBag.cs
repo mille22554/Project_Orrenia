@@ -5,7 +5,9 @@ using UnityEngine.UI;
 
 public class PageBag : MonoBehaviour
 {
+    static PageBag _ins;
     const string resourcePath = "Prefabs/PageBag";
+
     [SerializeField] Text itemName;
     [SerializeField] Text type;
     [SerializeField] Text description;
@@ -26,8 +28,11 @@ public class PageBag : MonoBehaviour
 
     public static void Create()
     {
-        var panel = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageBag>(), MainController.Instance.PageContent);
-        MainController.Instance.SwitchPage(panel);
+        if (_ins == null || !_ins.gameObject.activeSelf)
+        {
+            _ins = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageBag>(), MainController.Instance.PageContent);
+            MainController.Instance.SwitchPage(_ins);
+        }
     }
 
     void Awake()
@@ -54,11 +59,11 @@ public class PageBag : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.Full);
 
         void CallBack(GetSaveDataResponse response)
         {
-            var datas = response.SaveData.Datas;
+            var datas = response.SaveData;
             var characterData = datas.CharacterData;
 
             ResetBagInfo();
@@ -211,7 +216,7 @@ public class PageBag : MonoBehaviour
             BagItemData = selectedBagItem.Info
         };
         ApiBridge.Send(setItemActionRequestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.None);
 
         void CallBack(SetItemActionResponse setItemActionResponse)
         {

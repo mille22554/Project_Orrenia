@@ -8,22 +8,25 @@ public class SetBattleAction_Server : IApiHandler_Server
 {
     public string Cmd => "SetBattleAction";
 
-    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
-    EnemyData EnemyData => GameData_Server.NowEnemyData;
+    string _account;
+    PlayerContextData PlayerData => GameData_Server.GetPlayerData(_account);
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
+    PartyData PartyData => GameData_Server.GetPartyData(PlayerData.NowPartyLeader);
 
     public string Get(object request)
     {
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetBattleAction_ServerRequest>(request.ToString());
+            _account = requestData.Account;
+
             var actionResult = DoAction(requestData);
 
-            SaveDataCenter.SaveData();
+            SaveDataCenter.SaveData(requestData.Account);
 
             var responseData = new SetBattleAction_ServerResponse
             {
-                SaveData = GameData_Server.SaveData,
+                SaveData = GameData_Server.NowPlayers[requestData.Account],
                 ActionResult = actionResult,
                 FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData)
             };
@@ -71,7 +74,7 @@ public class SetBattleAction_Server : IApiHandler_Server
 
     (BattleResult battleResult, EffectResult effectResult) OnAttack(List<CharacterData> characterData)
     {
-        var targets = EnemyData.Enemies.Where(x => characterData.Any(y => x.CharacterData.Name == y.Name)).ToList();
+        var targets = PartyData.Enemies.Where(x => characterData.Any(y => x.CharacterData.Name == y.Name)).ToList();
         if (targets != null)
         {
             var battleResult = BattleSystem.RunBattle(CharacterData, targets.Select(x => x.CharacterData).ToList());
@@ -79,7 +82,7 @@ public class SetBattleAction_Server : IApiHandler_Server
             foreach (var result in battleResult.Results)
             {
                 if (result.IsDefenderDead)
-                    BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, battleResult.DropItems);
+                    BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, PartyData, battleResult.DropItems);
             }
 
             if (battleResult.IsAttackerDead)
@@ -124,7 +127,7 @@ public class SetBattleAction_Server : IApiHandler_Server
         }
         else
         {
-            var targets = EnemyData.Enemies.Where(x => skillTargets.Any(y => x.CharacterData.Name == y.Name)).ToList();
+            var targets = PartyData.Enemies.Where(x => skillTargets.Any(y => x.CharacterData.Name == y.Name)).ToList();
             if (targets != null)
             {
                 var battleResult = BattleSystem.RunBattle(CharacterData, targets.Select(x => x.CharacterData).ToList(), skillData);
@@ -132,7 +135,7 @@ public class SetBattleAction_Server : IApiHandler_Server
                 foreach (var result in battleResult.Results)
                 {
                     if (result.IsDefenderDead)
-                        BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, battleResult.DropItems);
+                        BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, PartyData, battleResult.DropItems);
                 }
 
                 if (battleResult.IsAttackerDead)
@@ -160,10 +163,10 @@ public class SetBattleAction_Server : IApiHandler_Server
     void OnLeave() => OnLeave(false);
     void OnLeave(bool isNotDead)
     {
-        PlayerData.Area = 1;
-        PlayerData.Deep = 0;
+        PartyData.Area = 1;
+        PartyData.Deep = 0;
 
-        EnemyData.Enemies.Clear();
+        PartyData.Enemies.Clear();
         if (!isNotDead)
             CharacterData.Effects.Clear();
 
@@ -171,7 +174,7 @@ public class SetBattleAction_Server : IApiHandler_Server
     }
 }
 
-public class SetBattleAction_ServerRequest
+public class SetBattleAction_ServerRequest : ServerRequestBase
 {
     public EBattleActionType BattleAction;
     public List<CharacterData> ActionTarget;
@@ -180,7 +183,7 @@ public class SetBattleAction_ServerRequest
 
 public class SetBattleAction_ServerResponse
 {
-    public SaveDataFormat SaveData;
+    public PlayerSaveDataFormat SaveData;
     public ActionResult ActionResult;
     public FullAbilityBase FullAbility;
 }

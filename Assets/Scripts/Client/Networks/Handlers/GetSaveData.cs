@@ -8,14 +8,15 @@ public class GetSaveData : IApiHandler<GetSaveDataResponse>
     }
 }
 
-public class GetSaveDataRequest : IRequestBase<GetSaveDataResponse>
+public class GetSaveDataRequest : RequestBase<GetSaveDataResponse>
 {
-    public string Cmd => "GetSaveData";
+    public override string Cmd =>"GetSaveData";
 }
 
 public class GetSaveDataResponse
 {
-    public SaveDataFormat SaveData;
+    public Datas SaveData;
+    public PartyData PartyData;
     public FullAbilityBase FullAbility;
     public int AbilityPoint;
     public int Exp;

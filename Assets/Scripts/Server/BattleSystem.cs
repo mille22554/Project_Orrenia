@@ -8,12 +8,14 @@ public static class BattleSystem
 {
     static BattleData _lastActor;
 
-    public static void InitNewBattle(List<CharacterData> characters)
+    public static void InitNewBattle(PartyData partyData)
     {
         _lastActor = null;
 
-        foreach (var character in characters)
-            character.CurrentTP = 0;
+        foreach (var member in partyData.Members)
+            GameData_Server.GetCharacterData(member).CurrentTP = 0;
+
+        partyData.Enemies = EnemySetting.SetEnemy(partyData.Area, partyData.Deep);
     }
 
     public static BattleData CreateBattleData(CharacterData characterData)
@@ -47,19 +49,21 @@ public static class BattleSystem
         return battleData;
     }
 
-    public static (CharacterData characterData, int mobID) RunSpeedProcess()
+    public static (CharacterData characterData, int mobID) RunSpeedProcess(PartyData partyData)
     {
-        var playerCharacterData = GameData_Server.NowCharacterData;
-        var enemies = GameData_Server.NowEnemyData.Enemies;
+        var enemies = partyData.Enemies;
+        var units = new Dictionary<BattleData, CharacterData>();
 
-        var units = new Dictionary<BattleData, CharacterData>
+        foreach (var member in partyData.Members)
         {
-            { CreateBattleData(playerCharacterData), playerCharacterData }
-        };
+            var characterData = GameData_Server.GetCharacterData(member);
+            units.Add(CreateBattleData(characterData), characterData);
+        }
 
         foreach (var mob in enemies)
         {
-            units.Add(CreateBattleData(mob.CharacterData), mob.CharacterData);
+            var characterData = mob.CharacterData;
+            units.Add(CreateBattleData(characterData), characterData);
         }
 
         BattleData next = null;
@@ -92,17 +96,17 @@ public static class BattleSystem
         return (units[next], mobID);
     }
 
-    public static (BattleResult battleResult, EffectResult.Result effectResult) CheckNowActor()
+    public static (BattleResult battleResult, EffectResult.Result effectResult) CheckNowActor(PartyData partyData)
     {
         var debugSwitch = false;
         debugSwitch = true;
 
-        var (nowActor, mobID) = RunSpeedProcess();
+        var (nowActor, mobID) = RunSpeedProcess(partyData);
         if (debugSwitch)
             Debug.Log($"當前行動單位: {nowActor.Name}");
 
-        var datas = GameData_Server.SaveData.Datas;
-        var characterData = datas.CharacterData;
+        // var datas = GameData_Server.SaveData.Datas;
+        // var characterData = datas.CharacterData;
 
         BattleResult battleResult = null;
         EffectResult.Result effectResult = null;
@@ -112,17 +116,17 @@ public static class BattleSystem
             case ECharacterRole.Player:
                 {
                     var skillList = nowActor.Skills.Values
-                        .Where(x => SkillWeaponCheck(characterData, x))
+                        .Where(x => SkillWeaponCheck(nowActor, x))
                         .ToList();
 
                     var skill = skillList.ElementAtOrDefault(Random.Range(0, skillList.Count));
 
-                    if (characterData.Effects.Find(x => x.ID == EEffectID.Berserk) != null)
+                    if (nowActor.Effects.Find(x => x.ID == EEffectID.Berserk) != null)
                     {
                         if (debugSwitch && skill != null)
                             Debug.Log($"施放技能: {skill.Name}");
 
-                        battleResult = RunBattle(nowActor, new() { datas.EnemyData.Enemies.FirstOrDefault().CharacterData }, skill);
+                        battleResult = RunBattle(nowActor, new() { partyData.Enemies.FirstOrDefault().CharacterData }, skill);
                         effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
                     }
                 }
@@ -136,7 +140,8 @@ public static class BattleSystem
 
                     if (skill == null)
                     {
-                        battleResult = RunBattle(nowActor, new() { characterData }, skill);
+                        var target = GameData_Server.GetCharacterData(partyData.Members[Random.Range(0, partyData.Members.Count)]);
+                        battleResult = RunBattle(nowActor, new() { target }, skill);
                     }
                     else
                     {
@@ -144,9 +149,12 @@ public static class BattleSystem
                         {
                             case ESkillType.SinglePhysicsAttack:
                             case ESkillType.SingleMagicAttack:
-                                battleResult = RunBattle(nowActor, new() { characterData }, skill);
+                                var target = GameData_Server.GetCharacterData(partyData.Members[Random.Range(0, partyData.Members.Count)]);
+                                battleResult = RunBattle(nowActor, new() { target }, skill);
                                 break;
                             case ESkillType.SingleBuff:
+                                foreach (var buff in skill.Buffs)
+                                    CharacterDataCenter.AddCharacterEffect(nowActor, buff);
 
                                 break;
                         }
@@ -514,53 +522,54 @@ public static class BattleSystem
         return breakEquips;
     }
 
-    public static void EnemyDeadProcess(MobData target, BattleResult.Result result, List<string> dropItems)
+    public static void EnemyDeadProcess(MobData target, BattleResult.Result result, PartyData partyData, List<string> dropItems)
     {
-        var characterData = GameData_Server.SaveData.Datas.CharacterData;
-        var playerData = GameData_Server.SaveData.Datas.PlayerData;
-        var enemyData = GameData_Server.SaveData.Datas.EnemyData;
-
-        characterData.CurrentExp += 1 << (target.CharacterData.Level - 1);
-
-        var maxExp = PublicFunc.GetExp(characterData.Level);
-        if (characterData.CurrentExp >= maxExp)
+        foreach (var member in partyData.Members)
         {
-            result.IsUnitLevelUp = true;
-            result.LevelUpUnit = characterData.Name;
-            characterData.Level += 1;
-            characterData.CurrentExp -= maxExp;
-            playerData.SkillPoint += 1;
-            CharacterDataCenter.InitCurrentData(characterData);
-        }
+            var characterData = GameData_Server.GetCharacterData(member);
+            var playerData = GameData_Server.GetPlayerData(member);
 
-        foreach (var drop in target.DropItems)
-        {
-            if (PublicFunc.Dice(1, 100) > drop.Prop)
-                continue;
+            characterData.CurrentExp += 1 << (target.CharacterData.Level - 1);
 
-            var bagItems = GameData_Server.NowCharacterData.BagItems;
-            var existing = bagItems.Find(item => item.ItemID == drop.Item);
-            var itemData = ItemDataCenter_Server.GetItemData(drop.Item);
-
-            ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
-
-            dropItems.Add(itemData.Name);
-
-            void EquipCallBack() => bagItems.Add(ItemDataCenter_Server.GetNewItem(itemData));
-
-            void OtherCallBack()
+            var maxExp = PublicFunc.GetExp(characterData.Level);
+            if (characterData.CurrentExp >= maxExp)
             {
-                if (existing == null)
+                result.LevelUpUnits.Add(characterData.Name);
+                characterData.Level += 1;
+                characterData.CurrentExp -= maxExp;
+                playerData.SkillPoint += 1;
+                CharacterDataCenter.InitCurrentData(characterData);
+            }
+
+            foreach (var drop in target.DropItems)
+            {
+                if (PublicFunc.Dice(1, 100) > drop.Prop)
+                    continue;
+
+                var bagItems = characterData.BagItems;
+                var existing = bagItems.Find(item => item.ItemID == drop.Item);
+                var itemData = ItemDataCenter_Server.GetItemData(drop.Item);
+
+                ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
+
+                dropItems.Add(itemData.Name);
+
+                void EquipCallBack() => bagItems.Add(ItemDataCenter_Server.GetNewItem(itemData));
+
+                void OtherCallBack()
                 {
-                    EquipCallBack();
-                }
-                else
-                {
-                    existing.Count++;
+                    if (existing == null)
+                    {
+                        EquipCallBack();
+                    }
+                    else
+                    {
+                        existing.Count++;
+                    }
                 }
             }
         }
 
-        enemyData.Enemies.Remove(target);
+        partyData.Enemies.Remove(target);
     }
 }

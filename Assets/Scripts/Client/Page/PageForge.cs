@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class PageForge : MonoBehaviour
 {
+    static PageForge _ins;
     const string resourcePath = "Prefabs/PageForge";
 
     [SerializeField] InputField _inputItemName;
@@ -37,8 +38,11 @@ public class PageForge : MonoBehaviour
 
     public static void Create()
     {
-        var panel = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageForge>(), MainController.Instance.PageContent);
-        MainController.Instance.SwitchPage(panel);
+        if (_ins == null || !_ins.gameObject.activeSelf)
+        {
+            _ins = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageForge>(), MainController.Instance.PageContent);
+            MainController.Instance.SwitchPage(_ins);
+        }
     }
 
     void Awake()
@@ -127,11 +131,11 @@ public class PageForge : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.Full);
 
         void CallBack(GetSaveDataResponse response)
         {
-            InitPage(response.SaveData.Datas.CharacterData.BagItems);
+            InitPage(response.SaveData.CharacterData.BagItems);
             PanelLoading.Close();
         }
     }
@@ -218,7 +222,7 @@ public class PageForge : MonoBehaviour
             Materials = materials
         };
         ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.Half);
 
         void CallBack(SetForgeActionResponse response)
         {

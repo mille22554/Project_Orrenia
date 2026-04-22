@@ -9,9 +9,9 @@ public class SetItemAction : IApiHandler<SetItemActionResponse>
     }
 }
 
-public class SetItemActionRequest : IRequestBase<SetItemActionResponse>
+public class SetItemActionRequest : RequestBase<SetItemActionResponse>
 {
-    public string Cmd => "SetItemAction";
+    public override string Cmd =>"SetItemAction";
     public BagItemData BagItemData;
 }
 

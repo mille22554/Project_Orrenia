@@ -6,17 +6,20 @@ public class SetTradeAction_Server : IApiHandler_Server
 {
     public string Cmd => "SetTradeAction";
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
-    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
+    string _account;
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
+    PlayerContextData PlayerData => GameData_Server.GetPlayerData(_account);
 
     public string Get(object request)
     {
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetTradeAction_ServerRequest>(request.ToString());
+            _account = requestData.Account;
 
             var itemData = ItemDataCenter_Server.GetItemData(requestData.ItemID);
             var sellItemSurplus = -1;
+
             switch (requestData.TradeActionType)
             {
                 case ETradeActionType.Buy:
@@ -27,7 +30,7 @@ public class SetTradeAction_Server : IApiHandler_Server
                     break;
             }
 
-            SaveDataCenter.SaveData();
+            SaveDataCenter.SaveData(requestData.Account);
 
             var responseData = new SetTradeAction_ServerResponse
             {
@@ -118,7 +121,7 @@ public class SetTradeAction_Server : IApiHandler_Server
     }
 }
 
-public class SetTradeAction_ServerRequest
+public class SetTradeAction_ServerRequest : ServerRequestBase
 {
     public ETradeActionType TradeActionType;
     public int ItemID;

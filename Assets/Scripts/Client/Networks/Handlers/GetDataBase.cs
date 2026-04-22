@@ -9,13 +9,14 @@ public class GetDataBase : IApiHandler<GetDataBaseResponse>
     }
 }
 
-public class GetDataBaseRequest : IRequestBase<GetDataBaseResponse>
+public class GetDataBaseRequest : RequestBase<GetDataBaseResponse>
 {
-    public string Cmd => "GetDataBase";
+    public override string Cmd =>"GetDataBase";
 }
 
 public class GetDataBaseResponse
 {
+    public Dictionary<int, AreaData> AreaData;
     public Dictionary<int, ItemData> ItemData;
     public Dictionary<EItemKind, ItemKind> ItemKind;
     public List<int> GameShopItem;

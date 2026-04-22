@@ -8,14 +8,14 @@ public class GetBattleStatus : IApiHandler<GetBattleStatusResponse>
     }
 }
 
-public class GetBattleStatusRequest : IRequestBase<GetBattleStatusResponse>
+public class GetBattleStatusRequest : RequestBase<GetBattleStatusResponse>
 {
-    public string Cmd => "GetBattleStatus";
+    public override string Cmd => "GetBattleStatus";
 }
 
 public class GetBattleStatusResponse
 {
-    public SaveDataFormat SaveData;
+    public PlayerSaveDataFormat SaveData;
     public BattleResult BattleResult;
     public EffectResult EffectResult;
 }

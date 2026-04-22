@@ -9,40 +9,51 @@ public class GetSaveData_Server : IApiHandler_Server
 {
     public string Cmd => "GetSaveData";
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    string _account;
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
+    PlayerContextData PlayerData => GameData_Server.GetPlayerData(_account);
+    PartyData PartyData => GameData_Server.GetPartyData(_account);
 
     public string Get(object request)
     {
         try
         {
-            string path = GameData_Server.SaveDataPath;
+            var requestData = JsonConvert.DeserializeObject<GetSaveData_ServerRequest>(request.ToString());
+            _account = requestData.Account;
+
+            string path = GameData_Server.PlayerSaveDataPath(_account);
             Debug.Log($"從 {path} 讀取遊戲資料");
 
             if (File.Exists(path))
             {
                 string json = File.ReadAllText(path);
-                var data = JsonConvert.DeserializeObject<SaveDataFormat>(json);
+                var data = JsonConvert.DeserializeObject<PlayerSaveDataFormat>(json);
 
                 if (data.version != GameData_Server.version)
                 {
-                    GameData_Server.SaveData = UpdateSaveData(data);
-                    SaveDataCenter.SaveData();
+                    GameData_Server.NowPlayers[_account] = UpdateSaveData(data);
+                    SaveDataCenter.SaveData(_account);
                 }
                 else
                 {
-                    GameData_Server.SaveData = data;
+                    GameData_Server.NowPlayers[_account] = data;
                 }
             }
             else
             {
-                GameData_Server.SaveData = SaveDataCenter.CreateSaveData();
+                GameData_Server.NowPlayers[_account] = SaveDataCenter.CreateSaveData();
                 CharacterDataCenter.InitCurrentData(CharacterData);
+                PlayerData.NowPartyLeader = _account;
+                PartyData.Leader = _account;
+                PartyData.Members.Add(_account);
             }
-            CheckFlags();
+
+            CheckFlags(_account);
 
             var responseData = new GetSaveData_ServerResponse
             {
-                SaveData = GameData_Server.SaveData,
+                SaveData = GameData_Server.NowPlayers[_account].Datas,
+                PartyData = GameData_Server.GetPartyData(PlayerData.NowPartyLeader),
                 FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData),
                 AbilityPoint = PublicFunc.GetAbilityPoint(CharacterData),
                 Exp = PublicFunc.GetExp(CharacterData.Level)
@@ -67,7 +78,7 @@ public class GetSaveData_Server : IApiHandler_Server
         }
     }
 
-    SaveDataFormat UpdateSaveData(SaveDataFormat oldData)
+    PlayerSaveDataFormat UpdateSaveData(PlayerSaveDataFormat oldData)
     {
         // Debug.Log("更新存檔資料結構");
         var newData = SaveDataCenter.CreateSaveData();
@@ -181,21 +192,18 @@ public class GetSaveData_Server : IApiHandler_Server
         return newData;
     }
 
-    void CheckFlags()
+    void CheckFlags(string account)
     {
-        var playerData = GameData_Server.NowPlayerData;
-        if (!playerData.IsGetBasicDagger)
-        {
-            GameData_Server.NowCharacterData.BagItems.Add(ItemDataCenter_Server.GetNewItemByItemID(1));
-            playerData.IsGetBasicDagger = true;
-        }
-        SaveDataCenter.SaveData();
+        SaveDataCenter.SaveData(account);
     }
 }
 
+public class GetSaveData_ServerRequest : ServerRequestBase { }
+
 public class GetSaveData_ServerResponse
 {
-    public SaveDataFormat SaveData;
+    public Datas SaveData;
+    public PartyData PartyData;
     public FullAbilityBase FullAbility;
     public int AbilityPoint;
     public int Exp;

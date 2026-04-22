@@ -1,18 +1,16 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 public static class GameData_Server
 {
-    public static string SaveDataPath
+    public static string PlayerSaveDataPath(string account)
     {
-        get
-        {
-            var saveDataFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "SaveData");
-            if (!Directory.Exists(saveDataFolderPath))
-                Directory.CreateDirectory(saveDataFolderPath);
+        var saveDataFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "SaveData", "Players");
+        if (!Directory.Exists(saveDataFolderPath))
+            Directory.CreateDirectory(saveDataFolderPath);
 
-            return Path.Combine(saveDataFolderPath, "savedata.json");
-        }
+        return Path.Combine(saveDataFolderPath, $"{account}_savedata.json");
     }
     public static string MobDataPath
     {
@@ -136,9 +134,9 @@ public static class GameData_Server
 
     public const int tpCost = 10000;
 
-    public static SaveDataFormat SaveData;
+    public static Dictionary<string, PlayerSaveDataFormat> NowPlayers = new();
 
-    public static PlayerContextData NowPlayerData => SaveData.Datas.PlayerData;
-    public static CharacterData NowCharacterData => SaveData.Datas.CharacterData;
-    public static EnemyData NowEnemyData => SaveData.Datas.EnemyData;
+    public static PlayerContextData GetPlayerData(string account) => NowPlayers[account].Datas.PlayerData;
+    public static CharacterData GetCharacterData(string account) => NowPlayers[account].Datas.CharacterData;
+    public static PartyData GetPartyData(string account) => NowPlayers[account].Datas.PartyData;
 }

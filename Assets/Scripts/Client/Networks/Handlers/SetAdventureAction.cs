@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class SetAdventureAction : IApiHandler<SetAdventureActionResponse>
@@ -8,16 +9,18 @@ public class SetAdventureAction : IApiHandler<SetAdventureActionResponse>
     }
 }
 
-public class SetAdventureActionRequest : IRequestBase<SetAdventureActionResponse>
+public class SetAdventureActionRequest : RequestBase<SetAdventureActionResponse>
 {
-    public string Cmd => "SetAdventureAction";
+    public override string Cmd =>"SetAdventureAction";
     public EAdventureActionType AdventureAction;
     public int GameArea;
 }
 
 public class SetAdventureActionResponse
 {
-    public SaveDataFormat SaveData;
+    public bool IsLeader;
+    public Datas Datas;
+    public PartyData PartyData;
     public ActionResult ActionResult;
     public FullAbilityBase FullAbility;
 }

@@ -8,20 +8,25 @@ public class GetBattleStatus_Server : IApiHandler_Server
 {
     public string Cmd => "GetBattleStatus";
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
-    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
-    EnemyData EnemyData => GameData_Server.NowEnemyData;
+    string _account;
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
+    PlayerContextData PlayerData => GameData_Server.GetPlayerData(_account);
+    PartyData PartyData => GameData_Server.GetPartyData(PlayerData.NowPartyLeader);
 
     public string Get(object request)
     {
         try
         {
+            var requestData = JsonConvert.DeserializeObject<GetBattleStatus_ServerRequest>(request.ToString());
+            _account = requestData.Account;
+
             BattleResult battleResult = null;
             var effectResult = new EffectResult();
-            if (EnemyData.Enemies.Count > 0)
+            var enemies = PartyData.Enemies;
+            if (enemies.Count > 0)
             {
                 EffectResult.Result nowActorEffectResult;
-                (battleResult, nowActorEffectResult) = BattleSystem.CheckNowActor();
+                (battleResult, nowActorEffectResult) = BattleSystem.CheckNowActor(PartyData);
                 effectResult.Results.Add(nowActorEffectResult);
 
                 if (battleResult != null && (battleResult.IsAttackerDead || battleResult.Results.Any(x => x.IsDefenderDead)))
@@ -37,18 +42,18 @@ public class GetBattleStatus_Server : IApiHandler_Server
                         foreach (var result in battleResult.Results)
                         {
                             var deadMob = battleResult.IsAttackerDead ? battleResult.Attacker : result.Defenderer;
-                            var target = EnemyData.Enemies.Find(x => x.CharacterData.Name == deadMob);
-                            BattleSystem.EnemyDeadProcess(target, result, battleResult.DropItems);
+                            var target = enemies.Find(x => x.CharacterData.Name == deadMob);
+                            BattleSystem.EnemyDeadProcess(target, result, PartyData, battleResult.DropItems);
                         }
                     }
                 }
 
-                SaveDataCenter.SaveData();
+                SaveDataCenter.SaveData(requestData.Account);
             }
 
             var responseData = new GetBattleStatus_ServerResponse
             {
-                SaveData = GameData_Server.SaveData,
+                SaveData = GameData_Server.NowPlayers[requestData.Account],
                 BattleResult = battleResult,
                 EffectResult = effectResult,
             };
@@ -74,19 +79,21 @@ public class GetBattleStatus_Server : IApiHandler_Server
 
     void OnLeave()
     {
-        PlayerData.Area = 1;
-        PlayerData.Deep = 0;
+        PartyData.Area = 1;
+        PartyData.Deep = 0;
 
-        EnemyData.Enemies.Clear();
+        PartyData.Enemies.Clear();
         CharacterData.Effects.Clear();
 
         CharacterDataCenter.InitCurrentData(CharacterData);
     }
 }
 
+public class GetBattleStatus_ServerRequest : ServerRequestBase { }
+
 public class GetBattleStatus_ServerResponse
 {
-    public SaveDataFormat SaveData;
+    public PlayerSaveDataFormat SaveData;
     public BattleResult BattleResult;
     public EffectResult EffectResult;
 }

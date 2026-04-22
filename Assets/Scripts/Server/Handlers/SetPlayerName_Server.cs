@@ -6,16 +6,20 @@ public class SetPlayerName_Server : IApiHandler_Server
 {
     public string Cmd => "SetPlayerName";
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    string _account;
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
+    PartyData PartyData => GameData_Server.GetPartyData(_account);
 
     public string Get(object request)
     {
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetPlayerName_ServerRequest>(request.ToString());
+            _account = requestData.Account;
 
             CharacterData.Name = requestData.PlayerName;
-            SaveDataCenter.SaveData();
+
+            SaveDataCenter.SaveData(requestData.Account);
 
             var response = new ResponseData_Server
             {
@@ -37,7 +41,7 @@ public class SetPlayerName_Server : IApiHandler_Server
     }
 }
 
-public class SetPlayerName_ServerRequest
+public class SetPlayerName_ServerRequest : ServerRequestBase
 {
     public string PlayerName;
 }

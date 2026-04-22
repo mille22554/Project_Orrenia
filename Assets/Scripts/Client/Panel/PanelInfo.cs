@@ -78,7 +78,7 @@ public class RefreshInfoData
 
     public static RefreshInfoData Create(GetSaveDataResponse response)
     {
-        var characterData = response.SaveData.Datas.CharacterData;
+        var characterData = response.SaveData.CharacterData;
         var fullAbility = response.FullAbility;
 
         return new RefreshInfoData

@@ -8,28 +8,41 @@ using Color = UnityEngine.Color;
 
 public static class DataCenter
 {
+    public static string Account;
     public static Dictionary<EItemKind, ItemKind> ItemKind => _itemKind;
     public static List<int> GameShopItem => _gameShopItem;
 
+    static Dictionary<int, AreaData> _areaDatas;
     static Dictionary<int, ItemData> _itemData;
     static Dictionary<EItemKind, ItemKind> _itemKind;
     static List<int> _gameShopItem;
     static List<QualityData> _qualityData;
     static Dictionary<ESkillType, string> _damageTypes;
 
-    public static void Init()
+    public static void Init(Action callback)
     {
         var requestData = new GetDataBaseRequest();
         ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create(PanelLoading.BGType.Full);
 
         void CallBack(GetDataBaseResponse response)
         {
+            _areaDatas = response.AreaData;
             _itemData = response.ItemData;
             _itemKind = response.ItemKind;
             _gameShopItem = response.GameShopItem;
             _qualityData = response.QualityData;
             _damageTypes = response.DamageTypes;
+
+            callback.Invoke();
+            PanelLoading.Close();
         }
+    }
+
+    public static AreaData GetAreaData(int areaID)
+    {
+        _areaDatas.TryGetValue(areaID, out var areaData);
+        return areaData;
     }
 
     public static ItemData GetItemData(int id)

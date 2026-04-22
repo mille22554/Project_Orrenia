@@ -9,9 +9,9 @@ public class SetForgeAction : IApiHandler<SetForgeActionResponse>
     }
 }
 
-public class SetForgeActionRequest : IRequestBase<SetForgeActionResponse>
+public class SetForgeActionRequest : RequestBase<SetForgeActionResponse>
 {
-    public string Cmd => "SetForgeAction";
+    public override string Cmd =>"SetForgeAction";
     public string ItemName;
     public EItemKind ItemKind;
     public List<long> Materials;

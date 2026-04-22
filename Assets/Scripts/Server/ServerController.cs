@@ -42,13 +42,13 @@ public static class ServerController
 
         var requestData = JsonConvert.DeserializeObject<RequestData_Server>(request);
 
-        if (handlerBases.TryGetValue(requestData.cmd, out var handlerBase))
+        if (handlerBases.TryGetValue(requestData.Cmd, out var handlerBase))
         {
-            callback.Invoke(handlerBase.Get(requestData.data));
+            callback.Invoke(handlerBase.Get(requestData.Data));
         }
         else
         {
-            Debug.LogError($"No handler found for {requestData.cmd}");
+            Debug.LogError($"No handler found for {requestData.Cmd}");
             callback.Invoke("");
         }
     }
@@ -56,8 +56,8 @@ public static class ServerController
 
 public class RequestData_Server
 {
-    public string cmd;
-    public object data;
+    public string Cmd;
+    public object Data;
 }
 
 public class ResponseData_Server

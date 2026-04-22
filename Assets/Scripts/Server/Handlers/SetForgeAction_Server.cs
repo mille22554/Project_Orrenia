@@ -7,17 +7,20 @@ public class SetForgeAction_Server : IApiHandler_Server
 {
     public string Cmd => "SetForgeAction";
 
-    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    string _account;
+    PlayerContextData PlayerData => GameData_Server.GetPlayerData(_account);
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
 
     public string Get(object request)
     {
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetForgeAction_ServerRequest>(request.ToString());
+            _account = requestData.Account;
+
             DoAction(requestData);
 
-            SaveDataCenter.SaveData();
+            SaveDataCenter.SaveData(requestData.Account);
 
             var responseData = new SetForgeAction_ServerResponse
             {
@@ -51,7 +54,7 @@ public class SetForgeAction_Server : IApiHandler_Server
 
         var newItem = CreateItem(request.ItemKind, baseParam);
         newItem.Name = request.ItemName;
-        newItem.Description = $"Create by {GameData_Server.NowCharacterData.Name} at {DateTime.Now:yyyy/MM/dd HH:mm}";
+        newItem.Description = $"Create by {CharacterData.Name} at {DateTime.Now:yyyy/MM/dd HH:mm}";
         newItem.Durability = baseParam * 20;
         newItem.Count = 1;
 
@@ -118,7 +121,7 @@ public class SetForgeAction_Server : IApiHandler_Server
             Kind = kind
         };
 
-        var forgeParam = GameData_Server.NowPlayerData.ForgeLevel - 1;
+        var forgeParam = PlayerData.ForgeLevel - 1;
         switch (kind)
         {
             case EItemKind.Sword:
@@ -378,7 +381,7 @@ public class SetForgeAction_Server : IApiHandler_Server
     }
 }
 
-public class SetForgeAction_ServerRequest
+public class SetForgeAction_ServerRequest : ServerRequestBase
 {
     public string ItemName;
     public EItemKind ItemKind;

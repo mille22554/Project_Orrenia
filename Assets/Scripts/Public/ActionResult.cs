@@ -32,8 +32,7 @@ public class BattleResult
         public decimal BattleDamage;
 
         public bool IsDefenderDead;
-        public bool IsUnitLevelUp;
-        public string LevelUpUnit;
+        public List<string> LevelUpUnits = new();
         public bool IsCounter;
     }
 }

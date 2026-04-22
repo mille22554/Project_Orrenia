@@ -8,9 +8,9 @@ public class SetPlayerName : IApiHandler<SetPlayerNameResponse>
     }
 }
 
-public class SetPlayerNameRequest : IRequestBase<SetPlayerNameResponse>
+public class SetPlayerNameRequest : RequestBase<SetPlayerNameResponse>
 {
-    public string Cmd => "SetPlayerName";
+    public override string Cmd =>"SetPlayerName";
     public string PlayerName;
 }
 

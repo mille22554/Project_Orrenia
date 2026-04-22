@@ -3,7 +3,9 @@ using UnityEngine.UI;
 
 public class PageCharacter : MonoBehaviour
 {
+    static PageCharacter _ins;
     const string resourcePath = "Prefabs/PageCharacter";
+
     [SerializeField] ItemAbility STR;
     [SerializeField] ItemAbility VIT;
     [SerializeField] ItemAbility DEX;
@@ -15,8 +17,11 @@ public class PageCharacter : MonoBehaviour
 
     public static void Create()
     {
-        var page = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageCharacter>(), MainController.Instance.PageContent);
-        MainController.Instance.SwitchPage(page);
+        if (_ins == null || !_ins.gameObject.activeSelf)
+        {
+            _ins = ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PageCharacter>(), MainController.Instance.PageContent);
+            MainController.Instance.SwitchPage(_ins);
+        }
     }
 
     void Awake()
@@ -33,11 +38,11 @@ public class PageCharacter : MonoBehaviour
     {
         var requestData = new GetSaveDataRequest();
         ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.None);
 
         void CallBack(GetSaveDataResponse response)
         {
-            var characterData = response.SaveData.Datas.CharacterData;
+            var characterData = response.SaveData.CharacterData;
             var isHasAbilityPoint = response.AbilityPoint > 0;
 
             STR.SetInfo(characterData.Ability.STR_Point, isHasAbilityPoint, OnAbilityPlus);
@@ -71,7 +76,7 @@ public class PageCharacter : MonoBehaviour
             Ability = ability
         };
         ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.None);
 
         void CallBack(SetPlayerAbilityResponse response)
         {
@@ -97,7 +102,7 @@ public class PageCharacter : MonoBehaviour
             Ability = ability
         };
         ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create();
+        PanelLoading.Create(PanelLoading.BGType.None);
 
         void CallBack(SetPlayerAbilityResponse response)
         {

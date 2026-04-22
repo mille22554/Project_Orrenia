@@ -71,8 +71,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: -6231044458718751821, guid: 37af2a0ba16d41d4f9612447497d8437, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -119,7 +119,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8b4131f5d2f6d84d886f2882122919a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Equips: 
   IconEquip: {fileID: 5931640873755364275}
   _itemName: {fileID: 4361928453568989578}
   _count: {fileID: 5834620658079586719}

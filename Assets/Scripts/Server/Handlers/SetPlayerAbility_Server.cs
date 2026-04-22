@@ -7,24 +7,23 @@ public class SetPlayerAbility_Server : IApiHandler_Server
 {
     public string Cmd => "SetPlayerAbility";
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    string _account;
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
 
     public string Get(object request)
     {
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetPlayerAbility_ServerRequest>(request.ToString());
+            _account = requestData.Account;
 
             var ability = requestData.Ability;
             var abilityPoint = PublicFunc.GetAbilityPoint(CharacterData);
+
             if (abilityPoint >= 0)
             {
                 CharacterData.Ability = ability;
-                SaveDataCenter.SaveData();
-            }
-            else
-            {
-
+                SaveDataCenter.SaveData(requestData.Account);
             }
 
             var response = new ResponseData_Server
@@ -47,7 +46,7 @@ public class SetPlayerAbility_Server : IApiHandler_Server
     }
 }
 
-public class SetPlayerAbility_ServerRequest
+public class SetPlayerAbility_ServerRequest : ServerRequestBase
 {
     public AbilityBase Ability;
 }

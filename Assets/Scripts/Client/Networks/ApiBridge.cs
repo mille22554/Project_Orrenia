@@ -44,7 +44,7 @@ public static class ApiBridge
             var responseType = handlerInterface.GetGenericArguments()[0];
 
             // 產生 IRequestBase<T>
-            var requestType = typeof(IRequestBase<>).MakeGenericType(responseType);
+            var requestType = typeof(RequestBase<>).MakeGenericType(responseType);
 
             var instance = (IApiHandlerBase)Activator.CreateInstance(type);
 
@@ -54,9 +54,9 @@ public static class ApiBridge
         }
     }
 
-    public static async void Send<T>(IRequestBase<T> request, Action<T> callback)
+    public static async void Send<T>(RequestBase<T> request, Action<T> callback)
     {
-        if (handlerBases.TryGetValue(typeof(IRequestBase<T>), out var handlerBase))
+        if (handlerBases.TryGetValue(typeof(RequestBase<T>), out var handlerBase))
         {
             var handler = (IApiHandler<T>)handlerBase;
 
@@ -101,7 +101,7 @@ public static class ApiBridge
         }
         else
         {
-            Debug.LogError($"No handler found for {typeof(IRequestBase<T>).Name}");
+            Debug.LogError($"No handler found for {typeof(RequestBase<T>).Name}");
         }
     }
 }
@@ -113,18 +113,19 @@ public interface IApiHandler<T> : IApiHandlerBase
 
 public interface IApiHandlerBase { }
 
-public interface IRequestBase<T>
+public abstract class RequestBase<T>
 {
-    string Cmd { get; }
+    public abstract string Cmd { get; }
+    public string Account => DataCenter.Account;
 }
 
-public class RequestData
+public struct RequestData
 {
     public string Cmd;
     public object Data;
 }
 
-public class ResponseData
+public struct ResponseData
 {
     public int Code;
     public object Data;

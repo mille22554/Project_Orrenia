@@ -27,11 +27,12 @@ public class MainController : MonoBehaviour
 
     public void Login()
     {
-        PanelBtns.Create();
-        _panelInfo = PanelInfo.Create();
-        PageBattle.Create();
-
-        DataCenter.Init();
+        DataCenter.Init(() =>
+        {
+            _panelInfo = PanelInfo.Create();
+            PanelBtns.Create();
+            PageBattle.Create();
+        });
     }
 
     public void SwitchPage<T>(T page) where T : MonoBehaviour

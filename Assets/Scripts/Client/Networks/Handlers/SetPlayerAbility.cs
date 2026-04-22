@@ -8,9 +8,9 @@ public class SetPlayerAbility : IApiHandler<SetPlayerAbilityResponse>
     }
 }
 
-public class SetPlayerAbilityRequest : IRequestBase<SetPlayerAbilityResponse>
+public class SetPlayerAbilityRequest : RequestBase<SetPlayerAbilityResponse>
 {
-    public string Cmd => "SetPlayerAbility";
+    public override string Cmd =>"SetPlayerAbility";
     public AbilityBase Ability;
 }
 

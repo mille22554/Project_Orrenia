@@ -8,17 +8,19 @@ public class SetItemAction_Server : IApiHandler_Server
 {
     public string Cmd => "SetItemAction";
 
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
+    string _account;
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
 
     public string Get(object request)
     {
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetItemAction_ServerRequest>(request.ToString());
+            _account = requestData.Account;
 
             var responseData = Do(requestData.BagItemData);
 
-            SaveDataCenter.SaveData();
+            SaveDataCenter.SaveData(requestData.Account);
 
             var response = new ResponseData_Server
             {
@@ -53,7 +55,7 @@ public class SetItemAction_Server : IApiHandler_Server
 
         response.ItemCategory = itemKind.Category;
         response.BagItemData = bagItemData;
-        response.Enemies = GameData_Server.NowEnemyData.Enemies;
+        response.Enemies = GameData_Server.GetPartyData(GameData_Server.GetPlayerData(_account).NowPartyLeader).Enemies;
         response.CharacterData = CharacterData;
         response.FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData);
 
@@ -144,7 +146,7 @@ public class SetItemAction_Server : IApiHandler_Server
     }
 }
 
-public class SetItemAction_ServerRequest
+public class SetItemAction_ServerRequest : ServerRequestBase
 {
     public BagItemData BagItemData;
 }

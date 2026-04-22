@@ -9,9 +9,9 @@ public class SetBattleAction : IApiHandler<SetBattleActionResponse>
     }
 }
 
-public class SetBattleActionRequest : IRequestBase<SetBattleActionResponse>
+public class SetBattleActionRequest : RequestBase<SetBattleActionResponse>
 {
-    public string Cmd => "SetBattleAction";
+    public override string Cmd =>"SetBattleAction";
     public EBattleActionType BattleAction;
     public List<CharacterData> ActionTarget;
     public ESkillID SkillID;
@@ -19,7 +19,7 @@ public class SetBattleActionRequest : IRequestBase<SetBattleActionResponse>
 
 public class SetBattleActionResponse
 {
-    public SaveDataFormat SaveData;
+    public PlayerSaveDataFormat SaveData;
     public ActionResult ActionResult;
     public FullAbilityBase FullAbility;
 }

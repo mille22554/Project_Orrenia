@@ -51,7 +51,7 @@ public class PanelSkill : MonoBehaviour
 
         void CallBack(GetSaveDataResponse response)
         {
-            var skills = response.SaveData.Datas.CharacterData.Skills;
+            var skills = response.SaveData.CharacterData.Skills;
             foreach (var skill in skills.Values)
             {
                 var item = ObjectPool.Get(_skillItem, ToggleGroup.transform);

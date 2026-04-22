@@ -70,8 +70,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: -6231044458718751821, guid: 37af2a0ba16d41d4f9612447497d8437, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -166,6 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a95f1529f1c09b469d2dcf3057202b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BagItemUID: 0
   _iconPick: {fileID: 7190501356392476928}
   _itemName: {fileID: 4361928453568989578}
   _count: {fileID: 5834620658079586719}

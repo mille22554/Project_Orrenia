@@ -8,9 +8,10 @@ public class SetAdventureAction_Server : IApiHandler_Server
 {
     public string Cmd => "SetAdventureAction";
 
-    PlayerContextData PlayerData => GameData_Server.NowPlayerData;
-    CharacterData CharacterData => GameData_Server.NowCharacterData;
-    EnemyData EnemyData => GameData_Server.NowEnemyData;
+    string _account;
+    PlayerContextData PlayerData => GameData_Server.GetPlayerData(_account);
+    CharacterData CharacterData => GameData_Server.GetCharacterData(_account);
+    PartyData PartyData => GameData_Server.GetPartyData(_account);
 
     const int enemyProp = 100;
 
@@ -19,16 +20,26 @@ public class SetAdventureAction_Server : IApiHandler_Server
         try
         {
             var requestData = JsonConvert.DeserializeObject<SetAdventureAction_ServerRequest>(request.ToString());
-            var actionResult = DoAction(requestData);
+            _account = requestData.Account;
 
-            SaveDataCenter.SaveData();
+            var responseData = new SetAdventureAction_ServerResponse();
 
-            var responseData = new SetAdventureAction_ServerResponse
+            if (_account == PlayerData.NowPartyLeader)
             {
-                SaveData = GameData_Server.SaveData,
-                ActionResult = actionResult,
-                FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData)
-            };
+                var actionResult = DoAction(requestData);
+
+                SaveDataCenter.SaveData(requestData.Account);
+
+                responseData = new SetAdventureAction_ServerResponse
+                {
+                    IsLeader = true,
+                    Datas = GameData_Server.NowPlayers[_account].Datas,
+                    PartyData = PartyData,
+                    ActionResult = actionResult,
+                    FullAbility = CharacterDataCenter.GetCharacterAbility(CharacterData)
+                };
+            }
+
             var response = new ResponseData_Server
             {
                 Code = 0,
@@ -73,8 +84,8 @@ public class SetAdventureAction_Server : IApiHandler_Server
 
     void OnIntoArea(SetAdventureAction_ServerRequest data)
     {
-        PlayerData.Area = data.GameArea;
-        PlayerData.Deep = 1;
+        PartyData.Area = data.GameArea;
+        PartyData.Deep = 1;
     }
 
     ActionResult OnGoAhead()
@@ -89,13 +100,12 @@ public class SetAdventureAction_Server : IApiHandler_Server
             return actionResult;
         }
 
-        PlayerData.Deep++;
+        PartyData.Deep++;
 
         var prop = PublicFunc.Dice(1, 100);
         if (prop <= enemyProp)
         {
-            OnEnemyAppear(actionResult.EffectResult);
-            // actionResult.BattleResult = OnEnemyAppear(actionResult.EffectResult);
+            OnEnemyAppear();
         }
 
         return actionResult;
@@ -138,8 +148,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
             prop = PublicFunc.Dice(1, 100);
             if (prop <= 3)
             {
-                OnEnemyAppear(actionResult.EffectResult);
-                // actionResult.BattleResult = OnEnemyAppear(actionResult.EffectResult);
+                OnEnemyAppear();
                 break;
             }
         }
@@ -149,22 +158,17 @@ public class SetAdventureAction_Server : IApiHandler_Server
 
     void OnLeave()
     {
-        PlayerData.Area = 1;
-        PlayerData.Deep = 0;
+        PartyData.Area = 1;
+        PartyData.Deep = 0;
 
-        EnemyData.Enemies.Clear();
+        PartyData.Enemies.Clear();
 
         CharacterDataCenter.InitCurrentData(CharacterData);
     }
 
-    void OnEnemyAppear(EffectResult effectResult)
+    void OnEnemyAppear()
     {
-        EnemyData.Enemies = EnemySetting.SetEnemy(
-            PlayerData.Area,
-            PlayerData.Deep
-        );
-
-        BattleSystem.InitNewBattle(new() { CharacterData });
+        BattleSystem.InitNewBattle(PartyData);
     }
 
     EffectResult.Result ActionEndProcess(CharacterData characterData, bool isRest, List<EffectResult.Result> results)
@@ -177,7 +181,7 @@ public class SetAdventureAction_Server : IApiHandler_Server
     }
 }
 
-public class SetAdventureAction_ServerRequest
+public class SetAdventureAction_ServerRequest : ServerRequestBase
 {
     public EAdventureActionType AdventureAction;
     public int GameArea;
@@ -185,7 +189,9 @@ public class SetAdventureAction_ServerRequest
 
 public class SetAdventureAction_ServerResponse
 {
-    public SaveDataFormat SaveData;
+    public bool IsLeader;
+    public Datas Datas;
+    public PartyData PartyData;
     public ActionResult ActionResult;
     public FullAbilityBase FullAbility;
 }

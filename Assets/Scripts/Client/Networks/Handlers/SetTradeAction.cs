@@ -9,9 +9,9 @@ public class SetTradeAction : IApiHandler<SetTradeActionResponse>
     }
 }
 
-public class SetTradeActionRequest : IRequestBase<SetTradeActionResponse>
+public class SetTradeActionRequest : RequestBase<SetTradeActionResponse>
 {
-    public string Cmd => "SetTradeAction";
+    public override string Cmd =>"SetTradeAction";
     public ETradeActionType TradeActionType;
     public int ItemID;
     public int TradeNum;

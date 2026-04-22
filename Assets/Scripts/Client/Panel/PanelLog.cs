@@ -50,7 +50,7 @@ public class PanelLog : MonoBehaviour
 
     public void SetLine()
     {
-        if (toggleBattleLog.isOn && itemBattleLogs.Count > 0 || toggleEffect.isOn && itemEffectLogs.Count > 0)
+        if ((toggleBattleLog.isOn && itemBattleLogs.Count > 0) || (toggleEffect.isOn && itemEffectLogs.Count > 0))
             SetLog(_line);
     }
 
@@ -102,8 +102,8 @@ public class PanelLog : MonoBehaviour
 
             void CallBack(GetSaveDataResponse response)
             {
-                var characterData = response.SaveData.Datas.CharacterData;
-                var enemies = response.SaveData.Datas.EnemyData.Enemies;
+                var characterData = response.SaveData.CharacterData;
+                var enemies = response.PartyData.Enemies;
 
                 Text textLog;
                 if (characterData.Effects.Count > 0)

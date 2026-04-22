@@ -14,6 +14,7 @@ public class GetDataBase_Server : IApiHandler_Server
         {
             var responseData = new GetDataBase_ServerResponse
             {
+                AreaData = AreaDataCenter.GetAllAreaData(),
                 ItemData = ItemDataCenter_Server.ItemData,
                 ItemKind = ItemDataCenter_Server.ItemKind,
                 GameShopItem = ItemDataCenter_Server.GameShopItem,
@@ -44,6 +45,7 @@ public class GetDataBase_Server : IApiHandler_Server
 
 public class GetDataBase_ServerResponse
 {
+    public Dictionary<int, AreaData> AreaData;
     public Dictionary<int, ItemData> ItemData;
     public Dictionary<EItemKind, ItemKind> ItemKind;
     public List<int> GameShopItem;

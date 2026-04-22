@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-public class SaveDataFormat
+public class PlayerSaveDataFormat
 {
     public string version;
     public Datas Datas;
@@ -13,7 +13,7 @@ public class Datas
 {
     public PlayerContextData PlayerData;
     public CharacterData CharacterData;
-    public EnemyData EnemyData;
+    public PartyData PartyData;
 
     public static Datas CreateDefault()
     {
@@ -21,11 +21,21 @@ public class Datas
         {
             PlayerData = PlayerContextData.CreateDefault(),
             CharacterData = CharacterData.CreateDefault(),
-            EnemyData = new()
+            PartyData = PartyData.CreateDefault(),
         };
 
         return datas;
     }
+}
+
+public class PartySaveDataFormat
+{
+    public long PartyID;
+    public string Leader;
+    public List<string> Members = new();
+    public int Area;
+    public int Deep;
+    public List<MobData> Enemies = new();
 }
 
 public class EnemyData
