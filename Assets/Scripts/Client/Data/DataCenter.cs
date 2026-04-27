@@ -21,20 +21,24 @@ public static class DataCenter
 
     public static void Init(Action callback)
     {
-        var requestData = new GetDataBaseRequest();
-        ApiBridge.Send(requestData, CallBack);
         PanelLoading.Create(PanelLoading.BGType.Full);
+        var requestData = new GetDataBaseRequest();
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetDataBaseResponse response)
         {
-            _areaDatas = response.AreaData;
-            _itemData = response.ItemData;
-            _itemKind = response.ItemKind;
-            _gameShopItem = response.GameShopItem;
-            _qualityData = response.QualityData;
-            _damageTypes = response.DamageTypes;
+            if (response.Code == 0)
+            {
+                _areaDatas = response.AreaData;
+                _itemData = response.ItemData;
+                _itemKind = response.ItemKind;
+                _gameShopItem = response.GameShopItem;
+                _qualityData = response.QualityData;
+                _damageTypes = response.DamageTypes;
 
-            callback.Invoke();
+                callback.Invoke();
+            }
+
             PanelLoading.Close();
         }
     }

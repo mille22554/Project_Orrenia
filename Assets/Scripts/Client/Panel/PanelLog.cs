@@ -97,41 +97,29 @@ public class PanelLog : MonoBehaviour
 
         if (isOn)
         {
-            var requestData = new GetSaveDataRequest();
-            ApiBridge.Send(requestData, CallBack);
+            PanelLoading.Create(PanelLoading.BGType.None);
+            var requestData = new GetSaveDataRequest
+            {
+                Account = DataCenter.Account,
+            };
+            APIController.Ins.Send(requestData, CallBack);
 
             void CallBack(GetSaveDataResponse response)
             {
-                var characterData = response.SaveData.CharacterData;
-                var enemies = response.PartyData.Enemies;
-
-                Text textLog;
-                if (characterData.Effects.Count > 0)
+                if (response.Code == 0)
                 {
-                    textLog = ObjectPool.Get(itemLog, effectContent);
-                    itemEffectLogs.Add(textLog);
-                    textLog.text = $"{characterData.Name}:";
-                    textLog.color = Color.white;
+                    var characterData = response.SaveData.CharacterData;
+                    var enemies = response.PartyData.Enemies;
 
-                    foreach (var effect in characterData.Effects)
+                    Text textLog;
+                    if (characterData.Effects.Count > 0)
                     {
                         textLog = ObjectPool.Get(itemLog, effectContent);
                         itemEffectLogs.Add(textLog);
-                        textLog.text = $"{effect.Name}－{effect.Times}回合";
-                        textLog.color = Color.white;
-                    }
-                }
-
-                foreach (var enemy in enemies)
-                {
-                    if (enemy.CharacterData.Effects.Count > 0)
-                    {
-                        textLog = ObjectPool.Get(itemLog, effectContent);
-                        itemEffectLogs.Add(textLog);
-                        textLog.text = $"{enemy.CharacterData.Name}:";
+                        textLog.text = $"{characterData.Name}:";
                         textLog.color = Color.white;
 
-                        foreach (var effect in enemy.CharacterData.Effects)
+                        foreach (var effect in characterData.Effects)
                         {
                             textLog = ObjectPool.Get(itemLog, effectContent);
                             itemEffectLogs.Add(textLog);
@@ -139,8 +127,29 @@ public class PanelLog : MonoBehaviour
                             textLog.color = Color.white;
                         }
                     }
+
+                    foreach (var enemy in enemies)
+                    {
+                        if (enemy.CharacterData.Effects.Count > 0)
+                        {
+                            textLog = ObjectPool.Get(itemLog, effectContent);
+                            itemEffectLogs.Add(textLog);
+                            textLog.text = $"{enemy.CharacterData.Name}:";
+                            textLog.color = Color.white;
+
+                            foreach (var effect in enemy.CharacterData.Effects)
+                            {
+                                textLog = ObjectPool.Get(itemLog, effectContent);
+                                itemEffectLogs.Add(textLog);
+                                textLog.text = $"{effect.Name}－{effect.Times}回合";
+                                textLog.color = Color.white;
+                            }
+                        }
+                    }
+                    log.verticalNormalizedPosition = 1;
                 }
-                log.verticalNormalizedPosition = 1;
+
+                PanelLoading.Close();
             }
         }
     }

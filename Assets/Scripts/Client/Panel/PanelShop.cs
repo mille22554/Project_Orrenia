@@ -42,16 +42,25 @@ public class PanelShop : MonoBehaviour
         }
         else
         {
-            var requestData = new GetSaveDataRequest();
-            ApiBridge.Send(requestData, CallBack);
+            PanelLoading.Create(PanelLoading.BGType.None);
+            var requestData = new GetSaveDataRequest
+            {
+                Account = DataCenter.Account,
+            };
+            APIController.Ins.Send(requestData, CallBack);
 
             void CallBack(GetSaveDataResponse response)
             {
-                ResetBagInfo();
-                _gold.text = response.SaveData.PlayerData.Gold.ToString();
-                _btnShop.gameObject.SetActive(true);
-                _toggleSell.isOn = true;
-                _toggleBuy.isOn = true;
+                if (response.Code == 0)
+                {
+                    ResetBagInfo();
+                    _gold.text = response.SaveData.PlayerData.Gold.ToString();
+                    _btnShop.gameObject.SetActive(true);
+                    _toggleSell.isOn = true;
+                    _toggleBuy.isOn = true;
+                }
+
+                PanelLoading.Close();
             }
         }
     }
@@ -85,18 +94,27 @@ public class PanelShop : MonoBehaviour
 
         ClearList();
 
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create(PanelLoading.BGType.None);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            foreach (var itemInfo in response.SaveData.CharacterData.BagItems)
+            if (response.Code == 0)
             {
-                var item = ObjectPool.Get(_shopItem, _itemList.content);
-                item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);
-                item.BagItemUID = itemInfo.UID;
-                _shopItemList.Add(item);
+                foreach (var itemInfo in response.SaveData.CharacterData.BagItems)
+                {
+                    var item = ObjectPool.Get(_shopItem, _itemList.content);
+                    item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);
+                    item.BagItemUID = itemInfo.UID;
+                    _shopItemList.Add(item);
+                }
             }
+
+            PanelLoading.Close();
         }
     }
 
@@ -105,33 +123,40 @@ public class PanelShop : MonoBehaviour
         if (_selectedShopItem == null || !int.TryParse(_inputTradeNum.text, out var itemNum) || itemNum == 0)
             return;
 
+        PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetTradeActionRequest
         {
+            Account = DataCenter.Account,
             TradeActionType = _toggleBuy.isOn ? ETradeActionType.Buy : ETradeActionType.Sell,
             ItemID = _selectedShopItem.Info.ID,
             TradeNum = itemNum,
             SelledItemUID = _selectedShopItem.BagItemUID
         };
-        ApiBridge.Send(requestData, CallBack);
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(SetTradeActionResponse response)
         {
-            _gold.text = response.Gold.ToString();
-            _inputTradeNum.text = "0";
-
-            if (_toggleSell.isOn)
+            if (response.Code == 0)
             {
-                if (response.SelledItemSurplus == 0)
+                _gold.text = response.Gold.ToString();
+                _inputTradeNum.text = "0";
+
+                if (_toggleSell.isOn)
                 {
-                    _shopItemList.Remove(_selectedShopItem);
-                    _selectedShopItem.Remove();
-                    _selectedShopItem = null;
-                }
-                else
-                {
-                    _selectedShopItem.UpdateItemCount(response.SelledItemSurplus);
+                    if (response.SelledItemSurplus == 0)
+                    {
+                        _shopItemList.Remove(_selectedShopItem);
+                        _selectedShopItem.Remove();
+                        _selectedShopItem = null;
+                    }
+                    else
+                    {
+                        _selectedShopItem.UpdateItemCount(response.SelledItemSurplus);
+                    }
                 }
             }
+
+            PanelLoading.Close();
         }
     }
 

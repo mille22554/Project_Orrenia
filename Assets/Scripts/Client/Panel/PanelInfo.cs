@@ -26,16 +26,25 @@ public class PanelInfo : MonoBehaviour
 
     void RefreshInfo()
     {
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create(PanelLoading.BGType.None);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            _fullAbility = response.FullAbility;
-            _exp = response.Exp;
+            if (response.Code == 0)
+            {
+                _fullAbility = response.FullAbility;
+                _exp = response.Exp;
 
-            var data = RefreshInfoData.Create(response);
-            RefreshInfo(data);
+                var data = RefreshInfoData.Create(response);
+                RefreshInfo(data);
+            }
+
+            PanelLoading.Close();
         }
     }
 

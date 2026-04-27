@@ -1,0 +1,20 @@
+{
+    "name": "API",
+    "rootNamespace": "",
+    "references": [
+        "GUID:32023c158ed62d04ba61be0ed3060707",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:1491147abca9d7d4bb7105af628b223e",
+        "GUID:909b916c026fcc844a928f1630245154",
+        "GUID:e0cd26848372d4e5c891c569017e11f1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

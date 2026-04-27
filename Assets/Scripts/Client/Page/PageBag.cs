@@ -57,34 +57,40 @@ public class PageBag : MonoBehaviour
 
     void OnEnable()
     {
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
         PanelLoading.Create(PanelLoading.BGType.Full);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            var datas = response.SaveData;
-            var characterData = datas.CharacterData;
-
-            ResetBagInfo();
-            btnUse.gameObject.SetActive(false);
-            gold.text = datas.PlayerData.Gold.ToString();
-            equips = characterData.Equips;
-
-            foreach (var itemInfo in characterData.BagItems)
+            if (response.Code == 0)
             {
-                var item = ObjectPool.Get(bagItem, itemList.content);
-                item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, equips.Contains(itemInfo.UID));
-                bagItems.Add(item);
+                var datas = response.SaveData;
+                var characterData = datas.CharacterData;
 
-                var itemKind = DataCenter.GetItemKind(item.Info.Kind);
+                ResetBagInfo();
+                btnUse.gameObject.SetActive(false);
+                gold.text = datas.PlayerData.Gold.ToString();
+                equips = characterData.Equips;
 
-                if (toggleEquip.isOn)
-                    item.gameObject.SetActive(PublicFunc.IsEquipCategory(itemKind.Category));
-                else if (toggleUse.isOn)
-                    item.gameObject.SetActive(PublicFunc.IsUseCategory(itemKind.Category));
-                else if (toggleMaterial.isOn)
-                    item.gameObject.SetActive(PublicFunc.IsMaterialCategory(itemKind.Category));
+                foreach (var itemInfo in characterData.BagItems)
+                {
+                    var item = ObjectPool.Get(bagItem, itemList.content);
+                    item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, equips.Contains(itemInfo.UID));
+                    bagItems.Add(item);
+
+                    var itemKind = DataCenter.GetItemKind(item.Info.Kind);
+
+                    if (toggleEquip.isOn)
+                        item.gameObject.SetActive(PublicFunc.IsEquipCategory(itemKind.Category));
+                    else if (toggleUse.isOn)
+                        item.gameObject.SetActive(PublicFunc.IsUseCategory(itemKind.Category));
+                    else if (toggleMaterial.isOn)
+                        item.gameObject.SetActive(PublicFunc.IsMaterialCategory(itemKind.Category));
+                }
             }
 
             PanelLoading.Close();
@@ -215,23 +221,80 @@ public class PageBag : MonoBehaviour
         {
             BagItemData = selectedBagItem.Info
         };
-        ApiBridge.Send(setItemActionRequestData, CallBack);
-        PanelLoading.Create(PanelLoading.BGType.None);
 
-        void CallBack(SetItemActionResponse setItemActionResponse)
+        SetItemAction();
+
+        void SetItemAction()
         {
-            equips = setItemActionResponse.CharacterData.Equips;
-            PublicFunc.DoActionAccordingToCategory(setItemActionResponse.ItemCategory, EquipCallBack, UseCallBack, null);
-
-            if (setItemActionResponse.Enemies.Count > 0)
+            PanelLoading.Create(PanelLoading.BGType.None);
+            var requestData = new SetItemActionRequest
             {
-                var getBattleStatusRequestData = new GetBattleStatusRequest();
-                ApiBridge.Send(getBattleStatusRequestData, CallBack);
+                Account = DataCenter.Account,
+            };
+            APIController.Ins.Send(requestData, CallBack);
 
-                void CallBack(GetBattleStatusResponse getBattleStatusResponse)
+            void CallBack(SetItemActionResponse response)
+            {
+                if (response.Code == 0)
                 {
-                    var datas = getBattleStatusResponse.SaveData.Datas;
-                    var battleResult = getBattleStatusResponse.BattleResult;
+                    equips = response.CharacterData.Equips;
+                    PublicFunc.DoActionAccordingToCategory(response.ItemCategory, EquipCallBack, UseCallBack, null);
+
+                    if (response.Enemies.Count > 0)
+                    {
+                        GetBattleStatus();
+                    }
+                    MainController.Instance.RefreshUI(response.CharacterData, response.FullAbility);
+
+                    void EquipCallBack()
+                    {
+                        if (response.IsEquipped)
+                        {
+                            selectedBagItem.IconEquip.SetActive(false);
+
+                            textUse.text = "裝備";
+                        }
+                        else
+                        {
+                            if (response.UnEquiped.Count > 0)
+                            {
+                                foreach (var unEquiped in response.UnEquiped)
+                                {
+                                    var existingItem = bagItems.Find(x => x.Info.UID == unEquiped.UID);
+
+                                    if (existingItem != null)
+                                        existingItem.IconEquip.SetActive(false);
+                                }
+                            }
+
+                            selectedBagItem.IconEquip.SetActive(true);
+
+                            textUse.text = "卸下";
+                        }
+                    }
+
+                    void UseCallBack() => UseItem(response.BagItemData);
+                }
+
+                PanelLoading.Close();
+            }
+        }
+
+        void GetBattleStatus()
+        {
+            PanelLoading.Create(PanelLoading.BGType.None);
+            var requestData = new GetBattleStatusRequest
+            {
+                Account = DataCenter.Account,
+            };
+            APIController.Ins.Send(requestData, CallBack);
+
+            void CallBack(GetBattleStatusResponse response)
+            {
+                if (response.Code == 0)
+                {
+                    var datas = response.SaveData;
+                    var battleResult = response.BattleResult;
 
                     if (battleResult != null)
                     {
@@ -242,44 +305,15 @@ public class PageBag : MonoBehaviour
                         }
                         else
                         {
-                            ApiBridge.Send(getBattleStatusRequestData, CallBack);
+                            GetBattleStatus();
                         }
                     }
 
                     MainController.Instance.RefreshUI(datas.CharacterData);
                 }
+
+                PanelLoading.Close();
             }
-            MainController.Instance.RefreshUI(setItemActionResponse.CharacterData, setItemActionResponse.FullAbility);
-            PanelLoading.Close();
-
-            void EquipCallBack()
-            {
-                if (setItemActionResponse.IsEquipped)
-                {
-                    selectedBagItem.IconEquip.SetActive(false);
-
-                    textUse.text = "裝備";
-                }
-                else
-                {
-                    if (setItemActionResponse.UnEquiped.Count > 0)
-                    {
-                        foreach (var unEquiped in setItemActionResponse.UnEquiped)
-                        {
-                            var existingItem = bagItems.Find(x => x.Info.UID == unEquiped.UID);
-
-                            if (existingItem != null)
-                                existingItem.IconEquip.SetActive(false);
-                        }
-                    }
-
-                    selectedBagItem.IconEquip.SetActive(true);
-
-                    textUse.text = "卸下";
-                }
-            }
-
-            void UseCallBack() => UseItem(setItemActionResponse.BagItemData);
         }
     }
 

@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
-using Newtonsoft.Json;
+using Unity.Netcode;
 
 public class PlayerSaveDataFormat
 {
@@ -9,11 +7,11 @@ public class PlayerSaveDataFormat
     public Datas Datas;
 }
 
-public class Datas
+public class Datas : INetworkSerializable
 {
-    public PlayerContextData PlayerData;
-    public CharacterData CharacterData;
-    public PartyData PartyData;
+    public PlayerContextData PlayerData = new();
+    public CharacterData CharacterData = new();
+    public PartyData PartyData = new();
 
     public static Datas CreateDefault()
     {
@@ -25,6 +23,13 @@ public class Datas
         };
 
         return datas;
+    }
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref PlayerData);
+        serializer.SerializeValue(ref CharacterData);
+        serializer.SerializeValue(ref PartyData);
     }
 }
 

@@ -129,13 +129,20 @@ public class PageForge : MonoBehaviour
 
     void OnEnable()
     {
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
         PanelLoading.Create(PanelLoading.BGType.Full);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            InitPage(response.SaveData.CharacterData.BagItems);
+            if (response.Code == 0)
+            {
+                InitPage(response.SaveData.CharacterData.BagItems);
+            }
+
             PanelLoading.Close();
         }
     }
@@ -215,20 +222,24 @@ public class PageForge : MonoBehaviour
                 materials.Add(selectedItem.UID);
         }
 
+        PanelLoading.Create(PanelLoading.BGType.Half);
         var requestData = new SetForgeActionRequest
         {
+            Account = DataCenter.Account,
             ItemName = _inputItemName.text,
             ItemKind = _nowSelectedKind,
             Materials = materials
         };
-        ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create(PanelLoading.BGType.Half);
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(SetForgeActionResponse response)
         {
-            Clear();
+            if (response.Code == 0)
+            {
+                Clear();
+                InitPage(response.BagItemDatas);
+            }
 
-            InitPage(response.BagItemDatas);
             PanelLoading.Close();
         }
     }

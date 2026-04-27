@@ -255,6 +255,13 @@ public static class CharacterDataCenter
             STAProcess(characterData, -1);
 
         var result = EffectProcess(characterData);
+
+        if (characterData.CurrentHP <= 0)
+        {
+            result.IsDead = true;
+            characterData.Effects.Clear();
+        }
+
         SkillCDProcess(characterData);
 
         return result;

@@ -29,18 +29,22 @@ public class PageStart : MonoBehaviour
 
         DataCenter.Account = _inputUserAccount.text;
 
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
         PanelLoading.Create(PanelLoading.BGType.Full);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            var saveData = response.SaveData;
-
-            if (string.IsNullOrEmpty(saveData.CharacterData.Name))
-                PageRegister.Create();
-            else
-                MainController.Instance.Login();
+            if (response.Code == 0)
+            {
+                if (string.IsNullOrEmpty(response.SaveData.CharacterData.Name))
+                    PageRegister.Create();
+                else
+                    MainController.Instance.Login();
+            }
 
             PanelLoading.Close();
         }

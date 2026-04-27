@@ -46,18 +46,27 @@ public class PanelSkill : MonoBehaviour
     {
         RefreshUI(null);
 
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
+        PanelLoading.Create(PanelLoading.BGType.None);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            var skills = response.SaveData.CharacterData.Skills;
-            foreach (var skill in skills.Values)
+            if (response.Code == 0)
             {
-                var item = ObjectPool.Get(_skillItem, ToggleGroup.transform);
-                item.SetInfo(skill, ToggleGroup, RefreshUI);
-                _skillItems.Add(item);
+                var skills = response.SaveData.CharacterData.Skills;
+                foreach (var skill in skills.Values)
+                {
+                    var item = ObjectPool.Get(_skillItem, ToggleGroup.transform);
+                    item.SetInfo(skill, ToggleGroup, RefreshUI);
+                    _skillItems.Add(item);
+                }
             }
+
+            PanelLoading.Close();
         }
     }
 

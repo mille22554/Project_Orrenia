@@ -1,11 +1,13 @@
 
 
-public class PlayerContextData
+using Unity.Netcode;
+
+public class PlayerContextData : INetworkSerializable
 {
-    public string Password;
+    public string Password = "";
     public int Gold;
 
-    public string NowPartyLeader;
+    public string NowPartyLeader = "";
 
     public int SkillPoint;
 
@@ -23,5 +25,15 @@ public class PlayerContextData
         };
 
         return data;
+    }
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref Password);
+        serializer.SerializeValue(ref Gold);
+        serializer.SerializeValue(ref NowPartyLeader);
+        serializer.SerializeValue(ref SkillPoint);
+        serializer.SerializeValue(ref ForgeLevel);
+        serializer.SerializeValue(ref CurrentForgeExp);
     }
 }

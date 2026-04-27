@@ -12,7 +12,7 @@ public class PageCharacter : MonoBehaviour
     [SerializeField] ItemAbility INT;
     [SerializeField] ItemAbility AGI;
     [SerializeField] ItemAbility LUK;
-    [SerializeField] Text abilityPoint;
+    [SerializeField] Text _abilityPoint;
     [SerializeField] Button btnReset;
 
     public static void Create()
@@ -36,28 +36,40 @@ public class PageCharacter : MonoBehaviour
 
     void RefreshInfo()
     {
-        var requestData = new GetSaveDataRequest();
-        ApiBridge.Send(requestData, CallBack);
         PanelLoading.Create(PanelLoading.BGType.None);
+        var requestData = new GetSaveDataRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(GetSaveDataResponse response)
         {
-            var characterData = response.SaveData.CharacterData;
-            var isHasAbilityPoint = response.AbilityPoint > 0;
+            if (response.Code == 0)
+            {
+                RefreshInfo(response.SaveData.CharacterData, response.AbilityPoint);
+            }
 
-            STR.SetInfo(characterData.Ability.STR_Point, isHasAbilityPoint, OnAbilityPlus);
-            VIT.SetInfo(characterData.Ability.VIT_Point, isHasAbilityPoint, OnAbilityPlus);
-            DEX.SetInfo(characterData.Ability.DEX_Point, isHasAbilityPoint, OnAbilityPlus);
-            INT.SetInfo(characterData.Ability.INT_Point, isHasAbilityPoint, OnAbilityPlus);
-            AGI.SetInfo(characterData.Ability.AGI_Point, isHasAbilityPoint, OnAbilityPlus);
-            LUK.SetInfo(characterData.Ability.LUK_Point, isHasAbilityPoint, OnAbilityPlus);
-
-            abilityPoint.text = response.AbilityPoint.ToString();
-
-            MainController.Instance.RefreshUI(response);
             PanelLoading.Close();
         }
     }
+
+    void RefreshInfo(CharacterData characterData, int abilityPoint)
+    {
+        var isHasAbilityPoint = abilityPoint > 0;
+
+        STR.SetInfo(characterData.Ability.STR_Point, isHasAbilityPoint, OnAbilityPlus);
+        VIT.SetInfo(characterData.Ability.VIT_Point, isHasAbilityPoint, OnAbilityPlus);
+        DEX.SetInfo(characterData.Ability.DEX_Point, isHasAbilityPoint, OnAbilityPlus);
+        INT.SetInfo(characterData.Ability.INT_Point, isHasAbilityPoint, OnAbilityPlus);
+        AGI.SetInfo(characterData.Ability.AGI_Point, isHasAbilityPoint, OnAbilityPlus);
+        LUK.SetInfo(characterData.Ability.LUK_Point, isHasAbilityPoint, OnAbilityPlus);
+
+        _abilityPoint.text = abilityPoint.ToString();
+
+        MainController.Instance.RefreshUI(characterData);
+    }
+
 
     void OnAbilityPlus()
     {
@@ -71,16 +83,21 @@ public class PageCharacter : MonoBehaviour
             LUK_Point = int.Parse(LUK.Point.text),
         };
 
+        PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetPlayerAbilityRequest
         {
+            Account = DataCenter.Account,
             Ability = ability
         };
-        ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create(PanelLoading.BGType.None);
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(SetPlayerAbilityResponse response)
         {
-            RefreshInfo();
+            if (response.Code == 0)
+            {
+                RefreshInfo(response.CharacterData, response.AbilityPoint);
+            }
+
             PanelLoading.Close();
         }
     }
@@ -97,16 +114,21 @@ public class PageCharacter : MonoBehaviour
             LUK_Point = 1
         };
 
+        PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetPlayerAbilityRequest
         {
+            Account = DataCenter.Account,
             Ability = ability
         };
-        ApiBridge.Send(requestData, CallBack);
-        PanelLoading.Create(PanelLoading.BGType.None);
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(SetPlayerAbilityResponse response)
         {
-            RefreshInfo();
+            if (response.Code == 0)
+            {
+                RefreshInfo(response.CharacterData, response.AbilityPoint);
+            }
+
             PanelLoading.Close();
         }
     }

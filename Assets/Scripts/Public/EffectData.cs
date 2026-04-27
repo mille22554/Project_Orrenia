@@ -1,11 +1,22 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 
-public class EffectData
+public class EffectData : INetworkSerializable
 {
-    public string Name;
+    public string Name = "";
     public EEffectID ID;
     public List<ParamFormat> Value;
     public int Times;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        var value = Value.ToArray();
+
+        serializer.SerializeValue(ref Name);
+        serializer.SerializeValue(ref ID);
+        serializer.SerializeValue(ref value);
+        serializer.SerializeValue(ref Times);
+    }
 }
 
 public enum EEffectID

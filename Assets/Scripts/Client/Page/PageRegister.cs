@@ -26,15 +26,21 @@ public class PageRegister : MonoBehaviour
             return;
         }
 
-        var requestData = new SetPlayerNameRequest { PlayerName = inputUsername.text };
-        ApiBridge.Send(requestData, CallBack);
         PanelLoading.Create(PanelLoading.BGType.Full);
+        var requestData = new SetPlayerNameRequest
+        {
+            Account = DataCenter.Account,
+        };
+        APIController.Ins.Send(requestData, CallBack);
 
         void CallBack(SetPlayerNameResponse response)
         {
-            MainController.Instance.Login();
+            if (response.Code == 0)
+            {
+                MainController.Instance.Login();
+            }
+
             PanelLoading.Close();
         }
-
     }
 }

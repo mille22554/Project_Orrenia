@@ -1,73 +1,73 @@
-using System;
-using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
-using UnityEngine;
+// using System;
+// using System.Collections.Generic;
+// using Cysharp.Threading.Tasks;
+// using Newtonsoft.Json;
+// using UnityEngine;
 
-public static class ServerController
-{
-    readonly static Dictionary<string, IApiHandler_Server> handlerBases = new();
+// public static class ServerController
+// {
+//     readonly static Dictionary<string, IApiHandler_Server> handlerBases = new();
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void Init()
-    {
-        RegisterHandlers();
-        EventMng.SetEvent(EventName.ServerRequest, (Action<string, Action<string>>)Get);
-    }
+//     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+//     static void Init()
+//     {
+//         RegisterHandlers();
+//         EventMng.SetEvent(EventName.ServerRequest, (Action<string, Action<string>>)Get);
+//     }
 
-    static void RegisterHandlers()
-    {
-        var types = typeof(ServerController).Assembly.GetTypes();
+//     static void RegisterHandlers()
+//     {
+//         var types = typeof(ServerController).Assembly.GetTypes();
 
-        foreach (var type in types)
-        {
-            if (type.IsInterface || type.IsAbstract)
-                continue;
+//         foreach (var type in types)
+//         {
+//             if (type.IsInterface || type.IsAbstract)
+//                 continue;
 
-            if (!typeof(IApiHandler_Server).IsAssignableFrom(type))
-                continue;
+//             if (!typeof(IApiHandler_Server).IsAssignableFrom(type))
+//                 continue;
 
-            var instance = (IApiHandler_Server)Activator.CreateInstance(type);
+//             var instance = (IApiHandler_Server)Activator.CreateInstance(type);
 
-            Debug.Log($"Register server handler: {instance.Cmd} -> {type.Name}");
+//             Debug.Log($"Register server handler: {instance.Cmd} -> {type.Name}");
 
-            handlerBases[instance.Cmd] = instance;
-        }
-    }
+//             handlerBases[instance.Cmd] = instance;
+//         }
+//     }
 
-    static async void Get(string request, Action<string> callback)
-    {
-        await UniTask.NextFrame();
-        // await UniTask.WaitForSeconds(0.5f);
+//     static async void Get(string request, Action<string> callback)
+//     {
+//         await UniTask.NextFrame();
+//         // await UniTask.WaitForSeconds(0.5f);
 
-        var requestData = JsonConvert.DeserializeObject<RequestData_Server>(request);
+//         var requestData = JsonConvert.DeserializeObject<RequestData_Server>(request);
 
-        if (handlerBases.TryGetValue(requestData.Cmd, out var handlerBase))
-        {
-            callback.Invoke(handlerBase.Get(requestData.Data));
-        }
-        else
-        {
-            Debug.LogError($"No handler found for {requestData.Cmd}");
-            callback.Invoke("");
-        }
-    }
-}
+//         if (handlerBases.TryGetValue(requestData.Cmd, out var handlerBase))
+//         {
+//             callback.Invoke(handlerBase.Get(requestData.Data));
+//         }
+//         else
+//         {
+//             Debug.LogError($"No handler found for {requestData.Cmd}");
+//             callback.Invoke("");
+//         }
+//     }
+// }
 
-public class RequestData_Server
-{
-    public string Cmd;
-    public object Data;
-}
+// public class RequestData_Server
+// {
+//     public string Cmd;
+//     public object Data;
+// }
 
-public class ResponseData_Server
-{
-    public int Code;
-    public object Data = "";
-}
+// public class ResponseData_Server
+// {
+//     public int Code;
+//     public object Data = "";
+// }
 
-public interface IApiHandler_Server
-{
-    string Cmd { get; }
-    string Get(object response);
-}
+// public interface IApiHandler_Server
+// {
+//     string Cmd { get; }
+//     string Get(object response);
+// }

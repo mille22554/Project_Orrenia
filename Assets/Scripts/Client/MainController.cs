@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class MainController : MonoBehaviour
@@ -17,11 +18,24 @@ public class MainController : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        ApiBridge.Initialize("");
+        // ApiBridge.Initialize("");
+
+        NetworkManager.Singleton.OnClientConnectedCallback += OnConnectSuccess;
+
+        void OnConnectSuccess(ulong id)
+        {
+            if (id == NetworkManager.Singleton.LocalClientId)
+            {
+                Debug.Log("連線成功！已成功加入伺服器。");
+            }
+        }
     }
 
     void Start()
     {
+        NetworkManager.Singleton.StartHost();
+        // NetworkManager.Singleton.StartClient();
+        // NetworkManager.Singleton.StartServer();
         PageStart.Create();
     }
 

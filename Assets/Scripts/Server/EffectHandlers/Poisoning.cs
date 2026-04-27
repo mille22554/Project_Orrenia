@@ -28,10 +28,5 @@ public class Poisoning : IEffectHandler
             characterData.Effects.Remove(effectData);
             info.IsTimeUp = true;
         }
-
-        if (characterData.CurrentHP <= 0)
-        {
-            result.IsDead = true;
-        }
     }
 }

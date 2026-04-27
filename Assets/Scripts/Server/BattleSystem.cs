@@ -247,12 +247,16 @@ public static class BattleSystem
             {
                 RefreshCharacterData(defender, target);
                 defenders.Remove(defender);
+                target.Effects.Clear();
             }
         }
 
         if (battleResult.IsAttackerDead || defenders.Count == 0)
         {
             RefreshCharacterData(attacker, actor);
+            if (battleResult.IsAttackerDead)
+                actor.Effects.Clear();
+
             foreach (var (defender, target) in defenders)
                 RefreshCharacterData(defender, target);
 
@@ -344,6 +348,7 @@ public static class BattleSystem
                 if (DamageProcess(attacker, result.BattleDamage))
                 {
                     battleResult.IsAttackerDead = true;
+                    actor.Effects.Clear();
                 }
 
                 battleResult.BreakEquips.AddRange(RunDurability(actor, defender.Role == ECharacterRole.Player));
@@ -404,6 +409,7 @@ public static class BattleSystem
                 if (DamageProcess(defender, result.BattleDamage * (attacker.Combo * 0.1m + 1)))
                 {
                     result.IsDefenderDead = true;
+                    target.Effects.Clear();
                 }
 
             }
