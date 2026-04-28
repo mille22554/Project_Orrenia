@@ -7,10 +7,10 @@ public class CharacterData : INetworkSerializable
     public ECharacterRole Role;
     public int Level;
     public int CurrentExp;
-    public decimal CurrentHP;
-    public decimal CurrentMP;
-    public decimal CurrentSTA;
-    public decimal CurrentTP;
+    public int CurrentHP;
+    public int CurrentMP;
+    public int CurrentSTA;
+    public int CurrentTP;
     public AbilityBase Ability = new();
     public List<long> Equips = new();
     public List<EffectData> Effects = new();

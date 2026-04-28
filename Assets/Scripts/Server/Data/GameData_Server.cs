@@ -12,6 +12,15 @@ public static class GameData_Server
 
         return Path.Combine(saveDataFolderPath, $"{account}_savedata.json");
     }
+    public static string SaveDataBasePath()
+    {
+        var saveDataFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "SaveData");
+        if (!Directory.Exists(saveDataFolderPath))
+            Directory.CreateDirectory(saveDataFolderPath);
+
+        return Path.Combine(saveDataFolderPath, "SaveData.db");
+    }
+
     public static string MobDataPath
     {
         get

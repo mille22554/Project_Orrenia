@@ -1,46 +1,54 @@
 using SQLite;
 
-public class PlayerSave_Other
+public class PlayerSave
 {
-    [PrimaryKey]
+    [PrimaryKey, AutoIncrement]
+    public long UID { get; set; }
+
+    [Indexed]
     public string Account { get; set; }
+    [Indexed]
+    public long PartyUID { get; set; }
 
     public string Password { get; set; }
     public int Gold { get; set; }
 
-    public string NowPartyLeader { get; set; }
 
     public int SkillPoint { get; set; }
 
     public int ForgeLevel { get; set; }
     public int CurrentForgeExp { get; set; }
-}
 
-public class PlayerSave_Charater
-{
-    [PrimaryKey]
-    public string Account { get; set; }
+    public static PlayerSave Create(PlayerContextData data)
+    {
+        var saveData = new PlayerSave
+        {
+            Account = data.Account,
+            Password = data.Password,
+            Gold = data.Gold,
+            PartyUID = data.PartyUID,
+            SkillPoint = data.SkillPoint,
+            ForgeLevel = data.ForgeLevel,
+            CurrentForgeExp = data.CurrentForgeExp,
+        };
 
-    public string Name;
-    public ECharacterRole Role;
-    public int Level;
-    public int CurrentExp;
-    public decimal CurrentHP;
-    public decimal CurrentMP;
-    public decimal CurrentSTA;
-    public decimal CurrentTP;
-    public AbilityBase Ability;
-    // public List<long> Equips;
-    // public List<EffectData> Effects;
-    // public List<BagItemData> BagItems;
-    // public Dictionary<ESkillID, SkillData> Skills;
-}
+        return saveData;
+    }
 
-public class PlayerSave_Party
-{
-    [PrimaryKey]
-    public string Account { get; set; }
+    public static PlayerContextData GetData(PlayerSave save)
+    {
+        var data = new PlayerContextData
+        {
+            UID = save.UID,
+            Account = save.Account,
+            Password = save.Password,
+            Gold = save.Gold,
+            PartyUID = save.PartyUID,
+            SkillPoint = save.SkillPoint,
+            ForgeLevel = save.ForgeLevel,
+            CurrentForgeExp = save.CurrentForgeExp,
+        };
 
-    public int Area { get; set; }
-    public int Deep { get; set; }
+        return data;
+    }
 }

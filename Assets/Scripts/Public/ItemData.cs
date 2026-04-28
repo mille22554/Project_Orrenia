@@ -4,7 +4,7 @@ using Unity.Netcode;
 public class BagItemData : ItemData
 {
     public long UID;
-    public int ItemID => ID;
+    public long Owner;
     public EQuality Quality = EQuality.Common;
     public List<int> Materials = new();
     public int Seed;
@@ -14,6 +14,7 @@ public class BagItemData : ItemData
         base.NetworkSerialize(serializer);
 
         serializer.SerializeValue(ref UID);
+        serializer.SerializeValue(ref Owner);
         serializer.SerializeValue(ref Quality);
         serializer.SerializeValue(ref Seed);
 
