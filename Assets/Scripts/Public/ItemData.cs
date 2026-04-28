@@ -9,16 +9,15 @@ public class BagItemData : ItemData
     public List<int> Materials = new();
     public int Seed;
 
-    public new void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    public override void NetworkSerialize<T>(BufferSerializer<T> serializer)
     {
         base.NetworkSerialize(serializer);
 
-        var materials = Materials.ToArray();
-
         serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref Quality);
-        serializer.SerializeValue(ref materials);
         serializer.SerializeValue(ref Seed);
+
+        PublicFunc.SerializeList(serializer, ref Materials);
     }
 }
 
@@ -36,21 +35,20 @@ public class ItemData : INetworkSerializable
     public int Durability;
     public int Count;
 
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    public virtual void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var effects = Effects.ToArray();
-
         serializer.SerializeValue(ref ID);
         serializer.SerializeValue(ref Name);
         serializer.SerializeValue(ref Kind);
         serializer.SerializeValue(ref Description);
         serializer.SerializeValue(ref Ability);
-        serializer.SerializeValue(ref effects);
         serializer.SerializeValue(ref Skill);
         serializer.SerializeValue(ref Trait);
         serializer.SerializeValue(ref Price);
         serializer.SerializeValue(ref Durability);
         serializer.SerializeValue(ref Count);
+
+        PublicFunc.SerializeClassList(serializer, ref Effects);
     }
 }
 
@@ -68,9 +66,9 @@ public class ItemKind : INetworkSerializable
 
 public class QualityData : INetworkSerializable
 {
-    public string Name = null;
+    public string Name = "";
     public decimal Multi;
-    public string Color = null;
+    public string Color = "";
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {

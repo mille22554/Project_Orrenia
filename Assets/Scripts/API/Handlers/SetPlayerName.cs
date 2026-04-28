@@ -15,6 +15,7 @@ public partial class APIController
     public void Send(SetPlayerNameRequest requestData) => Send(requestData, null);
     public void Send(SetPlayerNameRequest requestData, Action<SetPlayerNameResponse> callback)
     {
+        Debug.Log($"送: {JsonConvert.SerializeObject(requestData)}");
         _all_OnceListeners[typeof(SetPlayerNameResponse)] = callback;
         ExecuteCommandServerRpc(requestData);
     }
@@ -47,8 +48,8 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(SetPlayerNameRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {

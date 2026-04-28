@@ -217,11 +217,6 @@ public class PageBag : MonoBehaviour
 
     void OnUse()
     {
-        var setItemActionRequestData = new SetItemActionRequest
-        {
-            BagItemData = selectedBagItem.Info
-        };
-
         SetItemAction();
 
         void SetItemAction()
@@ -230,6 +225,7 @@ public class PageBag : MonoBehaviour
             var requestData = new SetItemActionRequest
             {
                 Account = DataCenter.Account,
+                BagItemData = selectedBagItem.Info
             };
             APIController.Ins.Send(requestData, CallBack);
 
@@ -294,7 +290,7 @@ public class PageBag : MonoBehaviour
                 if (response.Code == 0)
                 {
                     var datas = response.SaveData;
-                    var battleResult = response.BattleResult;
+                    var battleResult = response.ActionResult.BattleResult;
 
                     if (battleResult != null)
                     {

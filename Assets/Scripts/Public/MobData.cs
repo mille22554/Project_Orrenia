@@ -4,8 +4,8 @@ using Unity.Netcode;
 public class MobData : INetworkSerializable
 {
     public int MobID;
-    public CharacterData CharacterData;
-    public List<DropItem> DropItems;
+    public CharacterData CharacterData = new();
+    public List<DropItem> DropItems = new();
 
     public static MobData CreateDefault()
     {
@@ -20,11 +20,10 @@ public class MobData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var dropItems = DropItems.ToArray();
-
         serializer.SerializeValue(ref MobID);
         serializer.SerializeValue(ref CharacterData);
-        serializer.SerializeValue(ref dropItems);
+
+        PublicFunc.SerializeClassList(serializer, ref DropItems);
     }
 }
 

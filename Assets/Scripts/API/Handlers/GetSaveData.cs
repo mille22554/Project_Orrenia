@@ -47,12 +47,12 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(GetSaveDataRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {
-            Send = new RpcSendParams
+            Send = new()
             {
                 // 注意！這裡的欄位名稱是 Target，而不是 TargetClientIds
                 Target = RpcTarget.Single(clientId, RpcTargetUse.Temp)
@@ -67,9 +67,6 @@ public partial class APIController
         try
         {
             var account = requestData.Account.ToString();
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
 
             string path = GameData_Server.PlayerSaveDataPath(account);
             Debug.Log($"從 {path} 讀取遊戲資料");
@@ -92,8 +89,13 @@ public partial class APIController
             else
             {
                 GameData_Server.NowPlayers[account] = SaveDataCenter.CreateSaveData();
-                CharacterDataCenter.InitCurrentData(characterData);
+                CharacterDataCenter.InitCurrentData(GameData_Server.GetCharacterData(account));
+
+                var playerData = GameData_Server.GetPlayerData(account);
+
                 playerData.NowPartyLeader = account;
+                var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+
                 partyData.Leader = account;
                 partyData.Members.Add(account);
             }
@@ -104,10 +106,10 @@ public partial class APIController
             {
                 Code = EErrorCode.None,
                 SaveData = GameData_Server.NowPlayers[account].Datas,
-                PartyData = GameData_Server.GetPartyData(playerData.NowPartyLeader),
-                FullAbility = CharacterDataCenter.GetCharacterAbility(characterData),
-                AbilityPoint = PublicFunc.GetAbilityPoint(characterData),
-                Exp = PublicFunc.GetExp(characterData.Level)
+                PartyData = GameData_Server.GetPartyData(GameData_Server.GetPlayerData(account).NowPartyLeader),
+                FullAbility = CharacterDataCenter.GetCharacterAbility(GameData_Server.GetCharacterData(account)),
+                AbilityPoint = PublicFunc.GetAbilityPoint(GameData_Server.GetCharacterData(account)),
+                Exp = PublicFunc.GetExp(GameData_Server.GetCharacterData(account).Level)
             };
             return responseData;
         }

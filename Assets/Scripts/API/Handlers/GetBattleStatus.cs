@@ -16,6 +16,7 @@ public partial class APIController
     public void Send(GetBattleStatusRequest requestData) => Send(requestData, null);
     public void Send(GetBattleStatusRequest requestData, Action<GetBattleStatusResponse> callback)
     {
+        Debug.Log($"送: {JsonConvert.SerializeObject(requestData)}");
         _all_OnceListeners[typeof(GetBattleStatusResponse)] = callback;
         ExecuteCommandServerRpc(requestData);
     }
@@ -48,8 +49,8 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(GetBattleStatusRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {
@@ -75,13 +76,15 @@ public partial class APIController
             var responseData = new GetBattleStatusResponse
             {
                 Code = EErrorCode.None,
+                SaveData = GameData_Server.NowPlayers[account].Datas
             };
             var enemies = partyData.Enemies;
 
             if (enemies.Count > 0)
             {
-                var (battleResult, nowActorEffectResult) = BattleSystem.CheckNowActor(partyData);
-                responseData.EffectResult.Results.Add(nowActorEffectResult);
+                BattleSystem.CheckNowActor(partyData, responseData.ActionResult);
+
+                var battleResult = responseData.ActionResult.BattleResult;
 
                 if (battleResult != null && (battleResult.IsAttackerDead || battleResult.Results.Any(x => x.IsDefenderDead)))
                 {
@@ -138,15 +141,13 @@ public class GetBattleStatusResponse : INetworkSerializable
     public EErrorCode Code;
     public string ErrorMessage = "";
     public Datas SaveData = new();
-    public BattleResult BattleResult = new();
-    public EffectResult EffectResult = new();
+    public ActionResult ActionResult = new();
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
         serializer.SerializeValue(ref SaveData);
-        serializer.SerializeValue(ref BattleResult);
-        serializer.SerializeValue(ref EffectResult);
+        serializer.SerializeValue(ref ActionResult);
     }
 }

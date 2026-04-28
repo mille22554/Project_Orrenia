@@ -3,7 +3,7 @@ using Unity.Netcode;
 
 public class PartyData : INetworkSerializable
 {
-    public string Leader;
+    public string Leader = "";
     public List<string> Members = new();
     public int Area;
     public int Deep;
@@ -20,17 +20,11 @@ public class PartyData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var enemies = Enemies.ToArray();
-
         serializer.SerializeValue(ref Leader);
         serializer.SerializeValue(ref Area);
         serializer.SerializeValue(ref Deep);
-        serializer.SerializeValue(ref enemies);
 
-        for (var i = 0; i < Members.Count; i++)
-        {
-            var member = Members[i];
-            serializer.SerializeValue(ref member);
-        }
+        PublicFunc.SerializeStringList(serializer, ref Members);
+        PublicFunc.SerializeClassList(serializer, ref Enemies);
     }
 }

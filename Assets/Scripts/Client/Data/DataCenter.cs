@@ -184,23 +184,23 @@ public static class DataCenter
         {
             var materialData = GetItemData(material);
 
-            tempSTR += materialData.Ability.STR * (materialMulti.STR / 1000m);
-            tempDEX += materialData.Ability.DEX * (materialMulti.DEX / 1000m);
-            tempINT += materialData.Ability.INT * (materialMulti.INT / 1000m);
-            tempVIT += materialData.Ability.VIT * (materialMulti.VIT / 1000m);
-            tempAGI += materialData.Ability.AGI * (materialMulti.AGI / 1000m);
-            tempLUK += materialData.Ability.LUK * (materialMulti.LUK / 1000m);
-            tempHP += materialData.Ability.HP * (materialMulti.HP / 1000m);
-            tempMP += materialData.Ability.MP * (materialMulti.MP / 1000m);
-            tempSTA += materialData.Ability.STA * (materialMulti.STA / 1000m);
-            tempATK += materialData.Ability.ATK * (materialMulti.ATK / 1000m);
-            tempMATK += materialData.Ability.MATK * (materialMulti.MATK / 1000m);
-            tempDEF += materialData.Ability.DEF * (materialMulti.DEF / 1000m);
-            tempMDEF += materialData.Ability.MDEF * (materialMulti.MDEF / 1000m);
-            tempACC += materialData.Ability.ACC * (materialMulti.ACC / 1000m);
-            tempEVA += materialData.Ability.EVA * (materialMulti.EVA / 1000m);
-            tempCRIT += materialData.Ability.CRIT * (materialMulti.CRIT / 1000m);
-            tempSPD += materialData.Ability.SPD * (materialMulti.SPD / 1000m);
+            tempSTR += materialData.Ability.STR * (materialMulti.STR / 1000);
+            tempDEX += materialData.Ability.DEX * (materialMulti.DEX / 1000);
+            tempINT += materialData.Ability.INT * (materialMulti.INT / 1000);
+            tempVIT += materialData.Ability.VIT * (materialMulti.VIT / 1000);
+            tempAGI += materialData.Ability.AGI * (materialMulti.AGI / 1000);
+            tempLUK += materialData.Ability.LUK * (materialMulti.LUK / 1000);
+            tempHP += materialData.Ability.HP * (materialMulti.HP / 1000);
+            tempMP += materialData.Ability.MP * (materialMulti.MP / 1000);
+            tempSTA += materialData.Ability.STA * (materialMulti.STA / 1000);
+            tempATK += materialData.Ability.ATK * (materialMulti.ATK / 1000);
+            tempMATK += materialData.Ability.MATK * (materialMulti.MATK / 1000);
+            tempDEF += materialData.Ability.DEF * (materialMulti.DEF / 1000);
+            tempMDEF += materialData.Ability.MDEF * (materialMulti.MDEF / 1000);
+            tempACC += materialData.Ability.ACC * (materialMulti.ACC / 1000);
+            tempEVA += materialData.Ability.EVA * (materialMulti.EVA / 1000);
+            tempCRIT += materialData.Ability.CRIT * (materialMulti.CRIT / 1000);
+            tempSPD += materialData.Ability.SPD * (materialMulti.SPD / 1000);
         }
 
         final.STR += (int)tempSTR;

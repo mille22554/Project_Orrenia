@@ -41,14 +41,15 @@ public static class BattleSystem
             MATK = ability.MATK,
             DEF = ability.DEF,
             MDEF = ability.MDEF,
-            ACC = (decimal)Math.Pow((double)ability.ACC, 1.0 / 4.0) * 100,
-            EVA = (decimal)Math.Pow((double)ability.EVA, 1.0 / 4.0) * 100,
-            CRIT = (decimal)Math.Pow((double)ability.CRIT, 1.0 / 4.0) * 100,
-            SPD = (decimal)Math.Pow((double)ability.SPD, 1.0 / 4.0) * 100,
+            ACC = (decimal)(Math.Pow((double)ability.ACC, 1.0 / 4.0) * 100),
+            EVA = (decimal)(Math.Pow((double)ability.EVA, 1.0 / 4.0) * 100),
+            CRIT = (decimal)(Math.Pow((double)ability.CRIT, 1.0 / 4.0) * 100),
+            SPD = (decimal)(Math.Pow((double)ability.SPD, 1.0 / 4.0) * 100),
         };
         return battleData;
     }
 
+    //用decimal算是因為double會有誤差，會卡在9999.99999999多
     public static (CharacterData characterData, int mobID) RunSpeedProcess(PartyData partyData)
     {
         var enemies = partyData.Enemies;
@@ -67,11 +68,11 @@ public static class BattleSystem
         }
 
         BattleData next = null;
-        decimal minTime = decimal.MaxValue;
+        var minTime = decimal.MaxValue;
 
         foreach (var unit in units.Keys)
         {
-            decimal time = (GameData_Server.tpCost - unit.TP) / unit.SPD;
+            var time = (GameData_Server.tpCost - unit.TP) / unit.SPD;
 
             if (time < minTime)
             {
@@ -87,7 +88,7 @@ public static class BattleSystem
 
         foreach (var unit in units)
         {
-            unit.Value.CurrentTP += unit.Key.SPD * minTime;
+            unit.Value.CurrentTP = unit.Value.CurrentTP + unit.Key.SPD * minTime;
         }
 
         var actMob = enemies.Find(x => x.CharacterData.Name == units[next].Name);
@@ -96,7 +97,7 @@ public static class BattleSystem
         return (units[next], mobID);
     }
 
-    public static (BattleResult battleResult, EffectResult.Result effectResult) CheckNowActor(PartyData partyData)
+    public static void CheckNowActor(PartyData partyData, ActionResult actionResult)
     {
         var debugSwitch = false;
         debugSwitch = true;
@@ -104,12 +105,6 @@ public static class BattleSystem
         var (nowActor, mobID) = RunSpeedProcess(partyData);
         if (debugSwitch)
             Debug.Log($"當前行動單位: {nowActor.Name}");
-
-        // var datas = GameData_Server.SaveData.Datas;
-        // var characterData = datas.CharacterData;
-
-        BattleResult battleResult = null;
-        EffectResult.Result effectResult = null;
 
         switch (nowActor.Role)
         {
@@ -126,8 +121,10 @@ public static class BattleSystem
                         if (debugSwitch && skill != null)
                             Debug.Log($"施放技能: {skill.Name}");
 
-                        battleResult = RunBattle(nowActor, new() { partyData.Enemies.FirstOrDefault().CharacterData }, skill);
-                        effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
+                        RunBattle(nowActor, new() { partyData.Enemies.FirstOrDefault().CharacterData }, skill, actionResult.BattleResult);
+                        var effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
+                        if (effectResult.Infos.Count > 0)
+                            actionResult.EffectResult.Results.Add(effectResult);
                     }
                 }
                 break;
@@ -141,7 +138,7 @@ public static class BattleSystem
                     if (skill == null)
                     {
                         var target = GameData_Server.GetCharacterData(partyData.Members[Random.Range(0, partyData.Members.Count)]);
-                        battleResult = RunBattle(nowActor, new() { target }, skill);
+                        RunBattle(nowActor, new() { target }, skill, actionResult.BattleResult);
                     }
                     else
                     {
@@ -150,7 +147,7 @@ public static class BattleSystem
                             case ESkillType.SinglePhysicsAttack:
                             case ESkillType.SingleMagicAttack:
                                 var target = GameData_Server.GetCharacterData(partyData.Members[Random.Range(0, partyData.Members.Count)]);
-                                battleResult = RunBattle(nowActor, new() { target }, skill);
+                                RunBattle(nowActor, new() { target }, skill, actionResult.BattleResult);
                                 break;
                             case ESkillType.SingleBuff:
                                 foreach (var buff in skill.Buffs)
@@ -160,12 +157,12 @@ public static class BattleSystem
                         }
                     }
 
-                    effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
+                    var effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
+                    if (effectResult.Infos.Count > 0)
+                        actionResult.EffectResult.Results.Add(effectResult);
                 }
                 break;
         }
-
-        return (battleResult, effectResult);
     }
 
     static bool SkillWeaponCheck(CharacterData characterData, SkillData skillData)
@@ -205,23 +202,17 @@ public static class BattleSystem
         return !isWeaponTypeError;
     }
 
-    public static BattleResult RunBattle(CharacterData actor, List<CharacterData> targets) => RunBattle(actor, targets, null);
-    public static BattleResult RunBattle(CharacterData actor, List<CharacterData> targets, SkillData skillData)
+    public static void RunBattle(CharacterData actor, List<CharacterData> targets, BattleResult battleResult) => RunBattle(actor, targets, null, battleResult);
+    public static void RunBattle(CharacterData actor, List<CharacterData> targets, SkillData skillData, BattleResult battleResult)
     {
         actor.CurrentTP -= GameData_Server.tpCost;
-
-        var battleResult = new BattleResult
-        {
-            BreakEquips = new(),
-            DropItems = new()
-        };
 
         var incapacitatedEffect = actor.Effects.Find(x => x.ID == EEffectID.Stun);
         if (incapacitatedEffect != null)
         {
             battleResult.IsAttakerIncapacitated = true;
             battleResult.IncapacitatedEffect = incapacitatedEffect.Name;
-            return battleResult;
+            return;
         }
 
         var attacker = CreateBattleData(actor);
@@ -231,7 +222,6 @@ public static class BattleSystem
             defenders.Add(CreateBattleData(target), target);
 
         battleResult.Attacker = attacker.Name;
-        battleResult.Results = new List<BattleResult.Result>();
 
         foreach (var (defender, target) in defenders.ToList())
         {
@@ -260,7 +250,7 @@ public static class BattleSystem
             foreach (var (defender, target) in defenders)
                 RefreshCharacterData(defender, target);
 
-            return battleResult;
+            return;
         }
 
         if (skillData != null)
@@ -291,7 +281,7 @@ public static class BattleSystem
         {
             _lastActor.Combo = 0;
             RefreshCharacterData(attacker, actor);
-            return battleResult;
+            return;
         }
         #endregion
 
@@ -318,12 +308,12 @@ public static class BattleSystem
             #endregion
 
             #region 攻守計算
-            var attackValue = 0m;
-            var defenceValue = 0m;
+            var attackValue = 0.0;
+            var defenceValue = 0.0;
             if (skillData == null)
             {
-                attackValue = GetEffectiveStat(attacker.ATK) * damageMulti;
-                defenceValue = GetEffectiveStat(defender.DEF) * defenceMulti;
+                attackValue = (double)(GetEffectiveStat(attacker.ATK) * damageMulti);
+                defenceValue = (double)(GetEffectiveStat(defender.DEF) * defenceMulti);
             }
             else
             {
@@ -335,15 +325,15 @@ public static class BattleSystem
                     _ => 0
                 };
 
-                attackValue = GetEffectiveStat(skillDamage) * damageMulti;
-                defenceValue = GetEffectiveStat(defence) * defenceMulti;
+                attackValue = (double)(GetEffectiveStat(skillDamage) * damageMulti);
+                defenceValue = (double)(GetEffectiveStat(defence) * defenceMulti);
             }
             #endregion
 
             if (counterEffect != null && (skillData == null || skillData.SkillType == ESkillType.SinglePhysicsAttack))
             {
                 result.IsCounter = true;
-                result.BattleDamage = attackValue * CharacterDataCenter.ParamCalculate(defender, counterEffect.Value);
+                result.BattleDamage = (decimal)(attackValue * CharacterDataCenter.ParamCalculate(defender, counterEffect.Value));
 
                 if (DamageProcess(attacker, result.BattleDamage))
                 {
@@ -355,7 +345,7 @@ public static class BattleSystem
             }
             else
             {
-                result.BattleDamage = attackValue - defenceValue;
+                result.BattleDamage = (decimal)(attackValue - defenceValue);
                 if (result.BattleDamage <= 0)
                     result.BattleDamage = 1;
 
@@ -419,7 +409,6 @@ public static class BattleSystem
 
         battleResult.BreakEquips.AddRange(RunDurability(actor, attacker.Role == ECharacterRole.Player));
         RefreshCharacterData(attacker, actor);
-        return battleResult;
     }
 
     static void RefreshCharacterData(BattleData battleData, CharacterData characterData)

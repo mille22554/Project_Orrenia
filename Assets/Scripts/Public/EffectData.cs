@@ -10,12 +10,11 @@ public class EffectData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var value = Value.ToArray();
-
         serializer.SerializeValue(ref Name);
         serializer.SerializeValue(ref ID);
-        serializer.SerializeValue(ref value);
         serializer.SerializeValue(ref Times);
+
+        PublicFunc.SerializeClassList(serializer, ref Value);
     }
 }
 

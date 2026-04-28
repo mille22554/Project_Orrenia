@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
+using Unity.Netcode;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -106,5 +107,246 @@ public class PublicFunc
             return c;
         else
             return Color.white;
+    }
+
+    public static void SerializeList<TSerialized, TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref List<TSerialized> list)
+    where TReaderWriter : IReaderWriter
+    where TSerialized : unmanaged, IComparable, IConvertible, IComparable<TSerialized>, IEquatable<TSerialized>
+    {
+        var count = list != null ? list.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+            list = new(new TSerialized[count]);
+
+        for (var i = 0; i < count; i++)
+        {
+            var val = list[i];
+            serializer.SerializeValue(ref val);
+            if (serializer.IsReader)
+                list[i] = val;
+        }
+    }
+
+    public static void SerializeStringList<TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref List<string> list)
+    where TReaderWriter : IReaderWriter
+    {
+        var count = list != null ? list.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+            list = new(count);
+
+        for (int i = 0; i < count; i++)
+        {
+            var val = serializer.IsReader ? "" : list[i];
+            serializer.SerializeValue(ref val);
+            if (serializer.IsReader)
+                list.Add(val);
+        }
+    }
+
+    public static void SerializeEnumList<TKey, TReaderWriter>(
+    BufferSerializer<TReaderWriter> serializer,
+    ref List<TKey> list)
+    where TReaderWriter : IReaderWriter
+    where TKey : unmanaged, Enum
+    {
+        var count = list != null ? list.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+        {
+            list = new(count);
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            TKey val = serializer.IsReader ? default : list[i];
+
+            // 注意：這裡如果編譯器抱怨 TKey 約束，
+            // 可以視情況像之前處理 Dict 一樣轉成 int，
+            // 但通常在 NGO 最新版中，有 unmanaged, Enum 約束是可以直接過件的。
+            serializer.SerializeValue(ref val);
+
+            if (serializer.IsReader)
+            {
+                list.Add(val);
+            }
+        }
+    }
+
+    public static void SerializeClassList<TSerialized, TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref List<TSerialized> list)
+    where TReaderWriter : IReaderWriter
+    where TSerialized : class, INetworkSerializable, new()
+    {
+        var count = list != null ? list.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+            list = new(count);
+
+        for (var i = 0; i < count; i++)
+        {
+            var item = serializer.IsReader ? new() : list[i];
+
+            // 關鍵：對於 NetworkSerializable 物件，有時候需要顯式指定序列化方式
+            serializer.SerializeValue(ref item);
+
+            if (serializer.IsReader)
+                list.Add(item);
+        }
+    }
+
+    public static void SerializeClassDictionary<TKey, TValue, TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref Dictionary<TKey, TValue> dict)
+    where TReaderWriter : IReaderWriter
+    // 補齊所有 NGO 需要的介面約束
+    where TKey : unmanaged, IComparable, IConvertible, IComparable<TKey>, IEquatable<TKey>
+    where TValue : class, INetworkSerializable, new()
+    {
+        var count = dict != null ? dict.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+        {
+            dict = new();
+            for (var i = 0; i < count; i++)
+            {
+                TKey key = default;
+                var val = new TValue();
+                serializer.SerializeValue(ref key);
+                serializer.SerializeValue(ref val);
+                dict.Add(key, val);
+            }
+        }
+        else
+        {
+            foreach (var kvp in dict)
+            {
+                var key = kvp.Key;
+                var val = kvp.Value;
+                serializer.SerializeValue(ref key);
+                serializer.SerializeValue(ref val);
+            }
+        }
+    }
+
+
+    public static void SerializeEnum_ClassDictionary<TKey, TValue, TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref Dictionary<TKey, TValue> dict)
+    where TReaderWriter : IReaderWriter where TKey : unmanaged, Enum where TValue : class, INetworkSerializable, new()
+    {
+        var count = dict != null ? dict.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+        {
+            dict = new();
+            for (var i = 0; i < count; i++)
+            {
+                TKey key = default;
+                var val = new TValue();
+                serializer.SerializeValue(ref key);
+                serializer.SerializeValue(ref val);
+                dict.Add(key, val);
+            }
+        }
+        else
+        {
+            foreach (var kvp in dict)
+            {
+                var key = kvp.Key;
+                var val = kvp.Value;
+                serializer.SerializeValue(ref key);
+                serializer.SerializeValue(ref val);
+            }
+        }
+    }
+
+    public static void SerializeEnum_StringDict<TKey, TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref Dictionary<TKey, string> dict)
+    where TReaderWriter : IReaderWriter
+    where TKey : unmanaged, Enum
+    {
+        var count = dict != null ? dict.Count : 0;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+        {
+            dict = new();
+            for (var i = 0; i < count; i++)
+            {
+                TKey key = default;
+                var val = "";
+                serializer.SerializeValue(ref key);
+                serializer.SerializeValue(ref val);
+                dict.Add(key, val);
+            }
+        }
+        else if (dict != null)
+        {
+            foreach (var kvp in dict)
+            {
+                TKey key = kvp.Key;
+                var val = kvp.Value ?? "";
+                serializer.SerializeValue(ref key);
+                serializer.SerializeValue(ref val);
+            }
+        }
+    }
+
+    public static void SerializeString_StringListDict<TReaderWriter>(BufferSerializer<TReaderWriter> serializer, ref Dictionary<string, List<string>> dict)
+    where TReaderWriter : IReaderWriter
+    {
+        // 1. 處理字典數量
+        var dictCount = dict != null ? dict.Count : 0;
+        serializer.SerializeValue(ref dictCount);
+
+        if (serializer.IsReader)
+        {
+            dict = new();
+            for (var i = 0; i < dictCount; i++)
+            {
+                // 2. 讀取 Key (string)
+                var key = "";
+                serializer.SerializeValue(ref key);
+
+                // 3. 讀取 Value (List<string>) 的長度
+                var listCount = 0;
+                serializer.SerializeValue(ref listCount);
+
+                var list = new List<string>(listCount);
+                for (var j = 0; j < listCount; j++)
+                {
+                    var item = "";
+                    serializer.SerializeValue(ref item);
+                    list.Add(item);
+                }
+
+                dict.Add(key, list);
+            }
+        }
+        else if (dict != null)
+        {
+            // 4. 寫入模式
+            foreach (var kvp in dict)
+            {
+                // 寫入 Key
+                var key = kvp.Key;
+                serializer.SerializeValue(ref key);
+
+                // 寫入 List 內容
+                var list = kvp.Value;
+                var listCount = list != null ? list.Count : 0;
+                serializer.SerializeValue(ref listCount);
+
+                if (list != null)
+                {
+                    foreach (var item in list)
+                    {
+                        var s = item ?? "";
+                        serializer.SerializeValue(ref s);
+                    }
+                }
+            }
+        }
     }
 }

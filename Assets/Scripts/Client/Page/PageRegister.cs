@@ -30,6 +30,7 @@ public class PageRegister : MonoBehaviour
         var requestData = new SetPlayerNameRequest
         {
             Account = DataCenter.Account,
+            PlayerName = inputUsername.text,
         };
         APIController.Ins.Send(requestData, CallBack);
 

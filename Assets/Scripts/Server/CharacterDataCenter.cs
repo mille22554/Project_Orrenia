@@ -120,10 +120,10 @@ public static class CharacterDataCenter
             var fields = typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
             foreach (var field in fields)
             {
-                decimal valueB = (decimal)field.GetValue(ability);
+                var valueB = (decimal)field.GetValue(ability);
                 if (valueB != 0)
                 {
-                    decimal valueA = (decimal)field.GetValue(data);
+                    var valueA = (decimal)field.GetValue(data);
                     field.SetValue(data, valueA + valueB);
                 }
             }

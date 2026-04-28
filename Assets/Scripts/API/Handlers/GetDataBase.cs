@@ -47,8 +47,8 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(GetDataBaseRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {
@@ -113,44 +113,14 @@ public class GetDataBaseResponse : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var gameShopItem = GameShopItem.ToArray();
-        var qualityData = QualityData.ToArray();
-
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
-        serializer.SerializeValue(ref gameShopItem);
-        serializer.SerializeValue(ref qualityData);
 
-        foreach (var item in AreaData)
-        {
-            var key = item.Key;
-            var value = item.Value;
-            serializer.SerializeValue(ref key);
-            serializer.SerializeValue(ref value);
-        }
-
-        foreach (var item in ItemData)
-        {
-            var key = item.Key;
-            var value = item.Value;
-            serializer.SerializeValue(ref key);
-            serializer.SerializeValue(ref value);
-        }
-
-        foreach (var item in ItemKind)
-        {
-            var key = item.Key;
-            var value = item.Value;
-            serializer.SerializeValue(ref key);
-            serializer.SerializeValue(ref value);
-        }
-
-        foreach (var item in DamageTypes)
-        {
-            var key = item.Key;
-            var value = item.Value;
-            serializer.SerializeValue(ref key);
-            serializer.SerializeValue(ref value);
-        }
+        PublicFunc.SerializeList(serializer, ref GameShopItem);
+        PublicFunc.SerializeClassList(serializer, ref QualityData);
+        PublicFunc.SerializeClassDictionary(serializer, ref AreaData);
+        PublicFunc.SerializeClassDictionary(serializer, ref ItemData);
+        PublicFunc.SerializeEnum_ClassDictionary(serializer, ref ItemKind);
+        PublicFunc.SerializeEnum_StringDict(serializer, ref DamageTypes);
     }
 }

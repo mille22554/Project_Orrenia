@@ -16,6 +16,7 @@ public partial class APIController
     public void Send(SetBattleActionRequest requestData) => Send(requestData, null);
     public void Send(SetBattleActionRequest requestData, Action<SetBattleActionResponse> callback)
     {
+        Debug.Log($"送: {JsonConvert.SerializeObject(requestData)}");
         _all_OnceListeners[typeof(SetBattleActionResponse)] = callback;
         ExecuteCommandServerRpc(requestData);
     }
@@ -48,8 +49,8 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(SetBattleActionRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {
@@ -122,7 +123,8 @@ public partial class APIController
         var targets = partyData.Enemies.Where(x => actionTarget.Any(y => x.CharacterData.Name == y.Name)).ToList();
         if (targets != null)
         {
-            var battleResult = actionResult.BattleResult = BattleSystem.RunBattle(characterData, targets.Select(x => x.CharacterData).ToList());
+            var battleResult = actionResult.BattleResult;
+            BattleSystem.RunBattle(characterData, targets.Select(x => x.CharacterData).ToList(), battleResult);
 
             foreach (var result in battleResult.Results)
             {
@@ -160,7 +162,8 @@ public partial class APIController
             var targets = partyData.Enemies.Where(x => skillTargets.Any(y => x.CharacterData.Name == y.Name)).ToList();
             if (targets != null)
             {
-                var battleResult = BattleSystem.RunBattle(characterData, targets.Select(x => x.CharacterData).ToList(), skillData);
+                var battleResult = actionResult.BattleResult;
+                BattleSystem.RunBattle(characterData, targets.Select(x => x.CharacterData).ToList(), skillData, battleResult);
 
                 foreach (var result in battleResult.Results)
                 {
@@ -191,12 +194,11 @@ public class SetBattleActionRequest : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var actionTarget = ActionTarget.ToArray();
-
         serializer.SerializeValue(ref Account);
         serializer.SerializeValue(ref BattleAction);
-        serializer.SerializeValue(ref actionTarget);
         serializer.SerializeValue(ref SkillID);
+
+        PublicFunc.SerializeClassList(serializer, ref ActionTarget);
     }
 }
 

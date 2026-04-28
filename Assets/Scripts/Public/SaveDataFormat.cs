@@ -3,8 +3,8 @@ using Unity.Netcode;
 
 public class PlayerSaveDataFormat
 {
-    public string version;
-    public Datas Datas;
+    public string version = "";
+    public Datas Datas = new();
 }
 
 public class Datas : INetworkSerializable
@@ -36,7 +36,7 @@ public class Datas : INetworkSerializable
 public class PartySaveDataFormat
 {
     public long PartyID;
-    public string Leader;
+    public string Leader = "";
     public List<string> Members = new();
     public int Area;
     public int Deep;
@@ -45,10 +45,5 @@ public class PartySaveDataFormat
 
 public class EnemyData
 {
-    public List<MobData> Enemies;
-
-    public EnemyData()
-    {
-        Enemies = new();
-    }
+    public List<MobData> Enemies = new();
 }

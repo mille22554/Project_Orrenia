@@ -43,10 +43,6 @@ public class CharacterData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var equips = Equips.ToArray();
-        var effects = Effects.ToArray();
-        var bagItems = BagItems.ToArray();
-
         serializer.SerializeValue(ref Name);
         serializer.SerializeValue(ref Role);
         serializer.SerializeValue(ref Level);
@@ -56,18 +52,11 @@ public class CharacterData : INetworkSerializable
         serializer.SerializeValue(ref CurrentSTA);
         serializer.SerializeValue(ref CurrentTP);
         serializer.SerializeValue(ref Ability);
-        serializer.SerializeValue(ref equips);
-        serializer.SerializeValue(ref effects);
-        serializer.SerializeValue(ref bagItems);
 
-        foreach (var skill in Skills)
-        {
-            var key = skill.Key;
-            var value = skill.Value;
-
-            serializer.SerializeValue(ref key);
-            serializer.SerializeValue(ref value);
-        }
+        PublicFunc.SerializeList(serializer, ref Equips);
+        PublicFunc.SerializeClassList(serializer, ref Effects);
+        PublicFunc.SerializeClassList(serializer, ref BagItems);
+        PublicFunc.SerializeEnum_ClassDictionary(serializer, ref Skills);
     }
 }
 

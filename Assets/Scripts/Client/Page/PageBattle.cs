@@ -250,6 +250,8 @@ public class PageBattle : MonoBehaviour
         btnGoAhead.gameObject.SetActive(false);
         btnRest.gameObject.SetActive(false);
         btnAttack.gameObject.SetActive(true);
+
+        OnGetBattleState();
     }
 
     void OnGetBattleState()
@@ -266,8 +268,8 @@ public class PageBattle : MonoBehaviour
             if (response.Code == 0)
             {
                 var datas = response.SaveData;
-                var battleResult = response.BattleResult;
-                var effectResult = response.EffectResult;
+                var battleResult = response.ActionResult.BattleResult;
+                var effectResult = response.ActionResult.EffectResult;
 
                 RunBattleVisuals(battleResult, effectResult, datas);
             }
@@ -281,7 +283,7 @@ public class PageBattle : MonoBehaviour
     {
         MainController.Instance.RefreshUI(datas.CharacterData, fullAbility);
 
-        if (battleResult != null)
+        if (battleResult != null && battleResult.Results.Count > 0)
         {
             ShowBattleLog(battleResult, datas.CharacterData);
             var attackerEffectResult = effectResult.Results.Find(x => x.CharacterName == battleResult.Attacker);

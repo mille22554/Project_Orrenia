@@ -47,8 +47,8 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(SetForgeActionRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {
@@ -441,12 +441,11 @@ public class SetForgeActionRequest : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var materials = Materials.ToArray();
-
         serializer.SerializeValue(ref Account);
         serializer.SerializeValue(ref ItemName);
         serializer.SerializeValue(ref ItemKind);
-        serializer.SerializeValue(ref materials);
+
+        PublicFunc.SerializeList(serializer, ref Materials);
     }
 }
 
@@ -458,10 +457,9 @@ public class SetForgeActionResponse : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var bagItemDatas = BagItemDatas.ToArray();
-
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
-        serializer.SerializeValue(ref bagItemDatas);
+
+        PublicFunc.SerializeClassList(serializer, ref BagItemDatas);
     }
 }

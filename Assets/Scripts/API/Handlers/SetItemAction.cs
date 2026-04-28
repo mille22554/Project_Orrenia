@@ -16,6 +16,7 @@ public partial class APIController
     public void Send(SetItemActionRequest requestData) => Send(requestData, null);
     public void Send(SetItemActionRequest requestData, Action<SetItemActionResponse> callback)
     {
+        Debug.Log($"送: {JsonConvert.SerializeObject(requestData)}");
         _all_OnceListeners[typeof(SetItemActionResponse)] = callback;
         ExecuteCommandServerRpc(requestData);
     }
@@ -48,8 +49,8 @@ public partial class APIController
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     void ExecuteCommandServerRpc(SetItemActionRequest requestData, RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log(clientId);
+        var clientId = rpcParams.Receive.SenderClientId;
+        // Debug.Log(clientId);
 
         var returnParams = new RpcParams
         {
@@ -226,17 +227,15 @@ public class SetItemActionResponse : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var unEquiped = UnEquiped.ToArray();
-        var enemies = Enemies.ToArray();
-
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
         serializer.SerializeValue(ref ItemCategory);
         serializer.SerializeValue(ref BagItemData);
-        serializer.SerializeValue(ref unEquiped);
         serializer.SerializeValue(ref IsEquipped);
-        serializer.SerializeValue(ref enemies);
         serializer.SerializeValue(ref CharacterData);
         serializer.SerializeValue(ref FullAbility);
+
+        PublicFunc.SerializeClassList(serializer, ref UnEquiped);
+        PublicFunc.SerializeClassList(serializer, ref Enemies);
     }
 }

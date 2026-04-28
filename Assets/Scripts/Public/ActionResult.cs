@@ -18,21 +18,18 @@ public class ActionResult : INetworkSerializable
 public class BattleResult : INetworkSerializable
 {
     public List<Result> Results = new();
-    public string Attacker;
+    public string Attacker = "";
     public bool IsAttackerDead;
     public List<string> BreakEquips = new();
     public List<string> DropItems = new();
     public bool IsSkill;
-    public string SkillName;
+    public string SkillName = "";
     public bool IsAttakerIncapacitated;
-    public string IncapacitatedEffect;
+    public string IncapacitatedEffect = "";
     public Dictionary<string, List<string>> NewEffects = new();
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var results = Results.ToArray();
-
-        serializer.SerializeValue(ref results);
         serializer.SerializeValue(ref Attacker);
         serializer.SerializeValue(ref IsAttackerDead);
         serializer.SerializeValue(ref IsSkill);
@@ -40,31 +37,10 @@ public class BattleResult : INetworkSerializable
         serializer.SerializeValue(ref IsAttakerIncapacitated);
         serializer.SerializeValue(ref IncapacitatedEffect);
 
-        for (var i = 0; i < BreakEquips.Count; i++)
-        {
-            var temp = BreakEquips[i];
-            serializer.SerializeValue(ref temp);
-        }
-
-        for (var i = 0; i < DropItems.Count; i++)
-        {
-            var temp = DropItems[i];
-            serializer.SerializeValue(ref temp);
-        }
-
-        foreach (var effect in NewEffects)
-        {
-            var key = effect.Key;
-            var value = effect.Value;
-
-            serializer.SerializeValue(ref key);
-
-            for (var i = 0; i < value.Count; i++)
-            {
-                var temp = value[i];
-                serializer.SerializeValue(ref temp);
-            }
-        }
+        PublicFunc.SerializeClassList(serializer, ref Results);
+        PublicFunc.SerializeStringList(serializer, ref BreakEquips);
+        PublicFunc.SerializeStringList(serializer, ref DropItems);
+        PublicFunc.SerializeString_StringListDict(serializer, ref NewEffects);
     }
 
     public class Result : INetworkSerializable
@@ -95,16 +71,12 @@ public class BattleResult : INetworkSerializable
             serializer.SerializeValue(ref IsDefenderDead);
             serializer.SerializeValue(ref IsCounter);
 
-            for (var i = 0; i < LevelUpUnits.Count; i++)
-            {
-                var unit = LevelUpUnits[i];
-                serializer.SerializeValue(ref unit);
-            }
+            PublicFunc.SerializeStringList(serializer, ref LevelUpUnits);
         }
     }
 }
 
-public class RestResult:INetworkSerializable
+public class RestResult : INetworkSerializable
 {
     public int RecoverHP;
     public int RecoverMP;
@@ -124,27 +96,26 @@ public class EffectResult : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        var results = Results.ToArray();
-
-        serializer.SerializeValue(ref results);
+        PublicFunc.SerializeClassList(serializer, ref Results);
     }
 
     public class Result : INetworkSerializable
     {
         public List<Info> Infos = new();
-        public string CharacterName;
+        public string CharacterName = "";
         public bool IsDead;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
-            var infos = Infos.ToArray();
+            serializer.SerializeValue(ref CharacterName);
+            serializer.SerializeValue(ref IsDead);
 
-            serializer.SerializeValue(ref infos);
+            PublicFunc.SerializeClassList(serializer, ref Infos);
         }
 
         public class Info : INetworkSerializable
         {
-            public string EffectName;
+            public string EffectName = "";
             public bool IsTimeUp;
             public FullAbilityBase MofityAbility = new();
 
