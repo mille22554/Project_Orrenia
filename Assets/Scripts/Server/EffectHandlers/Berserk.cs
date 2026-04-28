@@ -4,8 +4,8 @@ public class Berserk : IEffectHandler
 
     public void Passive(FullAbilityBase baseAbility, EffectData effectData, FullAbilityBase afterAbility)
     {
-        afterAbility.HP += baseAbility.HP * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value);
-        afterAbility.MP += baseAbility.MP * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value);
+        afterAbility.HP += (int)(baseAbility.HP * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value));
+        afterAbility.MP += (int)(baseAbility.MP * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value));
         afterAbility.ATK += baseAbility.ATK * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value);
         afterAbility.MATK += baseAbility.MATK * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value);
         afterAbility.DEF += baseAbility.DEF * CharacterDataCenter.ParamCalculate(baseAbility, effectData.Value);

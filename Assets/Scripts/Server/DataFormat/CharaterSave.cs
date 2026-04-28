@@ -12,7 +12,7 @@ public class CharaterSave
     public int CurrentHP { get; set; }
     public int CurrentMP { get; set; }
     public int CurrentSTA { get; set; }
-    public int CurrentTP { get; set; }
+    public string CurrentTP { get; set; }
 
     public static CharaterSave Create(long UID, CharacterData data)
     {
@@ -26,7 +26,7 @@ public class CharaterSave
             CurrentHP = data.CurrentHP,
             CurrentMP = data.CurrentMP,
             CurrentSTA = data.CurrentSTA,
-            CurrentTP = data.CurrentTP,
+            CurrentTP = data.CurrentTP.ToString(),
         };
 
         return saveData;
@@ -43,7 +43,7 @@ public class CharaterSave
             CurrentHP = save.CurrentHP,
             CurrentMP = save.CurrentMP,
             CurrentSTA = save.CurrentSTA,
-            CurrentTP = save.CurrentTP,
+            CurrentTP = decimal.Parse(save.CurrentTP),
         };
 
         return data;

@@ -18,7 +18,7 @@ public class HP_Regen : IEffectHandler
             }
         };
         result.Infos.Add(info);
-        characterData.CurrentHP += info.MofityAbility.HP;
+        CharacterData.ChangeHP(characterData, info.MofityAbility.HP);
 
         effectData.Times--;
 

@@ -35,7 +35,7 @@ public class ItemEnemy : MonoBehaviour
 
     public void GetDamage(decimal damage)
     {
-        Info.CharacterData.CurrentHP -= damage;
+        CharacterData.ChangeHP(Info.CharacterData, damage);
         if (Info.CharacterData.CurrentHP < 0)
             Info.CharacterData.CurrentHP = 0;
 

@@ -75,12 +75,12 @@ public class PanelInfo : MonoBehaviour
 public class RefreshInfoData
 {
     public string PlayerName;
-    public decimal PlayerCurrentHP;
-    public decimal PlayerHP;
-    public decimal PlayerCurrentMP;
-    public decimal PlayerMP;
-    public decimal PlayerCurrentSTA;
-    public decimal PlayerSTA;
+    public int PlayerCurrentHP;
+    public int PlayerHP;
+    public int PlayerCurrentMP;
+    public int PlayerMP;
+    public int PlayerCurrentSTA;
+    public int PlayerSTA;
     public int PlayerLv;
     public int PlayerCurrentExp;
     public int PlayerExp;
@@ -98,7 +98,7 @@ public class RefreshInfoData
             PlayerCurrentSTA = characterData.CurrentSTA,
             PlayerCurrentExp = characterData.CurrentExp,
             PlayerLv = characterData.Level,
-            PlayerHP = fullAbility.HP,
+            PlayerHP = (int)fullAbility.HP,
             PlayerMP = fullAbility.MP,
             PlayerSTA = fullAbility.STA,
             PlayerExp = response.Exp
@@ -121,7 +121,7 @@ public class RefreshInfoData
 
         if (fullAbility != null)
         {
-            data.PlayerHP = fullAbility.HP;
+            data.PlayerHP = (int)fullAbility.HP;
             data.PlayerMP = fullAbility.MP;
             data.PlayerSTA = fullAbility.STA;
         }

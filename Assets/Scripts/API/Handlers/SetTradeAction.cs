@@ -112,7 +112,7 @@ public partial class APIController
         {
             playerData.Gold -= itemData.Price * tradeNum;
 
-            var existing = characterData.BagItems.Find(item => item.ItemID == itemData.ID);
+            var existing = characterData.BagItems.Find(item => item.ID == itemData.ID);
 
             ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 

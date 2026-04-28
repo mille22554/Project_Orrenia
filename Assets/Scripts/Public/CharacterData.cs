@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 
@@ -10,7 +11,7 @@ public class CharacterData : INetworkSerializable
     public int CurrentHP;
     public int CurrentMP;
     public int CurrentSTA;
-    public int CurrentTP;
+    public decimal CurrentTP;
     public AbilityBase Ability = new();
     public List<long> Equips = new();
     public List<EffectData> Effects = new();
@@ -39,6 +40,11 @@ public class CharacterData : INetworkSerializable
             BagItems = new(),
             Skills = new(),
         };
+    }
+
+    public static void ChangeHP(CharacterData characterData, decimal value)
+    {
+        characterData.CurrentHP += Math.Max(1, Math.Abs((int)value)) * Math.Sign(value);
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -90,8 +96,8 @@ public class FullAbilityBase : INetworkSerializable
     public decimal LUK;
 
     public decimal HP;
-    public decimal MP;
-    public decimal STA;
+    public int MP;
+    public int STA;
     public decimal ATK;
     public decimal MATK;
     public decimal DEF;

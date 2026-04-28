@@ -308,12 +308,12 @@ public static class BattleSystem
             #endregion
 
             #region 攻守計算
-            var attackValue = 0.0;
-            var defenceValue = 0.0;
+            var attackValue = 0m;
+            var defenceValue = 0m;
             if (skillData == null)
             {
-                attackValue = (double)(GetEffectiveStat(attacker.ATK) * damageMulti);
-                defenceValue = (double)(GetEffectiveStat(defender.DEF) * defenceMulti);
+                attackValue = GetEffectiveStat(attacker.ATK) * damageMulti;
+                defenceValue = GetEffectiveStat(defender.DEF) * defenceMulti;
             }
             else
             {
@@ -325,8 +325,8 @@ public static class BattleSystem
                     _ => 0
                 };
 
-                attackValue = (double)(GetEffectiveStat(skillDamage) * damageMulti);
-                defenceValue = (double)(GetEffectiveStat(defence) * defenceMulti);
+                attackValue = GetEffectiveStat(skillDamage) * damageMulti;
+                defenceValue = GetEffectiveStat(defence) * defenceMulti;
             }
             #endregion
 
@@ -413,7 +413,7 @@ public static class BattleSystem
 
     static void RefreshCharacterData(BattleData battleData, CharacterData characterData)
     {
-        characterData.CurrentHP = battleData.HP;
+        characterData.CurrentHP = (int)battleData.HP;
         characterData.CurrentMP = battleData.MP;
     }
 
@@ -542,7 +542,7 @@ public static class BattleSystem
                     continue;
 
                 var bagItems = characterData.BagItems;
-                var existing = bagItems.Find(item => item.ItemID == drop.Item);
+                var existing = bagItems.Find(item => item.ID == drop.Item);
                 var itemData = ItemDataCenter_Server.GetItemData(drop.Item);
 
                 ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);

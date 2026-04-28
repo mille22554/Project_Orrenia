@@ -115,7 +115,7 @@ public partial class APIController
         {
             var bagItem = characterData.BagItems.Find(x => x.UID == material);
 
-            newBagItem.Materials.Add(bagItem.ItemID);
+            newBagItem.Materials.Add(bagItem.ID);
 
             if (newBagItem.Trait != null && bagItem.Trait != null)
             {

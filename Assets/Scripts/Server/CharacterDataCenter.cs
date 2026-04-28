@@ -61,7 +61,7 @@ public static class CharacterDataCenter
     {
         var fullAbility = GetCharacterAbility(data);
 
-        data.CurrentHP = fullAbility.HP;
+        data.CurrentHP = (int)fullAbility.HP;
         data.CurrentMP = fullAbility.MP;
         STAProcess(data, fullAbility.STA);
 
@@ -86,9 +86,9 @@ public static class CharacterDataCenter
             LUK = data.Ability.LUK_Point
         };
 
-        ability.HP = ability.VIT * 10 + ability.STR * 5 + 85;
-        ability.MP = ability.INT * 10 + ability.VIT * 5 + 35;
-        ability.STA = ability.VIT * 5 + 95;
+        ability.HP = (int)(ability.VIT * 10 + ability.STR * 5 + 85);
+        ability.MP = (int)(ability.INT * 10 + ability.VIT * 5 + 35);
+        ability.STA = (int)(ability.VIT * 5 + 95);
 
         ability.ATK = ability.STR * 2 + ability.VIT;
         ability.MATK = ability.INT * 2 + ability.VIT;
@@ -165,7 +165,7 @@ public static class CharacterDataCenter
     static void FixAbility(CharacterData data, FullAbilityBase ability)
     {
         if (data.CurrentHP > ability.HP)
-            data.CurrentHP = ability.HP;
+            data.CurrentHP = (int)ability.HP;
 
         if (data.CurrentMP > ability.MP)
             data.CurrentMP = ability.MP;
@@ -216,7 +216,7 @@ public static class CharacterDataCenter
         return result;
     }
 
-    public static void STAProcess(CharacterData characterData, decimal value)
+    public static void STAProcess(CharacterData characterData, int value)
     {
         characterData.CurrentSTA += value;
 
@@ -308,7 +308,7 @@ public static class CharacterDataCenter
             return;
 
         if (ability.HP != 0)
-            characterData.CurrentHP += ability.HP;
+            CharacterData.ChangeHP(characterData, ability.HP);
 
         if (ability.MP != 0)
             characterData.CurrentMP += ability.MP;
@@ -317,14 +317,14 @@ public static class CharacterDataCenter
             characterData.CurrentSTA += ability.STA;
     }
 
-    public static int ParamCalculate(FullAbilityBase ability, List<ParamFormat> paramFormats)
+    public static decimal ParamCalculate(FullAbilityBase ability, List<ParamFormat> paramFormats)
     {
-        var damage = 0m;
+        var value = 0m;
         foreach (var format in paramFormats)
         {
             if (format.Ability != null)
             {
-                damage += format.Constant *
+                value += format.Constant *
                 (
                     format.Ability.STR * ability.STR +
                     format.Ability.DEX * ability.DEX +
@@ -347,11 +347,11 @@ public static class CharacterDataCenter
             }
             else
             {
-                damage += format.Constant;
+                value += format.Constant;
             }
         }
 
-        return (int)damage;
+        return value;
     }
 }
 
