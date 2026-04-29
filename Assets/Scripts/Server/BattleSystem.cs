@@ -249,7 +249,10 @@ public static class BattleSystem
         {
             RefreshCharacterData(attacker, actor);
             if (battleResult.IsAttackerDead)
-                actor.Effects.Clear();
+            {
+                foreach (var effect in SaveDataCenter.GetEffects(actor.UID))
+                    SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
+            }
 
             foreach (var (defender, target) in defenders)
                 RefreshCharacterData(defender, target);
