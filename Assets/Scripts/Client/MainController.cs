@@ -21,12 +21,30 @@ public class MainController : MonoBehaviour
         // ApiBridge.Initialize("");
 
         NetworkManager.Singleton.OnClientConnectedCallback += OnConnectSuccess;
+        NetworkManager.Singleton.OnServerStarted += OnServerStarted;
 
         void OnConnectSuccess(ulong id)
         {
             if (id == NetworkManager.Singleton.LocalClientId)
             {
                 Debug.Log("連線成功！已成功加入伺服器。");
+            }
+        }
+
+        void OnServerStarted()
+        {
+            PanelLoading.Create(PanelLoading.BGType.None);
+            var requestData = new InitDataBaseRequest();
+            APIController.Ins.Send(requestData, CallBack);
+
+            void CallBack(InitDataBaseResponse response)
+            {
+                if (response.Code == 0)
+                {
+
+                }
+
+                PanelLoading.Close();
             }
         }
     }

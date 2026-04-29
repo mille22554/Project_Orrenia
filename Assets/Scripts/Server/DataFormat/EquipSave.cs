@@ -1,10 +1,21 @@
 using SQLite;
 
-public class EquipSave
+public class EquipSave : IDBTable
 {
     [PrimaryKey]
     public long UID { get; set; }
 
     [Indexed]
-    public string Owner { get; set; }
+    public long Owner { get; set; }
+
+    public static EquipSave Create(BagItemData data)
+    {
+        var saveData = new EquipSave
+        {
+            UID = data.UID,
+            Owner = data.Owner
+        };
+
+        return saveData;
+    }
 }

@@ -108,7 +108,7 @@ public class PanelLog : MonoBehaviour
             {
                 if (response.Code == 0)
                 {
-                    var characterData = response.SaveData.CharacterData;
+                    var characterData = response.CharacterData;
                     var enemies = response.PartyData.Enemies;
 
                     Text textLog;

@@ -68,12 +68,11 @@ public class PageBag : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                var datas = response.SaveData;
-                var characterData = datas.CharacterData;
+                var characterData = response.CharacterData;
 
                 ResetBagInfo();
                 btnUse.gameObject.SetActive(false);
-                gold.text = datas.PlayerData.Gold.ToString();
+                gold.text = response.PlayerData.Gold.ToString();
                 equips = characterData.Equips;
 
                 foreach (var itemInfo in characterData.BagItems)

@@ -3,16 +3,15 @@ using Unity.Netcode;
 
 public class PartyData : INetworkSerializable
 {
-    public string Leader = "";
-    public List<string> Members = new();
+    public long UID;
     public int Area;
     public int Deep;
-    public List<MobData> Enemies = new();
 
-    public static PartyData CreateDefault()
+    public static PartyData CreateDefault(long UID)
     {
         return new PartyData
         {
+            UID = UID,
             Area = 1,
             Deep = 0,
         };
@@ -20,11 +19,8 @@ public class PartyData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref Leader);
+        serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref Area);
         serializer.SerializeValue(ref Deep);
-
-        PublicFunc.SerializeStringList(serializer, ref Members);
-        PublicFunc.SerializeClassList(serializer, ref Enemies);
     }
 }

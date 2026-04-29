@@ -52,11 +52,12 @@ public static class SkillDataCenter
         }
     }
 
-    public static SkillData GetSkillData(ESkillID skillID)
+    public static SkillData GetSkillData(ESkillID skillID, long owner)
     {
         _skillDatas.TryGetValue(skillID, out var skillData);
         return new SkillData
         {
+            Owner = owner,
             Name = skillData.Name,
             ID = skillData.ID,
             Description = skillData.Description,

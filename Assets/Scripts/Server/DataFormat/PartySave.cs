@@ -1,6 +1,6 @@
 using SQLite;
 
-public class PartySave
+public class PartySave : IDBTable
 {
     [PrimaryKey]
     public long UID { get; set; }
@@ -8,11 +8,11 @@ public class PartySave
     public int Area { get; set; }
     public int Deep { get; set; }
 
-    public static PartySave Create(long UID, PartyData data)
+    public static PartySave Create(PartyData data)
     {
         var saveData = new PartySave
         {
-            UID = UID,
+            UID = data.UID,
             Area = data.Area,
             Deep = data.Deep,
         };
@@ -24,6 +24,7 @@ public class PartySave
     {
         var data = new PartyData
         {
+            UID = save.UID,
             Area = save.Area,
             Deep = save.Deep,
         };

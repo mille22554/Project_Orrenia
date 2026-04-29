@@ -68,50 +68,62 @@ public partial class APIController
         {
             var account = requestData.Account.ToString();
 
-            string path = GameData_Server.PlayerSaveDataPath(account);
+            string path = GameData_Server.SaveDataBasePath();
+            // string path = GameData_Server.PlayerSaveDataPath(account);
             Debug.Log($"從 {path} 讀取遊戲資料");
 
             if (File.Exists(path))
             {
-                string json = File.ReadAllText(path);
-                var data = JsonConvert.DeserializeObject<PlayerSaveDataFormat>(json);
+                // string json = File.ReadAllText(path);
+                // var data = JsonConvert.DeserializeObject<PlayerSaveDataFormat>(json);
 
-                if (data.version != GameData_Server.version)
-                {
-                    GameData_Server.NowPlayers[account] = UpdateSaveData(data);
-                    SaveDataCenter.SaveData(account);
-                }
-                else
-                {
-                    GameData_Server.NowPlayers[account] = data;
-                }
+                // // if (data.version != GameData_Server.version)
+                // // {
+                // //     GameData_Server.NowPlayers[account] = UpdateSaveData(data);
+                // //     SaveDataCenter.SaveData(account);
+                // // }
+                // // else
+                // {
+                //     GameData_Server.NowPlayers[account] = data;
+                // }
             }
             else
             {
-                GameData_Server.NowPlayers[account] = SaveDataCenter.CreateSaveData();
-                CharacterDataCenter.InitCurrentData(GameData_Server.GetCharacterData(account));
+                SaveDataCenter.CreateSaveData_New(account);
 
-                var playerData = GameData_Server.GetPlayerData(account);
+                var characterData = SaveDataCenter.GetCharacterData(account);
+                CharacterDataCenter.InitCurrentData(characterData);
+                SaveDataCenter.SaveDataToDB(characterData);
 
-                playerData.NowPartyLeader = account;
-                var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+                // GameData_Server.NowPlayers[account] = SaveDataCenter.CreateSaveData();
+                // CharacterDataCenter.InitCurrentData(GameData_Server.GetCharacterData(account));
 
-                partyData.Leader = account;
-                partyData.Members.Add(account);
+                // var playerData = GameData_Server.GetPlayerData(account);
+
+                // playerData.NowPartyLeader = account;
+                // var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+
+                // partyData.Leader = account;
+                // partyData.Members.Add(account);
             }
 
             CheckFlags(account);
 
-            var responseData = new GetSaveDataResponse
             {
-                Code = EErrorCode.None,
-                SaveData = GameData_Server.NowPlayers[account].Datas,
-                PartyData = GameData_Server.GetPartyData(GameData_Server.GetPlayerData(account).NowPartyLeader),
-                FullAbility = CharacterDataCenter.GetCharacterAbility(GameData_Server.GetCharacterData(account)),
-                AbilityPoint = PublicFunc.GetAbilityPoint(GameData_Server.GetCharacterData(account)),
-                Exp = PublicFunc.GetExp(GameData_Server.GetCharacterData(account).Level)
-            };
-            return responseData;
+                var characterData = SaveDataCenter.GetCharacterData(account);
+
+                var responseData = new GetSaveDataResponse
+                {
+                    Code = EErrorCode.None,
+                    PlayerData = SaveDataCenter.GetPlayerData(account),
+                    CharacterData = characterData,
+                    PartyData = SaveDataCenter.GetPartyData(account),
+                    FullAbility = CharacterDataCenter.GetCharacterAbility(characterData),
+                    AbilityPoint = PublicFunc.GetAbilityPoint(characterData),
+                    Exp = PublicFunc.GetExp(characterData.Level)
+                };
+                return responseData;
+            }
         }
         catch (Exception ex)
         {
@@ -130,112 +142,6 @@ public partial class APIController
     {
         // Debug.Log("更新存檔資料結構");
         var newData = SaveDataCenter.CreateSaveData();
-        newData.Datas.CharacterData.Name = oldData.Datas.CharacterData.Name;
-
-        CopyNonDefaultValues(oldData.Datas, newData.Datas);
-        return newData;
-    }
-
-    T CopyNonDefaultValues<T>(T oldData, T newData)
-    {
-        if (oldData == null || newData == null)
-            return newData;
-
-        foreach (var field in oldData.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance))
-        {
-            object oldValue = field.GetValue(oldData);
-            if (oldValue == null)
-                continue;
-
-            FieldInfo newField = newData.GetType().GetField(field.Name, BindingFlags.Public | BindingFlags.Instance);
-            // 新物件沒有這個欄位就跳過
-            if (newField == null)
-                continue;
-
-            Type fieldType = field.FieldType;
-
-            // 判斷是否為自訂 class
-            if (!fieldType.IsPrimitive && fieldType != typeof(string))
-            {
-                if (typeof(IList).IsAssignableFrom(fieldType))
-                {
-                    var oldList = oldValue as IList;
-
-                    if (newField.GetValue(newData) is not IList newList)
-                    {
-                        newList = Activator.CreateInstance(fieldType) as IList;
-                        newField.SetValue(newData, newList);
-                    }
-
-                    newList.Clear();
-                    foreach (var item in oldList)
-                    {
-                        newList.Add(item);
-                    }
-                }
-                else
-                {
-                    object newChild = newField.GetValue(newData);
-                    if (newChild == null)
-                    {
-                        newChild = Activator.CreateInstance(fieldType);
-                        newField.SetValue(newData, newChild);
-                    }
-                    CopyNonDefaultValues(oldValue, newChild);
-                }
-            }
-            else
-            {
-                // 基本型別直接賦值
-                newField.SetValue(newData, oldValue);
-            }
-        }
-
-        // ====== 處理屬性 ======
-        foreach (var prop in oldData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (!prop.CanRead || !prop.CanWrite)
-                continue; // 跳過唯讀屬性
-
-            object oldValue = prop.GetValue(oldData);
-            if (oldValue == null)
-                continue;
-
-            Type propType = prop.PropertyType;
-
-            if (!propType.IsPrimitive && propType != typeof(string))
-            {
-                if (typeof(IList).IsAssignableFrom(propType))
-                {
-                    if (oldValue is not IList oldList)
-                        continue;
-
-                    if (prop.GetValue(newData) is not IList newList)
-                    {
-                        newList = Activator.CreateInstance(propType) as IList;
-                        prop.SetValue(newData, newList);
-                    }
-
-                    newList.Clear();
-                    foreach (var item in oldList)
-                        newList.Add(item);
-                }
-                else
-                {
-                    object newChild = prop.GetValue(newData);
-                    if (newChild == null)
-                    {
-                        newChild = Activator.CreateInstance(propType);
-                        prop.SetValue(newData, newChild);
-                    }
-                    CopyNonDefaultValues(oldValue, newChild);
-                }
-            }
-            else
-            {
-                prop.SetValue(newData, oldValue);
-            }
-        }
 
         return newData;
     }
@@ -261,7 +167,8 @@ public class GetSaveDataResponse : INetworkSerializable
 {
     public EErrorCode Code;
     public string ErrorMessage = "";
-    public Datas SaveData = new();
+    public PlayerContextData PlayerData = new();
+    public CharacterData CharacterData = new();
     public PartyData PartyData = new();
     public FullAbilityBase FullAbility = new();
     public int AbilityPoint;
@@ -271,7 +178,8 @@ public class GetSaveDataResponse : INetworkSerializable
     {
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
-        serializer.SerializeValue(ref SaveData);
+        serializer.SerializeValue(ref PlayerData);
+        serializer.SerializeValue(ref CharacterData);
         serializer.SerializeValue(ref PartyData);
         serializer.SerializeValue(ref FullAbility);
         serializer.SerializeValue(ref AbilityPoint);

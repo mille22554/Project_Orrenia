@@ -3,6 +3,7 @@ using Unity.Netcode;
 
 public class SkillData : INetworkSerializable
 {
+    public long Owner;
     public string Name = "";
     public ESkillID ID;
     public string Description = "";
@@ -17,6 +18,7 @@ public class SkillData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
+        serializer.SerializeValue(ref Owner);
         serializer.SerializeValue(ref Name);
         serializer.SerializeValue(ref ID);
         serializer.SerializeValue(ref Description);

@@ -47,7 +47,7 @@ public class PageCharacter : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                RefreshInfo(response.SaveData.CharacterData, response.AbilityPoint);
+                RefreshInfo(response.CharacterData, response.AbilityPoint);
             }
 
             PanelLoading.Close();

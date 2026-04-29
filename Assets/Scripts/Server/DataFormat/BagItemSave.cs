@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using SQLite;
 
-public class BagItemSave
+public class BagItemSave : IDBTable
 {
     [PrimaryKey, AutoIncrement]
     public long UID { get; set; }
@@ -18,11 +18,11 @@ public class BagItemSave
     public int Durability { get; set; }
     public int Count { get; set; }
 
-    public static BagItemSave Create(long Owner, BagItemData data)
+    public static BagItemSave Create(BagItemData data)
     {
         var saveData = new BagItemSave
         {
-            Owner = Owner,
+            Owner = data.Owner,
             ID = data.ID,
             Quality = data.Quality,
             Materials = JsonConvert.SerializeObject(data.Materials),

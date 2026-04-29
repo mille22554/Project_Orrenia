@@ -1,6 +1,6 @@
 using SQLite;
 
-public class CharaterSave
+public class CharacterSave : IDBTable
 {
     [PrimaryKey]
     public long UID { get; set; }
@@ -14,11 +14,11 @@ public class CharaterSave
     public int CurrentSTA { get; set; }
     public string CurrentTP { get; set; }
 
-    public static CharaterSave Create(long UID, CharacterData data)
+    public static CharacterSave Create(CharacterData data)
     {
-        var saveData = new CharaterSave
+        var saveData = new CharacterSave
         {
-            UID = UID,
+            UID = data.UID,
             Name = data.Name,
             Role = data.Role,
             Level = data.Level,
@@ -32,10 +32,11 @@ public class CharaterSave
         return saveData;
     }
 
-    public static CharacterData GetData(CharaterSave save)
+    public static CharacterData GetData(CharacterSave save)
     {
         var data = new CharacterData
         {
+            UID = save.UID,
             Name = save.Name,
             Role = save.Role,
             Level = save.Level,
@@ -50,7 +51,7 @@ public class CharaterSave
     }
 }
 
-public class CharaterAbilitySave
+public class CharaterAbilitySave : IDBTable
 {
     [PrimaryKey]
     public long UID { get; set; }
@@ -62,11 +63,11 @@ public class CharaterAbilitySave
     public int AGI_Point { get; set; }
     public int LUK_Point { get; set; }
 
-    public static CharaterAbilitySave Create(long UID, AbilityBase data)
+    public static CharaterAbilitySave Create(AbilityBase data)
     {
         var saveData = new CharaterAbilitySave
         {
-            UID = UID,
+            UID = data.UID,
             STR_Point = data.STR_Point,
             DEX_Point = data.DEX_Point,
             INT_Point = data.INT_Point,
@@ -82,6 +83,7 @@ public class CharaterAbilitySave
     {
         var data = new AbilityBase
         {
+            UID = save.UID,
             STR_Point = save.STR_Point,
             DEX_Point = save.DEX_Point,
             INT_Point = save.INT_Point,

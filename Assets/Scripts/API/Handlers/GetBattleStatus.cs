@@ -69,14 +69,15 @@ public partial class APIController
         try
         {
             var account = requestData.Account.ToString();
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+            var characterData = SaveDataCenter.GetCharacterData(account);
+            var playerData = SaveDataCenter.GetPlayerData(account);
+            var partyData = SaveDataCenter.GetPartyData(account);
 
             var responseData = new GetBattleStatusResponse
             {
                 Code = EErrorCode.None,
-                SaveData = GameData_Server.NowPlayers[account].Datas
+                PlayerData = playerData,
+                CharacterData = characterData,
             };
             var enemies = partyData.Enemies;
 
@@ -106,6 +107,7 @@ public partial class APIController
                     }
                 }
 
+                SaveDataCenter.SaveDataToDB(characterData);
                 SaveDataCenter.SaveData(requestData.Account);
             }
 
@@ -140,14 +142,16 @@ public class GetBattleStatusResponse : INetworkSerializable
 {
     public EErrorCode Code;
     public string ErrorMessage = "";
-    public Datas SaveData = new();
+    public PlayerContextData PlayerData = new();
+    public CharacterData CharacterData = new();
     public ActionResult ActionResult = new();
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
-        serializer.SerializeValue(ref SaveData);
+        serializer.SerializeValue(ref PlayerData);
+        serializer.SerializeValue(ref CharacterData);
         serializer.SerializeValue(ref ActionResult);
     }
 }

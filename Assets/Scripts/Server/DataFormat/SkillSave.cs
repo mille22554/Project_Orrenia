@@ -1,13 +1,37 @@
 using SQLite;
 
-public class SkillSave
+public class SkillSave : IDBTable
 {
     [PrimaryKey]
     public long UID { get; set; }
 
     [Indexed]
-    public string Owner { get; set; }
+    public long Owner { get; set; }
 
-    public int ID { get; set; }
+    public ESkillID ID { get; set; }
     public int CurrentCD { get; set; }
+
+    public static SkillSave Create(SkillData data)
+    {
+        var saveData = new SkillSave
+        {
+            Owner = data.Owner,
+            ID = data.ID,
+            CurrentCD = data.CurrentCD
+        };
+
+        return saveData;
+    }
+
+    public static SkillData GetData(SkillSave save)
+    {
+        var data = new SkillData
+        {
+            Owner = save.Owner,
+            ID = save.ID,
+            CurrentCD = save.CurrentCD
+        };
+
+        return data;
+    }
 }

@@ -60,4 +60,5 @@ public enum EErrorCode
     SetTradeAction,
     SetPlayerAbility,
     SetForgeAction,
+    InitDataBase,
 }

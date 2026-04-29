@@ -111,12 +111,12 @@ public static class ItemDataCenter_Server
         return itemKind;
     }
 
-    public static BagItemData GetNewItemByItemID(int id) => GetNewItem(GetItemData(id));
-    public static BagItemData GetNewItem(ItemData source)
+    public static BagItemData GetNewItemByItemID(int id, long owner) => GetNewItem(GetItemData(id), owner);
+    public static BagItemData GetNewItem(ItemData source, long owner)
     {
         var target = new BagItemData
         {
-            UID = Math.Abs(BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0)),
+            Owner = owner,
             ID = source.ID,
             Name = source.Name,
             Kind = source.Kind,

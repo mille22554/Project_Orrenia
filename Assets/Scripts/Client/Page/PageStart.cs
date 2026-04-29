@@ -40,7 +40,7 @@ public class PageStart : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                if (string.IsNullOrEmpty(response.SaveData.CharacterData.Name))
+                if (string.IsNullOrEmpty(response.CharacterData.Name))
                     PageRegister.Create();
                 else
                     MainController.Instance.Login();

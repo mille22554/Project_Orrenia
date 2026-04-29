@@ -66,7 +66,7 @@ public static class MobDataCenter
         }
     }
 
-    public static MobData GetRandomMob(int area, int deep)
+    public static CharacterData GetRandomMob(int area, int deep, long partyUID)
     {
         var level = EnemySetting.GetEnemyLevel(area, deep);
         var mobList = AreaDataCenter.GetAreaData(area).MobList;
@@ -74,41 +74,44 @@ public static class MobDataCenter
         var index = Random.Range(Mathf.Min(deepParam / 100, mobList.Count - 4), Mathf.Min(mobList.Count, deepParam / 100 + 3));
         var mobID = mobList.ElementAtOrDefault(index);
 
-        var mobData = MobData.CreateDefault();
         if (_datas.TryGetValue(mobID, out var mob))
         {
-            mobData.CharacterData.Name = mob.Name;
-            mobData.MobID = mob.ID;
-            mobData.CharacterData.Level = level;
-            mobData.CharacterData.Role = ECharacterRole.Mob;
+            var mobData = MobData.CreateDefault(partyUID, mob.ID);
+            SaveDataCenter.NewDataToDB(MobSave.Create(mobData));
 
-            mobData.CharacterData.Ability.STR_Point += mob.Ability.STR_Point * level;
-            mobData.CharacterData.Ability.DEX_Point += mob.Ability.DEX_Point * level;
-            mobData.CharacterData.Ability.INT_Point += mob.Ability.INT_Point * level;
-            mobData.CharacterData.Ability.VIT_Point += mob.Ability.VIT_Point * level;
-            mobData.CharacterData.Ability.AGI_Point += mob.Ability.AGI_Point * level;
-            mobData.CharacterData.Ability.LUK_Point += mob.Ability.LUK_Point * level;
+            var characterData = CharacterData.CreateDefault(mobData.UID);
+            characterData.Name = mob.Name;
+            characterData.Level = level;
+            characterData.Role = ECharacterRole.Mob;
 
-            CharacterDataCenter.InitCurrentData(mobData.CharacterData);
+            var mobAbility = AbilityBase.CreateDefault(mobData.UID);
+            mobAbility.STR_Point += mob.Ability.STR_Point * level;
+            mobAbility.DEX_Point += mob.Ability.DEX_Point * level;
+            mobAbility.INT_Point += mob.Ability.INT_Point * level;
+            mobAbility.VIT_Point += mob.Ability.VIT_Point * level;
+            mobAbility.AGI_Point += mob.Ability.AGI_Point * level;
+            mobAbility.LUK_Point += mob.Ability.LUK_Point * level;
+            SaveDataCenter.NewDataToDB(CharaterAbilitySave.Create(mobAbility));
 
-            mobData.DropItems = mob.DropItems;
+            CharacterDataCenter.InitCurrentData(characterData);
 
             foreach (var equipID in mob.Equips)
             {
-                var equip = ItemDataCenter_Server.GetNewItemByItemID(equipID);
-                mobData.CharacterData.BagItems.Add(equip);
-                mobData.CharacterData.Equips.Add(equip.UID);
+                var equip = ItemDataCenter_Server.GetNewItemByItemID(equipID, mobData.UID);
+                SaveDataCenter.NewDataToDB(BagItemSave.Create(equip));
+                SaveDataCenter.NewDataToDB(EquipSave.Create(equip));
             }
 
             foreach (var skillID in mob.Skills)
-                mobData.CharacterData.Skills.Add(skillID, SkillDataCenter.GetSkillData(skillID));
+                SaveDataCenter.NewDataToDB(SkillSave.Create(SkillDataCenter.GetSkillData(skillID, mobData.UID)));
+
+            return characterData;
         }
         else
         {
             Debug.LogError("取得怪物資料出錯!");
+            return null;
         }
-
-        return mobData;
     }
 
     public static SkillData SetMobAction(CharacterData mob, int mobID)
@@ -124,27 +127,23 @@ public static class EnemySetting
 {
     const float falloff = 10f; // 權重衰減因子，數值越大，距離中心越遠的數值權重衰減越快
 
-    public static List<MobData> SetEnemy(int area, int deep)
+    public static void SetEnemy(int area, int deep, long partyUID)
     {
-        var enemies = new List<MobData>();
         var enemyIDCounter = new Dictionary<string, int>();
         var enemyNum = GetEnemyNum(deep);
 
         for (int i = 0; i < enemyNum; i++)
         {
-            var mob = MobDataCenter.GetRandomMob(area, deep);
+            var mob = MobDataCenter.GetRandomMob(area, deep, partyUID);
 
-            if (!enemyIDCounter.ContainsKey(mob.CharacterData.Name))
-                enemyIDCounter[mob.CharacterData.Name] = 1;
+            if (!enemyIDCounter.ContainsKey(mob.Name))
+                enemyIDCounter[mob.Name] = 1;
             else
-                enemyIDCounter[mob.CharacterData.Name] += 1;
+                enemyIDCounter[mob.Name] += 1;
 
-            mob.CharacterData.Name += enemyIDCounter[mob.CharacterData.Name];
-
-            enemies.Add(mob);
+            mob.Name += enemyIDCounter[mob.Name];
+            SaveDataCenter.NewDataToDB(CharacterSave.Create(mob));
         }
-
-        return enemies;
     }
 
     static int GetEnemyNum(int deep)

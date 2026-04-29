@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Unity.Netcode;
 
 public class CharacterData : INetworkSerializable
 {
+    public long UID;
     public string Name = "";
     public ECharacterRole Role;
     public int Level;
@@ -12,33 +12,15 @@ public class CharacterData : INetworkSerializable
     public int CurrentMP;
     public int CurrentSTA;
     public decimal CurrentTP;
-    public AbilityBase Ability = new();
-    public List<long> Equips = new();
-    public List<EffectData> Effects = new();
-    public List<BagItemData> BagItems = new();
-    public Dictionary<ESkillID, SkillData> Skills = new();
 
-    public static CharacterData CreateDefault()
+    public static CharacterData CreateDefault(long UID)
     {
         return new CharacterData
         {
+            UID = UID,
             Level = 1,
             CurrentExp = 0,
             CurrentTP = 0,
-
-            Ability = new()
-            {
-                STR_Point = 1,
-                DEX_Point = 1,
-                INT_Point = 1,
-                VIT_Point = 1,
-                AGI_Point = 1,
-                LUK_Point = 1
-            },
-            Equips = new(),
-            Effects = new(),
-            BagItems = new(),
-            Skills = new(),
         };
     }
 
@@ -57,23 +39,32 @@ public class CharacterData : INetworkSerializable
         serializer.SerializeValue(ref CurrentMP);
         serializer.SerializeValue(ref CurrentSTA);
         serializer.SerializeValue(ref CurrentTP);
-        serializer.SerializeValue(ref Ability);
-
-        PublicFunc.SerializeList(serializer, ref Equips);
-        PublicFunc.SerializeClassList(serializer, ref Effects);
-        PublicFunc.SerializeClassList(serializer, ref BagItems);
-        PublicFunc.SerializeEnum_ClassDictionary(serializer, ref Skills);
     }
 }
 
 public class AbilityBase : INetworkSerializable
 {
+    public long UID;
     public int STR_Point;
     public int DEX_Point;
     public int INT_Point;
     public int VIT_Point;
     public int AGI_Point;
     public int LUK_Point;
+
+    public static AbilityBase CreateDefault(long UID)
+    {
+        return new AbilityBase
+        {
+            UID = UID,
+            STR_Point = 1,
+            DEX_Point = 1,
+            INT_Point = 1,
+            VIT_Point = 1,
+            AGI_Point = 1,
+            LUK_Point = 1,
+        };
+    }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {

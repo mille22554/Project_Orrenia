@@ -1,11 +1,11 @@
 using SQLite;
 
-public class PlayerSave
+public class PlayerSave : IDBTable
 {
     [PrimaryKey, AutoIncrement]
     public long UID { get; set; }
 
-    [Indexed]
+    [Indexed(Unique = true)]
     public string Account { get; set; }
     [Indexed]
     public long PartyUID { get; set; }

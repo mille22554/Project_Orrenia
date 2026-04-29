@@ -54,7 +54,7 @@ public class PanelShop : MonoBehaviour
                 if (response.Code == 0)
                 {
                     ResetBagInfo();
-                    _gold.text = response.SaveData.PlayerData.Gold.ToString();
+                    _gold.text = response.PlayerData.Gold.ToString();
                     _btnShop.gameObject.SetActive(true);
                     _toggleSell.isOn = true;
                     _toggleBuy.isOn = true;
@@ -105,7 +105,7 @@ public class PanelShop : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                foreach (var itemInfo in response.SaveData.CharacterData.BagItems)
+                foreach (var itemInfo in response.CharacterData.BagItems)
                 {
                     var item = ObjectPool.Get(_shopItem, _itemList.content);
                     item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);

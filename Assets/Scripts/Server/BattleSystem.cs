@@ -12,10 +12,13 @@ public static class BattleSystem
     {
         _lastActor = null;
 
-        foreach (var member in partyData.Members)
-            GameData_Server.GetCharacterData(member).CurrentTP = 0;
+        foreach (var member in SaveDataCenter.GetPartyMembers(partyData.UID))
+        {
+            member.CurrentTP = 0;
+            SaveDataCenter.SaveDataToDB(CharacterSave.Create(member));
+        }
 
-        partyData.Enemies = EnemySetting.SetEnemy(partyData.Area, partyData.Deep);
+        EnemySetting.SetEnemy(partyData.Area, partyData.Deep, partyData.UID);
     }
 
     public static BattleData CreateBattleData(CharacterData characterData)
@@ -52,20 +55,14 @@ public static class BattleSystem
     //用decimal算是因為double會有誤差，會卡在9999.99999999多
     public static (CharacterData characterData, int mobID) RunSpeedProcess(PartyData partyData)
     {
-        var enemies = partyData.Enemies;
+        var enemies = SaveDataCenter.GetMobs(partyData.UID);
         var units = new Dictionary<BattleData, CharacterData>();
 
-        foreach (var member in partyData.Members)
-        {
-            var characterData = GameData_Server.GetCharacterData(member);
-            units.Add(CreateBattleData(characterData), characterData);
-        }
+        foreach (var member in SaveDataCenter.GetPartyMembers(partyData.UID))
+            units.Add(CreateBattleData(member), member);
 
-        foreach (var mob in enemies)
-        {
-            var characterData = mob.CharacterData;
-            units.Add(CreateBattleData(characterData), characterData);
-        }
+        foreach (var mob in SaveDataCenter.GetPartyEnemies(partyData.UID))
+            units.Add(CreateBattleData(mob), mob);
 
         BattleData next = null;
         var minTime = decimal.MaxValue;
@@ -91,8 +88,8 @@ public static class BattleSystem
             unit.Value.CurrentTP = unit.Value.CurrentTP + unit.Key.SPD * minTime;
         }
 
-        var actMob = enemies.Find(x => x.CharacterData.Name == units[next].Name);
-        var mobID = actMob != null ? actMob.MobID : -1;
+        var actMob = enemies.Find(x => x.UID == units[next].UID);
+        var mobID = actMob != null ? actMob.ID : -1;
 
         return (units[next], mobID);
     }
@@ -110,21 +107,25 @@ public static class BattleSystem
         {
             case ECharacterRole.Player:
                 {
-                    var skillList = nowActor.Skills.Values
+                    var skillList = SaveDataCenter.GetSkills(nowActor.UID)
                         .Where(x => SkillWeaponCheck(nowActor, x))
                         .ToList();
 
                     var skill = skillList.ElementAtOrDefault(Random.Range(0, skillList.Count));
 
-                    if (nowActor.Effects.Find(x => x.ID == EEffectID.Berserk) != null)
+                    if (SaveDataCenter.GetEffects(nowActor.UID).Any(x => x.ID == EEffectID.Berserk))
                     {
                         if (debugSwitch && skill != null)
                             Debug.Log($"施放技能: {skill.Name}");
 
-                        RunBattle(nowActor, new() { partyData.Enemies.FirstOrDefault().CharacterData }, skill, actionResult.BattleResult);
+                        var mob = SaveDataCenter.GetPartyEnemies(partyData.UID).FirstOrDefault();
+                        var target = SaveDataCenter.GetCharacterData(mob.UID);
+                        RunBattle(nowActor, new() { target }, skill, actionResult.BattleResult);
                         var effectResult = CharacterDataCenter.ActionEndProcess(nowActor);
                         if (effectResult.Infos.Count > 0)
                             actionResult.EffectResult.Results.Add(effectResult);
+
+
                     }
                 }
                 break;
@@ -137,7 +138,8 @@ public static class BattleSystem
 
                     if (skill == null)
                     {
-                        var target = GameData_Server.GetCharacterData(partyData.Members[Random.Range(0, partyData.Members.Count)]);
+                        var members = SaveDataCenter.GetPartyMembers(partyData.UID);
+                        var target = members[Random.Range(0, members.Count)];
                         RunBattle(nowActor, new() { target }, skill, actionResult.BattleResult);
                     }
                     else
@@ -146,7 +148,8 @@ public static class BattleSystem
                         {
                             case ESkillType.SinglePhysicsAttack:
                             case ESkillType.SingleMagicAttack:
-                                var target = GameData_Server.GetCharacterData(partyData.Members[Random.Range(0, partyData.Members.Count)]);
+                                var members = SaveDataCenter.GetPartyMembers(partyData.UID);
+                                var target = members[Random.Range(0, members.Count)];
                                 RunBattle(nowActor, new() { target }, skill, actionResult.BattleResult);
                                 break;
                             case ESkillType.SingleBuff:
@@ -176,12 +179,11 @@ public static class BattleSystem
         var isWeaponTypeError = true;
         var weaponType = EItemKind.None;
 
-        foreach (var equip in characterData.Equips)
+        foreach (var equip in SaveDataCenter.GetEquips(characterData.UID))
         {
-            var item = characterData.BagItems.Find(x => x.UID == equip);
-            if (item != null && ItemDataCenter_Server.IsWeapon(item.Kind))
+            if (ItemDataCenter_Server.IsWeapon(equip.Kind))
             {
-                weaponType = item.Kind;
+                weaponType = equip.Kind;
                 foreach (var type in skillData.WeaponType)
                 {
                     if (weaponType == type)
@@ -207,7 +209,7 @@ public static class BattleSystem
     {
         actor.CurrentTP -= GameData_Server.tpCost;
 
-        var incapacitatedEffect = actor.Effects.Find(x => x.ID == EEffectID.Stun);
+        var incapacitatedEffect = SaveDataCenter.GetEffects(actor.UID).Find(x => x.ID == EEffectID.Stun);
         if (incapacitatedEffect != null)
         {
             battleResult.IsAttakerIncapacitated = true;
@@ -237,7 +239,9 @@ public static class BattleSystem
             {
                 RefreshCharacterData(defender, target);
                 defenders.Remove(defender);
-                target.Effects.Clear();
+
+                foreach (var effect in SaveDataCenter.GetEffects(target.UID))
+                    SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
             }
         }
 
@@ -345,7 +349,7 @@ public static class BattleSystem
             }
             else
             {
-                result.BattleDamage = (decimal)(attackValue - defenceValue);
+                result.BattleDamage = attackValue - defenceValue;
                 if (result.BattleDamage <= 0)
                     result.BattleDamage = 1;
 
@@ -415,6 +419,8 @@ public static class BattleSystem
     {
         characterData.CurrentHP = (int)battleData.HP;
         characterData.CurrentMP = battleData.MP;
+
+        SaveDataCenter.SaveDataToDB(characterData);
     }
 
     static bool LuckyEventCheck(BattleData actor, BattleData target, BattleResult.Result result)

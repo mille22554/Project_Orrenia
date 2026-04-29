@@ -140,7 +140,7 @@ public class PageForge : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                InitPage(response.SaveData.CharacterData.BagItems);
+                InitPage(response.CharacterData.BagItems);
             }
 
             PanelLoading.Close();

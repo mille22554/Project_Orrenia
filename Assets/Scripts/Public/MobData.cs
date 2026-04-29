@@ -3,16 +3,18 @@ using Unity.Netcode;
 
 public class MobData : INetworkSerializable
 {
-    public int MobID;
-    public CharacterData CharacterData = new();
-    public List<DropItem> DropItems = new();
+    public long UID;
+    public long PartyUID;
+    public int ID;
+    // public List<DropItem> DropItems = new();
 
-    public static MobData CreateDefault()
+    public static MobData CreateDefault(long partyUID, int ID)
     {
         var data = new MobData
         {
-            CharacterData = CharacterData.CreateDefault(),
-            DropItems = new(),
+            PartyUID = partyUID,
+            ID = ID,
+            // DropItems = new(),
         };
 
         return data;
@@ -20,10 +22,11 @@ public class MobData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref MobID);
-        serializer.SerializeValue(ref CharacterData);
+        serializer.SerializeValue(ref UID);
+        serializer.SerializeValue(ref PartyUID);
+        serializer.SerializeValue(ref ID);
 
-        PublicFunc.SerializeClassList(serializer, ref DropItems);
+        // PublicFunc.SerializeClassList(serializer, ref DropItems);
     }
 }
 

@@ -3,6 +3,7 @@ using Unity.Netcode;
 
 public class EffectData : INetworkSerializable
 {
+    public long Owner;
     public string Name = "";
     public EEffectID ID;
     public List<ParamFormat> Value;
@@ -10,6 +11,7 @@ public class EffectData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
+        serializer.SerializeValue(ref Owner);
         serializer.SerializeValue(ref Name);
         serializer.SerializeValue(ref ID);
         serializer.SerializeValue(ref Times);
