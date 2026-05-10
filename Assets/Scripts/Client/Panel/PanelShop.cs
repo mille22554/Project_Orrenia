@@ -43,13 +43,13 @@ public class PanelShop : MonoBehaviour
         else
         {
             PanelLoading.Create(PanelLoading.BGType.None);
-            var requestData = new GetSaveDataRequest
+            var requestData = new GetBagInfoRequest
             {
-                Account = DataCenter.Account,
+                UID = DataCenter.UID,
             };
             APIController.Ins.Send(requestData, CallBack);
 
-            void CallBack(GetSaveDataResponse response)
+            void CallBack(GetBagInfoResponse response)
             {
                 if (response.Code == 0)
                 {
@@ -95,17 +95,17 @@ public class PanelShop : MonoBehaviour
         ClearList();
 
         PanelLoading.Create(PanelLoading.BGType.None);
-        var requestData = new GetSaveDataRequest
+        var requestData = new GetBagInfoRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(GetBagInfoResponse response)
         {
             if (response.Code == 0)
             {
-                foreach (var itemInfo in response.CharacterData.BagItems)
+                foreach (var itemInfo in response.BagItems)
                 {
                     var item = ObjectPool.Get(_shopItem, _itemList.content);
                     item.SetInfo(itemInfo, _toggleItems, RefreshBagInfo);
@@ -126,11 +126,11 @@ public class PanelShop : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetTradeActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             TradeActionType = _toggleBuy.isOn ? ETradeActionType.Buy : ETradeActionType.Sell,
             ItemID = _selectedShopItem.Info.ID,
             TradeNum = itemNum,
-            SelledItemUID = _selectedShopItem.BagItemUID
+            SealedItemUID = _selectedShopItem.BagItemUID
         };
         APIController.Ins.Send(requestData, CallBack);
 
@@ -143,7 +143,7 @@ public class PanelShop : MonoBehaviour
 
                 if (_toggleSell.isOn)
                 {
-                    if (response.SelledItemSurplus == 0)
+                    if (response.SealedItemSurplus == 0)
                     {
                         _shopItemList.Remove(_selectedShopItem);
                         _selectedShopItem.Remove();
@@ -151,7 +151,7 @@ public class PanelShop : MonoBehaviour
                     }
                     else
                     {
-                        _selectedShopItem.UpdateItemCount(response.SelledItemSurplus);
+                        _selectedShopItem.UpdateItemCount(response.SealedItemSurplus);
                     }
                 }
             }

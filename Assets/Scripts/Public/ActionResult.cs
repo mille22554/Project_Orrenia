@@ -24,7 +24,7 @@ public class BattleResult : INetworkSerializable
     public List<string> DropItems = new();
     public bool IsSkill;
     public string SkillName = "";
-    public bool IsAttakerIncapacitated;
+    public bool IsAttackerIncapacitated;
     public string IncapacitatedEffect = "";
     public Dictionary<string, List<string>> NewEffects = new();
 
@@ -34,7 +34,7 @@ public class BattleResult : INetworkSerializable
         serializer.SerializeValue(ref IsAttackerDead);
         serializer.SerializeValue(ref IsSkill);
         serializer.SerializeValue(ref SkillName);
-        serializer.SerializeValue(ref IsAttakerIncapacitated);
+        serializer.SerializeValue(ref IsAttackerIncapacitated);
         serializer.SerializeValue(ref IncapacitatedEffect);
 
         PublicFunc.SerializeClassList(serializer, ref Results);

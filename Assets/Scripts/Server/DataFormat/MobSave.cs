@@ -13,6 +13,7 @@ public class MobSave : IDBTable
     {
         var saveData = new MobSave
         {
+            UID = data.UID,
             PartyUID = data.PartyUID,
             ID = data.ID,
         };

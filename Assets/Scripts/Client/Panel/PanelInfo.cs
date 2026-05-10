@@ -19,21 +19,9 @@ public class PanelInfo : MonoBehaviour
         return ObjectPool.Get(Resources.Load<GameObject>(resourcePath).GetComponent<PanelInfo>(), MainController.Instance.InfoContent);
     }
 
-    void OnEnable()
+    void Awake()
     {
-        RefreshInfo();
-    }
-
-    void RefreshInfo()
-    {
-        PanelLoading.Create(PanelLoading.BGType.None);
-        var requestData = new GetSaveDataRequest
-        {
-            Account = DataCenter.Account,
-        };
-        APIController.Ins.Send(requestData, CallBack);
-
-        void CallBack(GetSaveDataResponse response)
+        APIController.AddListener<GetPlayerInfoResponse>(this, response =>
         {
             if (response.Code == 0)
             {
@@ -43,7 +31,25 @@ public class PanelInfo : MonoBehaviour
                 var data = RefreshInfoData.Create(response);
                 RefreshInfo(data);
             }
+        });
+    }
 
+    void OnEnable()
+    {
+        RefreshInfo();
+    }
+
+    void RefreshInfo()
+    {
+        PanelLoading.Create(PanelLoading.BGType.None);
+        var requestData = new GetPlayerInfoRequest
+        {
+            UID = DataCenter.UID,
+        };
+        APIController.Ins.Send(requestData, CallBack);
+
+        void CallBack(GetPlayerInfoResponse response)
+        {
             PanelLoading.Close();
         }
     }
@@ -85,7 +91,7 @@ public class RefreshInfoData
     public int PlayerCurrentExp;
     public int PlayerExp;
 
-    public static RefreshInfoData Create(GetSaveDataResponse response)
+    public static RefreshInfoData Create(GetPlayerInfoResponse response)
     {
         var characterData = response.CharacterData;
         var fullAbility = response.FullAbility;

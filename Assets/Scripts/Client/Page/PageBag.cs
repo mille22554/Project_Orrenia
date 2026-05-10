@@ -24,7 +24,7 @@ public class PageBag : MonoBehaviour
     ToggleGroup toggleItems;
     readonly List<BagItem> bagItems = new();
     BagItem selectedBagItem;
-    List<long> equips;
+    List<BagItemData> equips;
 
     public static void Create()
     {
@@ -58,27 +58,25 @@ public class PageBag : MonoBehaviour
     void OnEnable()
     {
         PanelLoading.Create(PanelLoading.BGType.Full);
-        var requestData = new GetSaveDataRequest
+        var requestData = new GetBagInfoRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(GetBagInfoResponse response)
         {
             if (response.Code == 0)
             {
-                var characterData = response.CharacterData;
-
                 ResetBagInfo();
                 btnUse.gameObject.SetActive(false);
                 gold.text = response.PlayerData.Gold.ToString();
-                equips = characterData.Equips;
+                equips = response.Equips;
 
-                foreach (var itemInfo in characterData.BagItems)
+                foreach (var itemInfo in response.BagItems)
                 {
                     var item = ObjectPool.Get(bagItem, itemList.content);
-                    item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, equips.Contains(itemInfo.UID));
+                    item.SetInfo(itemInfo, toggleItems, RefreshBagInfo, equips.Any(equip => equip.UID == itemInfo.UID));
                     bagItems.Add(item);
 
                     var itemKind = DataCenter.GetItemKind(item.Info.Kind);
@@ -109,9 +107,9 @@ public class PageBag : MonoBehaviour
         ResetBagInfo();
         foreach (var item in bagItems)
         {
-            PublicFunc.DoActionAccordingToCategory
+            DataCenter.DoActionAccordingToCategory
             (
-                DataCenter.GetItemKind(item.Info.Kind).Category,
+                item.Info.Kind,
                 EquipCallBack,
                 OtherCallBack,
                 OtherCallBack
@@ -127,9 +125,9 @@ public class PageBag : MonoBehaviour
         ResetBagInfo();
         foreach (var item in bagItems)
         {
-            PublicFunc.DoActionAccordingToCategory
+            DataCenter.DoActionAccordingToCategory
             (
-                DataCenter.GetItemKind(item.Info.Kind).Category,
+                item.Info.Kind,
                 OtherCallBack,
                 UseCallBack,
                 OtherCallBack
@@ -145,9 +143,9 @@ public class PageBag : MonoBehaviour
         ResetBagInfo();
         foreach (var item in bagItems)
         {
-            PublicFunc.DoActionAccordingToCategory
+            DataCenter.DoActionAccordingToCategory
             (
-                DataCenter.GetItemKind(item.Info.Kind).Category,
+                item.Info.Kind,
                 OtherCallBack,
                 OtherCallBack,
                 MaterialCallBack
@@ -164,20 +162,21 @@ public class PageBag : MonoBehaviour
         {
             selectedBagItem = item;
 
-            var itemKind = DataCenter.GetItemKind(item.Info.Kind);
+            var itemData = DataCenter.GetItemData(item.Info.ID);
+            var itemKind = DataCenter.GetItemKind(itemData.Kind);
             var itemQuality = DataCenter.GetQualityData(item.Info.Quality);
 
-            itemName.text = itemQuality.Name + item.Info.Name;
+            itemName.text = itemQuality.Name + itemData.Name;
             itemName.color = PublicFunc.SetColorFromHex(itemQuality.Color);
 
             type.text = itemKind.Name;
-            description.text = item.Info.Description;
+            description.text = itemData.Description;
 
-            PublicFunc.DoActionAccordingToCategory(itemKind.Category, EquipCallBack, UseCallBack, MaterialCallBack);
+            DataCenter.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, UseCallBack, MaterialCallBack);
 
             void EquipCallBack()
             {
-                if (equips.Contains(item.Info.UID))
+                if (equips.Any(equip => equip.UID == item.Info.UID))
                     textUse.text = "卸下";
                 else
                     textUse.text = "裝備";
@@ -223,8 +222,9 @@ public class PageBag : MonoBehaviour
             PanelLoading.Create(PanelLoading.BGType.None);
             var requestData = new SetItemActionRequest
             {
-                Account = DataCenter.Account,
-                BagItemData = selectedBagItem.Info
+                UID = DataCenter.UID,
+                ItemUID = selectedBagItem.Info.UID
+                // BagItemData = selectedBagItem.Info
             };
             APIController.Ins.Send(requestData, CallBack);
 
@@ -232,7 +232,7 @@ public class PageBag : MonoBehaviour
             {
                 if (response.Code == 0)
                 {
-                    equips = response.CharacterData.Equips;
+                    equips = response.Equips;
                     PublicFunc.DoActionAccordingToCategory(response.ItemCategory, EquipCallBack, UseCallBack, null);
 
                     if (response.Enemies.Count > 0)
@@ -251,11 +251,11 @@ public class PageBag : MonoBehaviour
                         }
                         else
                         {
-                            if (response.UnEquiped.Count > 0)
+                            if (response.UnEquipped.Count > 0)
                             {
-                                foreach (var unEquiped in response.UnEquiped)
+                                foreach (var unEquipped in response.UnEquipped)
                                 {
-                                    var existingItem = bagItems.Find(x => x.Info.UID == unEquiped.UID);
+                                    var existingItem = bagItems.Find(x => x.Info.UID == unEquipped.UID);
 
                                     if (existingItem != null)
                                         existingItem.IconEquip.SetActive(false);
@@ -280,7 +280,7 @@ public class PageBag : MonoBehaviour
             PanelLoading.Create(PanelLoading.BGType.None);
             var requestData = new GetBattleStatusRequest
             {
-                Account = DataCenter.Account,
+                UID = DataCenter.UID,
             };
             APIController.Ins.Send(requestData, CallBack);
 
@@ -288,15 +288,14 @@ public class PageBag : MonoBehaviour
             {
                 if (response.Code == 0)
                 {
-                    var datas = response.SaveData;
                     var battleResult = response.ActionResult.BattleResult;
 
                     if (battleResult != null)
                     {
-                        if (battleResult.IsAttackerDead && datas.CharacterData.Name == battleResult.Attacker ||
-                            battleResult.Results.Any(x => x.IsDefenderDead && datas.CharacterData.Name == x.Defenderer))
+                        if (battleResult.IsAttackerDead && response.CharacterData.Name == battleResult.Attacker ||
+                            battleResult.Results.Any(x => x.IsDefenderDead && response.CharacterData.Name == x.Defenderer))
                         {
-                            // LeaveDungon(datas.PlayerData.Area, datas.CharacterData);
+                            // LeaveDungeon(response.PlayerData.Area, response.CharacterData);
                         }
                         else
                         {
@@ -304,7 +303,7 @@ public class PageBag : MonoBehaviour
                         }
                     }
 
-                    MainController.Instance.RefreshUI(datas.CharacterData);
+                    MainController.Instance.RefreshUI(response.CharacterData);
                 }
 
                 PanelLoading.Close();

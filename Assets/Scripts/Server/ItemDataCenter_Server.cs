@@ -137,25 +137,27 @@ public static class ItemDataCenter_Server
 
     public static FullAbilityBase FinalAbilityProcess(BagItemData itemData)
     {
+        var data = GetItemData(itemData.ID);
+
         var final = new FullAbilityBase
         {
-            STR = itemData.Ability.STR,
-            DEX = itemData.Ability.DEX,
-            INT = itemData.Ability.INT,
-            VIT = itemData.Ability.VIT,
-            AGI = itemData.Ability.AGI,
-            LUK = itemData.Ability.LUK,
-            HP = itemData.Ability.HP,
-            MP = itemData.Ability.MP,
-            STA = itemData.Ability.STA,
-            ATK = itemData.Ability.ATK,
-            MATK = itemData.Ability.MATK,
-            DEF = itemData.Ability.DEF,
-            MDEF = itemData.Ability.MDEF,
-            ACC = itemData.Ability.ACC,
-            EVA = itemData.Ability.EVA,
-            CRIT = itemData.Ability.CRIT,
-            SPD = itemData.Ability.SPD,
+            STR = data.Ability.STR,
+            DEX = data.Ability.DEX,
+            INT = data.Ability.INT,
+            VIT = data.Ability.VIT,
+            AGI = data.Ability.AGI,
+            LUK = data.Ability.LUK,
+            HP = data.Ability.HP,
+            MP = data.Ability.MP,
+            STA = data.Ability.STA,
+            ATK = data.Ability.ATK,
+            MATK = data.Ability.MATK,
+            DEF = data.Ability.DEF,
+            MDEF = data.Ability.MDEF,
+            ACC = data.Ability.ACC,
+            EVA = data.Ability.EVA,
+            CRIT = data.Ability.CRIT,
+            SPD = data.Ability.SPD,
         };
 
         var nameRandom = new System.Random(itemData.Seed);

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
@@ -98,46 +99,50 @@ public class PanelLog : MonoBehaviour
         if (isOn)
         {
             PanelLoading.Create(PanelLoading.BGType.None);
-            var requestData = new GetSaveDataRequest
+            var requestData = new GetPartyEffectsRequest
             {
-                Account = DataCenter.Account,
+                UID = DataCenter.UID,
             };
             APIController.Ins.Send(requestData, CallBack);
 
-            void CallBack(GetSaveDataResponse response)
+            void CallBack(GetPartyEffectsResponse response)
             {
                 if (response.Code == 0)
                 {
-                    var characterData = response.CharacterData;
-                    var enemies = response.PartyData.Enemies;
+                    var members = response.Members;
+                    var enemies = response.Enemies;
+                    var effects = response.Effects;
 
                     Text textLog;
-                    if (characterData.Effects.Count > 0)
+                    foreach (var member in members)
                     {
-                        textLog = ObjectPool.Get(itemLog, effectContent);
-                        itemEffectLogs.Add(textLog);
-                        textLog.text = $"{characterData.Name}:";
-                        textLog.color = Color.white;
-
-                        foreach (var effect in characterData.Effects)
+                        if (effects.Count > 0)
                         {
                             textLog = ObjectPool.Get(itemLog, effectContent);
                             itemEffectLogs.Add(textLog);
-                            textLog.text = $"{effect.Name}－{effect.Times}回合";
+                            textLog.text = $"{member.Name}:";
                             textLog.color = Color.white;
+
+                            foreach (var effect in effects.Where(x => x.Owner == member.UID))
+                            {
+                                textLog = ObjectPool.Get(itemLog, effectContent);
+                                itemEffectLogs.Add(textLog);
+                                textLog.text = $"{effect.Name}－{effect.Times}回合";
+                                textLog.color = Color.white;
+                            }
                         }
                     }
 
                     foreach (var enemy in enemies)
                     {
-                        if (enemy.CharacterData.Effects.Count > 0)
+                        if (effects.Count > 0)
                         {
                             textLog = ObjectPool.Get(itemLog, effectContent);
                             itemEffectLogs.Add(textLog);
-                            textLog.text = $"{enemy.CharacterData.Name}:";
+                            textLog.text = $"{enemy.Name}:";
                             textLog.color = Color.white;
 
-                            foreach (var effect in enemy.CharacterData.Effects)
+                            foreach (var effect in effects.Where(x => x.Owner == enemy.UID))
                             {
                                 textLog = ObjectPool.Get(itemLog, effectContent);
                                 itemEffectLogs.Add(textLog);

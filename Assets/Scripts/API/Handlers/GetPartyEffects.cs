@@ -12,41 +12,41 @@ public partial class APIController
 {
     #region Client
 
-    public void Send(SetPlayerNameRequest requestData) => Send(requestData, null);
-    public void Send(SetPlayerNameRequest requestData, Action<SetPlayerNameResponse> callback)
+    public void Send(GetPartyEffectsRequest requestData) => Send(requestData, null);
+    public void Send(GetPartyEffectsRequest requestData, Action<GetPartyEffectsResponse> callback)
     {
         Debug.Log($"送: {JsonConvert.SerializeObject(requestData)}");
-        _all_OnceListeners[typeof(SetPlayerNameResponse)] = callback;
+        _all_OnceListeners[typeof(GetPartyEffectsResponse)] = callback;
         ExecuteCommandServerRpc(requestData);
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
-    void ReturnResponseClientRpc(SetPlayerNameResponse responseData, RpcParams rpcParams = default)
+    void ReturnResponseClientRpc(GetPartyEffectsResponse responseData, RpcParams rpcParams = default)
     {
         // 這段就會回到 Client 端執行了
         Debug.Log($"收: {JsonConvert.SerializeObject(responseData)}");
 
-        if (_allListeners.TryGetValue(typeof(SetPlayerNameResponse), out var callbacks))
+        if (_allListeners.TryGetValue(typeof(GetPartyEffectsResponse), out var callbacks))
         {
             // 從後往前跑，方便在迴圈中直接刪除已失效的物件
             for (int i = callbacks.Count - 1; i >= 0; i--)
             {
                 if (callbacks[i].IsValid)
-                    ((Action<SetPlayerNameResponse>)callbacks[i].Callback).Invoke(responseData);
+                    ((Action<GetPartyEffectsResponse>)callbacks[i].Callback).Invoke(responseData);
                 else
                     callbacks.RemoveAt(i); // 自動清理已銷毀的物件
             }
         }
 
-        ((Action<SetPlayerNameResponse>)_all_OnceListeners[typeof(SetPlayerNameResponse)])?.Invoke(responseData);
-        _all_OnceListeners[typeof(SetPlayerNameResponse)] = null;
+        ((Action<GetPartyEffectsResponse>)_all_OnceListeners[typeof(GetPartyEffectsResponse)])?.Invoke(responseData);
+        _all_OnceListeners[typeof(GetPartyEffectsResponse)] = null;
     }
     #endregion
 
     #region Server
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    void ExecuteCommandServerRpc(SetPlayerNameRequest requestData, RpcParams rpcParams = default)
+    void ExecuteCommandServerRpc(GetPartyEffectsRequest requestData, RpcParams rpcParams = default)
     {
         var clientId = rpcParams.Receive.SenderClientId;
         // Debug.Log(clientId);
@@ -63,20 +63,29 @@ public partial class APIController
         ReturnResponseClientRpc(Main(requestData), returnParams);
     }
 
-    SetPlayerNameResponse Main(SetPlayerNameRequest requestData)
+    GetPartyEffectsResponse Main(GetPartyEffectsRequest requestData)
     {
         try
         {
             var uid = requestData.UID;
-            var characterData = SaveDataCenter.GetCharacterData(uid);
+            var playerData = SaveDataCenter.GetPlayerData(uid);
+            var members = SaveDataCenter.GetPartyMembers(playerData.PartyUID);
+            var enemies = SaveDataCenter.GetPartyEnemies(playerData.PartyUID);
 
-            characterData.Name = requestData.PlayerName;
+            var effects = new List<EffectData>();
+            foreach (var member in members)
+                effects.AddRange(SaveDataCenter.GetEffects(member.UID));
 
-            SaveDataCenter.SaveDataToDB(CharacterSave.Create(characterData));
+            foreach (var enemy in enemies)
+                effects.AddRange(SaveDataCenter.GetEffects(enemy.UID));
 
-            var responseData = new SetPlayerNameResponse
+
+            var responseData = new GetPartyEffectsResponse
             {
                 Code = EErrorCode.None,
+                Members = members,
+                Enemies = enemies,
+                Effects = effects
             };
             return responseData;
         }
@@ -84,9 +93,9 @@ public partial class APIController
         {
             var errorMessage = $"設定玩家名稱時發生錯誤: {ex.Message}, {ex.StackTrace}";
             Debug.LogError(errorMessage);
-            var responseData = new SetPlayerNameResponse
+            var responseData = new GetPartyEffectsResponse
             {
-                Code = EErrorCode.SetPlayerName,
+                Code = EErrorCode.GetPartyEffects,
                 ErrorMessage = errorMessage
             };
             return responseData;
@@ -95,26 +104,31 @@ public partial class APIController
     #endregion
 }
 
-public class SetPlayerNameRequest : INetworkSerializable
+public class GetPartyEffectsRequest : INetworkSerializable
 {
     public long UID;
-    public string PlayerName = "";
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref UID);
-        serializer.SerializeValue(ref PlayerName);
     }
 }
 
-public class SetPlayerNameResponse : INetworkSerializable
+public class GetPartyEffectsResponse : INetworkSerializable
 {
     public EErrorCode Code;
     public string ErrorMessage = "";
+    public List<CharacterData> Members = new();
+    public List<CharacterData> Enemies = new();
+    public List<EffectData> Effects = new();
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
+
+        PublicFunc.SerializeClassList(serializer, ref Members);
+        PublicFunc.SerializeClassList(serializer, ref Enemies);
+        PublicFunc.SerializeClassList(serializer, ref Effects);
     }
 }

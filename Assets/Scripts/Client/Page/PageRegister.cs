@@ -23,13 +23,14 @@ public class PageRegister : MonoBehaviour
         if (string.IsNullOrEmpty(inputUsername.text))
         {
             Debug.LogWarning("Username cannot be empty");
+            ItemToastMessage.Create("暱稱不可為空");
             return;
         }
 
         PanelLoading.Create(PanelLoading.BGType.Full);
         var requestData = new SetPlayerNameRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             PlayerName = inputUsername.text,
         };
         APIController.Ins.Send(requestData, CallBack);

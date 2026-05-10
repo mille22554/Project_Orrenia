@@ -51,7 +51,7 @@ public class CharacterSave : IDBTable
     }
 }
 
-public class CharaterAbilitySave : IDBTable
+public class CharacterAbilitySave : IDBTable
 {
     [PrimaryKey]
     public long UID { get; set; }
@@ -63,9 +63,9 @@ public class CharaterAbilitySave : IDBTable
     public int AGI_Point { get; set; }
     public int LUK_Point { get; set; }
 
-    public static CharaterAbilitySave Create(AbilityBase data)
+    public static CharacterAbilitySave Create(AbilityBase data)
     {
-        var saveData = new CharaterAbilitySave
+        var saveData = new CharacterAbilitySave
         {
             UID = data.UID,
             STR_Point = data.STR_Point,
@@ -79,7 +79,7 @@ public class CharaterAbilitySave : IDBTable
         return saveData;
     }
 
-    public static AbilityBase GetData(CharaterAbilitySave save)
+    public static AbilityBase GetData(CharacterAbilitySave save)
     {
         var data = new AbilityBase
         {

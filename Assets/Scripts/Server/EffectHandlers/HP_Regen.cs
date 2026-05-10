@@ -24,8 +24,12 @@ public class HP_Regen : IEffectHandler
 
         if (effectData.Times == 0)
         {
-            characterData.Effects.Remove(effectData);
+            SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effectData));
             info.IsTimeUp = true;
+        }
+        else
+        {
+            SaveDataCenter.SaveDataToDB(EffectSave.Create(effectData));
         }
     }
 }

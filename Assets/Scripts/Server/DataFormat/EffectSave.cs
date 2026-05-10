@@ -18,6 +18,7 @@ public class EffectSave : IDBTable
     {
         var saveData = new EffectSave
         {
+            UID = data.UID,
             Owner = data.Owner,
             ID = data.ID,
             Value = JsonConvert.SerializeObject(data.Value),
@@ -31,6 +32,7 @@ public class EffectSave : IDBTable
     {
         var data = new EffectData
         {
+            UID = save.UID,
             Owner = save.Owner,
             ID = save.ID,
             Value = JsonConvert.DeserializeObject<List<ParamFormat>>(save.Value),

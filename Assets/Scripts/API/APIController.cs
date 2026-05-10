@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,8 +8,8 @@ public partial class APIController : NetworkBehaviour
 {
     public static APIController Ins { get; private set; }
 
-    readonly Dictionary<Type, List<CallbackWrapper>> _allListeners = new();
-    readonly Dictionary<Type, object> _all_OnceListeners = new();
+    readonly static Dictionary<Type, List<CallbackWrapper>> _allListeners = new();
+    readonly static Dictionary<Type, object> _all_OnceListeners = new();
 
     void Awake()
     {
@@ -16,7 +17,7 @@ public partial class APIController : NetworkBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void AddListener<T>(MonoBehaviour owner, Action<T> callback)
+    public static void AddListener<T>(MonoBehaviour owner, Action<T> callback)
     {
         var type = typeof(T);
         if (!_allListeners.ContainsKey(type)) _allListeners[type] = new List<CallbackWrapper>();
@@ -29,12 +30,13 @@ public partial class APIController : NetworkBehaviour
         partyData.Area = 1;
         partyData.Deep = 0;
 
-        partyData.Enemies.Clear();
+        foreach (var mob in SaveDataCenter.GetMobs(partyData.UID))
+            SaveDataCenter.RemoveMob(mob.UID);
 
-        foreach (var member in partyData.Members)
+        foreach (var member in SaveDataCenter.GetPartyMembers(partyData.UID))
         {
-            var characterData = GameData_Server.GetCharacterData(member);
-            CharacterDataCenter.InitCurrentData(characterData);
+            CharacterDataCenter.InitCurrentData(member);
+            SaveDataCenter.SaveDataToDB(CharacterSave.Create(member));
         }
     }
 }
@@ -61,4 +63,11 @@ public enum EErrorCode
     SetPlayerAbility,
     SetForgeAction,
     InitDataBase,
+    CheckIsNewAccount,
+    GetPlayerInfo,
+    GetAdventureInfo,
+    GetCharacterInfo,
+    GetBagInfo,
+    GetPlayerSkill,
+    GetPartyEffects,
 }

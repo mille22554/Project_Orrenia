@@ -93,7 +93,7 @@ public partial class APIController
 
                 var characterData = SaveDataCenter.GetCharacterData(account);
                 CharacterDataCenter.InitCurrentData(characterData);
-                SaveDataCenter.SaveDataToDB(characterData);
+                SaveDataCenter.SaveDataToDB(CharacterSave.Create(characterData));
 
                 // GameData_Server.NowPlayers[account] = SaveDataCenter.CreateSaveData();
                 // CharacterDataCenter.InitCurrentData(GameData_Server.GetCharacterData(account));
@@ -119,7 +119,7 @@ public partial class APIController
                     CharacterData = characterData,
                     PartyData = SaveDataCenter.GetPartyData(account),
                     FullAbility = CharacterDataCenter.GetCharacterAbility(characterData),
-                    AbilityPoint = PublicFunc.GetAbilityPoint(characterData),
+                    AbilityPoint = CharacterDataCenter.GetAbilityPoint(characterData),
                     Exp = PublicFunc.GetExp(characterData.Level)
                 };
                 return responseData;
@@ -138,17 +138,17 @@ public partial class APIController
         }
     }
 
-    PlayerSaveDataFormat UpdateSaveData(PlayerSaveDataFormat oldData)
-    {
-        // Debug.Log("更新存檔資料結構");
-        var newData = SaveDataCenter.CreateSaveData();
+    // PlayerSaveDataFormat UpdateSaveData(PlayerSaveDataFormat oldData)
+    // {
+    //     // Debug.Log("更新存檔資料結構");
+    //     var newData = SaveDataCenter.CreateSaveData();
 
-        return newData;
-    }
+    //     return newData;
+    // }
 
     void CheckFlags(string account)
     {
-        SaveDataCenter.SaveData(account);
+        // SaveDataCenter.SaveData(account);
     }
     #endregion
 }
@@ -167,9 +167,15 @@ public class GetSaveDataResponse : INetworkSerializable
 {
     public EErrorCode Code;
     public string ErrorMessage = "";
-    public PlayerContextData PlayerData = new();
+    public PlayerData PlayerData = new();
     public CharacterData CharacterData = new();
+    public AbilityBase AbilityBase = new();
+    public List<BagItemData> BagItems = new();
+    public List<BagItemData> Equips = new();
+    public List<SkillData> Skills = new();
+    public List<EffectData> Effects = new();
     public PartyData PartyData = new();
+    public List<CharacterData> Enemies = new();
     public FullAbilityBase FullAbility = new();
     public int AbilityPoint;
     public int Exp;
@@ -180,9 +186,16 @@ public class GetSaveDataResponse : INetworkSerializable
         serializer.SerializeValue(ref ErrorMessage);
         serializer.SerializeValue(ref PlayerData);
         serializer.SerializeValue(ref CharacterData);
+        serializer.SerializeValue(ref AbilityBase);
         serializer.SerializeValue(ref PartyData);
         serializer.SerializeValue(ref FullAbility);
         serializer.SerializeValue(ref AbilityPoint);
         serializer.SerializeValue(ref Exp);
+
+        PublicFunc.SerializeClassList(serializer, ref Enemies);
+        PublicFunc.SerializeClassList(serializer, ref BagItems);
+        PublicFunc.SerializeClassList(serializer, ref Equips);
+        PublicFunc.SerializeClassList(serializer, ref Skills);
+        PublicFunc.SerializeClassList(serializer, ref Effects);
     }
 }

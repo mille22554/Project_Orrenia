@@ -25,15 +25,6 @@ public class PublicFunc
         }
     }
 
-    public static int GetAbilityPoint(CharacterData data) => GetAbilityPoint(data, null);
-    public static int GetAbilityPoint(CharacterData data, AbilityBase ability)
-    {
-        ability ??= data.Ability;
-        var totalUsedPoint = ability.STR_Point + ability.AGI_Point + ability.DEX_Point + ability.INT_Point + ability.LUK_Point + ability.VIT_Point;
-
-        return (data.Level + 1) * 6 - totalUsedPoint;
-    }
-
     public static int GetExp(int level)
     {
         return (1 << (level - 1)) * 100;

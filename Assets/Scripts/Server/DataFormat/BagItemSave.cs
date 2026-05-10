@@ -9,8 +9,11 @@ public class BagItemSave : IDBTable
 
     [Indexed]
     public long Owner { get; set; }
+    [Indexed]
+    public bool IsEquipped { get; set; }
 
     public int ID { get; set; }
+    public string Ability { get; set; }
     public EQuality Quality { get; set; }
     public string Materials { get; set; }
     public int Seed { get; set; }
@@ -22,8 +25,11 @@ public class BagItemSave : IDBTable
     {
         var saveData = new BagItemSave
         {
+            UID = data.UID,
             Owner = data.Owner,
+            IsEquipped = data.IsEquipped,
             ID = data.ID,
+            Ability = JsonConvert.SerializeObject(data.Ability),
             Quality = data.Quality,
             Materials = JsonConvert.SerializeObject(data.Materials),
             Seed = data.Seed,
@@ -41,7 +47,9 @@ public class BagItemSave : IDBTable
         {
             UID = save.UID,
             Owner = save.Owner,
+            IsEquipped = save.IsEquipped,
             ID = save.ID,
+            Ability = JsonConvert.DeserializeObject<FullAbilityBase>(save.Ability),
             Quality = save.Quality,
             Materials = JsonConvert.DeserializeObject<List<int>>(save.Materials),
             Seed = save.Seed,
@@ -49,6 +57,8 @@ public class BagItemSave : IDBTable
             Durability = save.Durability,
             Count = save.Count,
         };
+
+        BagItemData.SetInfo(ItemDataCenter_Server.GetItemData(save.ID), data);
 
         return data;
     }

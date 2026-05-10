@@ -68,14 +68,13 @@ public partial class APIController
     {
         try
         {
-            var account = requestData.Account.ToString();
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+            var uid = requestData.UID;
+            var characterData = SaveDataCenter.GetCharacterData(uid);
+            var playerData = SaveDataCenter.GetPlayerData(uid);
+            var partyData = SaveDataCenter.GetPartyData(playerData.PartyUID);
 
-            var responseData = Do(requestData.BagItemData, characterData, partyData);
-
-            SaveDataCenter.SaveData(account);
+            var responseData = Do(SaveDataCenter.GetBagItemData(requestData.ItemUID), characterData, partyData);
+            // var responseData = Do(requestData.BagItemData, characterData, partyData);
 
             return responseData;
         }
@@ -108,7 +107,7 @@ public partial class APIController
 
         response.ItemCategory = itemKind.Category;
         response.BagItemData = bagItemData;
-        response.Enemies = partyData.Enemies;
+        response.Enemies = SaveDataCenter.GetMobs(partyData.UID);
         response.CharacterData = characterData;
         response.FullAbility = CharacterDataCenter.GetCharacterAbility(characterData);
 
@@ -116,11 +115,10 @@ public partial class APIController
 
         void EquipCallBack()
         {
-            var equips = characterData.Equips;
-
-            if (equips.Contains(bagItemData.UID))
+            if (bagItemData.IsEquipped)
             {
-                equips.Remove(bagItemData.UID);
+                bagItemData.IsEquipped = false;
+                SaveDataCenter.SaveDataToDB(BagItemSave.Create(bagItemData));
                 response.IsEquipped = true;
             }
             else
@@ -129,19 +127,20 @@ public partial class APIController
                 var dualWieldCounter = 0;
                 var twoHandCounter = 0;
 
-                foreach (var equipUID in equips.ToList())
+                foreach (var equip in SaveDataCenter.GetEquips(characterData.UID))
                 {
-                    var equip = characterData.BagItems.Find(x => x.UID == equipUID);
                     var equipCategory = ItemDataCenter_Server.GetItemKind(equip.Kind).Category;
 
                     if (equipCategory == itemKind.Category || ItemDataCenter_Server.IsWeapon(equipCategory) || equip.Kind == EItemKind.Shield)
                     {
+                        var isPlayerDuelWield = SaveDataCenter.GetSkills(characterData.UID).Any(x => x.ID == ESkillID.雙持);
+
                         if (equip.Kind == EItemKind.Ring && ringCounter < 9)
                         {
                             ringCounter++;
                             continue;
                         }
-                        else if (characterData.Skills.ContainsKey(ESkillID.雙持) && itemKind.Category == EItemCategory.One_Hand && dualWieldCounter < 1)
+                        else if (isPlayerDuelWield && itemKind.Category == EItemCategory.One_Hand && dualWieldCounter < 1)
                         {
                             if (equipCategory != EItemCategory.Two_Hand)
                             {
@@ -150,8 +149,9 @@ public partial class APIController
                             }
                         }
 
-                        equips.Remove(equip.UID);
-                        response.UnEquiped.Add(equip);
+                        equip.IsEquipped = false;
+                        SaveDataCenter.SaveDataToDB(BagItemSave.Create(equip));
+                        response.UnEquipped.Add(equip);
 
                         if (itemKind.Category == EItemCategory.Two_Hand && twoHandCounter < 1)
                         {
@@ -163,16 +163,17 @@ public partial class APIController
                     }
                 }
 
-                equips.Add(bagItemData.UID);
+                bagItemData.IsEquipped = true;
+                SaveDataCenter.SaveDataToDB(BagItemSave.Create(bagItemData));
                 response.IsEquipped = false;
             }
         }
 
         void UseCallBack()
         {
-            bagItemData = characterData.BagItems.Find(x => x.UID == bagItemData.UID);
+            bagItemData = SaveDataCenter.GetBagItemDatas(characterData.UID).Find(x => x.UID == bagItemData.UID);
 
-            CharacterDataCenter.MotifyCurrentAbility(characterData, bagItemData.Ability);
+            CharacterDataCenter.ModifyCurrentAbility(characterData, bagItemData.Ability);
 
             if (bagItemData.Effects != null)
             {
@@ -185,16 +186,18 @@ public partial class APIController
 
             if (bagItemData.Skill != ESkillID.None)
             {
-                if (characterData.Skills.ContainsKey(bagItemData.Skill))
+                if (SaveDataCenter.GetSkills(characterData.UID).Any(x => x.ID == bagItemData.Skill))
                     return;
 
-                characterData.Skills.Add(bagItemData.Skill, SkillDataCenter.GetSkillData(bagItemData.Skill));
+                SaveDataCenter.NewDataToDB(SkillSave.Create(SkillDataCenter.GetSkillData(bagItemData.Skill, characterData.UID)));
             }
 
             bagItemData.Count--;
 
             if (bagItemData.Count == 0)
-                characterData.BagItems.Remove(bagItemData);
+                SaveDataCenter.RemoveDataFromDB(BagItemSave.Create(bagItemData));
+            else
+                SaveDataCenter.SaveDataToDB(BagItemSave.Create(bagItemData));
         }
     }
 
@@ -203,13 +206,15 @@ public partial class APIController
 
 public class SetItemActionRequest : INetworkSerializable
 {
-    public string Account = "";
-    public BagItemData BagItemData = new();
+    public long UID;
+    public long ItemUID;
+    // public BagItemData BagItemData = new();
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref Account);
-        serializer.SerializeValue(ref BagItemData);
+        serializer.SerializeValue(ref UID);
+        serializer.SerializeValue(ref ItemUID);
+        // serializer.SerializeValue(ref BagItemData);
     }
 }
 
@@ -219,7 +224,8 @@ public class SetItemActionResponse : INetworkSerializable
     public string ErrorMessage = "";
     public EItemCategory ItemCategory = new();
     public BagItemData BagItemData = new();
-    public List<BagItemData> UnEquiped = new();
+    public List<BagItemData> UnEquipped = new();
+    public List<BagItemData> Equips = new();
     public bool IsEquipped;
     public List<MobData> Enemies = new();
     public CharacterData CharacterData = new();
@@ -235,7 +241,8 @@ public class SetItemActionResponse : INetworkSerializable
         serializer.SerializeValue(ref CharacterData);
         serializer.SerializeValue(ref FullAbility);
 
-        PublicFunc.SerializeClassList(serializer, ref UnEquiped);
+        PublicFunc.SerializeClassList(serializer, ref UnEquipped);
         PublicFunc.SerializeClassList(serializer, ref Enemies);
+        PublicFunc.SerializeClassList(serializer, ref Equips);
     }
 }

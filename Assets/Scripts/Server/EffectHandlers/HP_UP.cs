@@ -13,12 +13,16 @@ public class HP_UP : IEffectHandler
 
         if (effectData.Times == 0)
         {
-            characterData.Effects.Remove(effectData);
+            SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effectData));
             result.Infos.Add(new()
             {
                 EffectName = effectData.Name,
                 IsTimeUp = true,
             });
+        }
+        else
+        {
+            SaveDataCenter.SaveDataToDB(EffectSave.Create(effectData));
         }
     }
 }

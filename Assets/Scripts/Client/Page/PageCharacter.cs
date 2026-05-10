@@ -37,33 +37,33 @@ public class PageCharacter : MonoBehaviour
     void RefreshInfo()
     {
         PanelLoading.Create(PanelLoading.BGType.None);
-        var requestData = new GetSaveDataRequest
+        var requestData = new GetCharacterInfoRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(GetCharacterInfoResponse response)
         {
             if (response.Code == 0)
             {
-                RefreshInfo(response.CharacterData, response.AbilityPoint);
+                RefreshInfo(response.CharacterData, response.Ability, response.AbilityPoint);
             }
 
             PanelLoading.Close();
         }
     }
 
-    void RefreshInfo(CharacterData characterData, int abilityPoint)
+    void RefreshInfo(CharacterData characterData, AbilityBase ability, int abilityPoint)
     {
         var isHasAbilityPoint = abilityPoint > 0;
 
-        STR.SetInfo(characterData.Ability.STR_Point, isHasAbilityPoint, OnAbilityPlus);
-        VIT.SetInfo(characterData.Ability.VIT_Point, isHasAbilityPoint, OnAbilityPlus);
-        DEX.SetInfo(characterData.Ability.DEX_Point, isHasAbilityPoint, OnAbilityPlus);
-        INT.SetInfo(characterData.Ability.INT_Point, isHasAbilityPoint, OnAbilityPlus);
-        AGI.SetInfo(characterData.Ability.AGI_Point, isHasAbilityPoint, OnAbilityPlus);
-        LUK.SetInfo(characterData.Ability.LUK_Point, isHasAbilityPoint, OnAbilityPlus);
+        STR.SetInfo(ability.STR_Point, isHasAbilityPoint, OnAbilityPlus);
+        VIT.SetInfo(ability.VIT_Point, isHasAbilityPoint, OnAbilityPlus);
+        DEX.SetInfo(ability.DEX_Point, isHasAbilityPoint, OnAbilityPlus);
+        INT.SetInfo(ability.INT_Point, isHasAbilityPoint, OnAbilityPlus);
+        AGI.SetInfo(ability.AGI_Point, isHasAbilityPoint, OnAbilityPlus);
+        LUK.SetInfo(ability.LUK_Point, isHasAbilityPoint, OnAbilityPlus);
 
         _abilityPoint.text = abilityPoint.ToString();
 
@@ -86,7 +86,7 @@ public class PageCharacter : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetPlayerAbilityRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             Ability = ability
         };
         APIController.Ins.Send(requestData, CallBack);
@@ -95,7 +95,7 @@ public class PageCharacter : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                RefreshInfo(response.CharacterData, response.AbilityPoint);
+                RefreshInfo(response.CharacterData, response.AbilityBase, response.AbilityPoint);
             }
 
             PanelLoading.Close();
@@ -117,7 +117,7 @@ public class PageCharacter : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetPlayerAbilityRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             Ability = ability
         };
         APIController.Ins.Send(requestData, CallBack);
@@ -126,7 +126,7 @@ public class PageCharacter : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                RefreshInfo(response.CharacterData, response.AbilityPoint);
+                RefreshInfo(response.CharacterData, response.AbilityBase, response.AbilityPoint);
             }
 
             PanelLoading.Close();

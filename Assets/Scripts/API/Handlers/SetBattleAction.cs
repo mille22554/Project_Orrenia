@@ -68,21 +68,22 @@ public partial class APIController
     {
         try
         {
-            var account = requestData.Account.ToString();
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+            var uid = requestData.UID;
+            var characterData = SaveDataCenter.GetCharacterData(uid);
+            var playerData = SaveDataCenter.GetPlayerData(uid);
+            var partyData = SaveDataCenter.GetPartyData(playerData.PartyUID);
 
             var responseData = new SetBattleActionResponse
             {
                 Code = EErrorCode.None,
-                SaveData = GameData_Server.NowPlayers[account].Datas,
+                PlayerData = playerData,
+                CharacterData = characterData,
                 FullAbility = CharacterDataCenter.GetCharacterAbility(characterData)
             };
 
             DoAction(requestData, characterData, partyData, responseData.ActionResult);
 
-            SaveDataCenter.SaveData(account);
+            // SaveDataCenter.SaveData(account);
 
             return responseData;
         }
@@ -120,21 +121,21 @@ public partial class APIController
 
     void OnAttack(List<CharacterData> actionTarget, CharacterData characterData, PartyData partyData, ActionResult actionResult)
     {
-        var targets = partyData.Enemies.Where(x => actionTarget.Any(y => x.CharacterData.Name == y.Name)).ToList();
+        var targets = SaveDataCenter.GetPartyEnemies(partyData.UID).Where(x => actionTarget.Any(y => x.Name == y.Name)).ToList();
         if (targets != null)
         {
             var battleResult = actionResult.BattleResult;
-            BattleSystem.RunBattle(characterData, targets.Select(x => x.CharacterData).ToList(), battleResult);
+            BattleSystem.RunBattle(characterData, targets, battleResult);
 
             foreach (var result in battleResult.Results)
             {
                 if (result.IsDefenderDead)
-                    BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, partyData, battleResult.DropItems);
+                    BattleSystem.EnemyDeadProcess(targets.Find(x => x.Name == result.Defenderer), result, partyData, battleResult.DropItems);
             }
 
             actionResult.EffectResult.Results.Add(CharacterDataCenter.ActionEndProcess(characterData));
 
-            if (!partyData.Members.Any(x => GameData_Server.GetCharacterData(x).CurrentHP > 0))
+            if (!SaveDataCenter.GetPartyMembers(partyData.UID).Any(x => x.CurrentHP > 0))
                 OnGoHome(partyData);
         }
         else
@@ -145,7 +146,7 @@ public partial class APIController
 
     void OnSkill(List<CharacterData> skillTargets, ESkillID skillID, CharacterData characterData, PartyData partyData, ActionResult actionResult)
     {
-        var skillData = SkillDataCenter.GetSkillData(skillID);
+        var skillData = SkillDataCenter.GetSkillData(skillID, characterData.UID);
         if (characterData.CurrentMP < skillData.Cost)
         {
             Debug.Log("MP不足!");
@@ -159,21 +160,21 @@ public partial class APIController
         }
         else
         {
-            var targets = partyData.Enemies.Where(x => skillTargets.Any(y => x.CharacterData.Name == y.Name)).ToList();
+            var targets = SaveDataCenter.GetPartyEnemies(partyData.UID).Where(x => skillTargets.Any(y => x.Name == y.Name)).ToList();
             if (targets != null)
             {
                 var battleResult = actionResult.BattleResult;
-                BattleSystem.RunBattle(characterData, targets.Select(x => x.CharacterData).ToList(), skillData, battleResult);
+                BattleSystem.RunBattle(characterData, targets, skillData, battleResult);
 
                 foreach (var result in battleResult.Results)
                 {
                     if (result.IsDefenderDead)
-                        BattleSystem.EnemyDeadProcess(targets.Find(x => x.CharacterData.Name == result.Defenderer), result, partyData, battleResult.DropItems);
+                        BattleSystem.EnemyDeadProcess(targets.Find(x => x.Name == result.Defenderer), result, partyData, battleResult.DropItems);
                 }
 
                 actionResult.EffectResult.Results.Add(CharacterDataCenter.ActionEndProcess(characterData));
 
-                if (!partyData.Members.Any(x => GameData_Server.GetCharacterData(x).CurrentHP > 0))
+                if (!SaveDataCenter.GetPartyMembers(partyData.UID).Any(x => x.CurrentHP > 0))
                     OnGoHome(partyData);
             }
             else
@@ -187,14 +188,14 @@ public partial class APIController
 
 public class SetBattleActionRequest : INetworkSerializable
 {
-    public string Account = "";
+    public long UID;
     public EBattleActionType BattleAction;
     public List<CharacterData> ActionTarget = new();
     public ESkillID SkillID;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref Account);
+        serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref BattleAction);
         serializer.SerializeValue(ref SkillID);
 
@@ -206,7 +207,9 @@ public class SetBattleActionResponse : INetworkSerializable
 {
     public EErrorCode Code;
     public string ErrorMessage = "";
-    public Datas SaveData = new();
+    public PlayerData PlayerData = new();
+    public CharacterData CharacterData = new();
+    public PartyData PartyData = new();
     public ActionResult ActionResult = new();
     public FullAbilityBase FullAbility = new();
 
@@ -214,7 +217,9 @@ public class SetBattleActionResponse : INetworkSerializable
     {
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
-        serializer.SerializeValue(ref SaveData);
+        serializer.SerializeValue(ref PlayerData);
+        serializer.SerializeValue(ref CharacterData);
+        serializer.SerializeValue(ref PartyData);
         serializer.SerializeValue(ref ActionResult);
         serializer.SerializeValue(ref FullAbility);
     }

@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SQLite;
+using Debug = UnityEngine.Debug;
 
 public static class SaveDataCenter
 {
@@ -20,15 +20,15 @@ public static class SaveDataCenter
 
         _db = new SQLiteConnection(path);
 
-        _db.Execute("PRAGMA journal_mode = WAL;");
+        _db.EnableWriteAheadLogging();
         _db.Execute("PRAGMA synchronous = NORMAL;");
 
         // 初始化時建立所有表 (若不存在則建立)
         _db.CreateTable<BagItemSave>();
         _db.CreateTable<CharacterSave>();
-        _db.CreateTable<CharaterAbilitySave>();
+        _db.CreateTable<CharacterAbilitySave>();
         _db.CreateTable<EffectSave>();
-        _db.CreateTable<EquipSave>();
+        // _db.CreateTable<EquipSave>();
         _db.CreateTable<MobSave>();
         _db.CreateTable<PartySave>();
         _db.CreateTable<PlayerSave>();
@@ -47,6 +47,7 @@ public static class SaveDataCenter
                 await Task.Delay(100);
                 continue;
             }
+            Debug.Log($"[DB] 開始批次寫入，隊列長度: {_dbActionQueue.Count}");
 
             try
             {
@@ -60,7 +61,7 @@ public static class SaveDataCenter
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[DB] 批次寫入失敗: {ex.Message}");
+                Debug.LogError($"[DB] 批次寫入失敗: {ex.Message}");
             }
         }
     }
@@ -69,14 +70,14 @@ public static class SaveDataCenter
     {
         _db.RunInTransaction(() =>
         {
-            var player = PlayerSave.Create(PlayerContextData.CreateDefault());
+            var player = PlayerSave.Create(PlayerData.CreateDefault());
             _db.Insert(player);
             player.Account = account;
             player.PartyUID = player.UID;
             _db.Update(player);
 
             _db.Insert(CharacterSave.Create(CharacterData.CreateDefault(player.UID)));
-            _db.Insert(CharaterAbilitySave.Create(AbilityBase.CreateDefault(player.UID)));
+            _db.Insert(CharacterAbilitySave.Create(AbilityBase.CreateDefault(player.UID)));
             _db.Insert(PartySave.Create(PartyData.CreateDefault(player.UID)));
 
             var item = ItemDataCenter_Server.GetNewItemByItemID(1, player.UID);
@@ -85,13 +86,32 @@ public static class SaveDataCenter
     }
 
     public static void NewDataToDB<T>(T data) where T : class, IDBTable, new() => _dbActionQueue.Enqueue(() => _db.Insert(data));
-    public static void SaveDataToDB<T>(T data) where T : class, IDBTable, new() => _dbActionQueue.Enqueue(() => _db.Update(data));
+    public static void SaveDataToDB<T>(T data) where T : class, IDBTable, new() => _dbActionQueue.Enqueue(() =>
+    {
+        Debug.Log($"[DB] Data: {JsonConvert.SerializeObject(data)}");
+        var result = _db.Update(data);
+        Debug.Log($"[DB] 受影響的列數: {result}");
+
+        if (result == 0)
+        {
+            // 如果是 0，代表資料庫裡找不到 UID 為 {data.UID} 的資料
+            Debug.Log($"[DB] 找不到資料: {data}");
+        }
+    });
     public static void RemoveDataFromDB<T>(T data) where T : class, IDBTable, new() => _dbActionQueue.Enqueue(() => _db.Delete(data));
 
-    public static PlayerContextData GetPlayerData(string account)
+    public static PlayerData GetPlayerData(string account)
     {
         var player = _db.Table<PlayerSave>().Where(x => x.Account == account).FirstOrDefault();
-        return PlayerSave.GetData(player);
+
+        if (player == null)
+            return null;
+        else
+            return PlayerSave.GetData(player);
+    }
+    public static PlayerData GetPlayerData(long UID)
+    {
+        return PlayerSave.GetData(_db.Find<PlayerSave>(UID));
     }
 
     public static CharacterData GetCharacterData(string account)
@@ -102,6 +122,16 @@ public static class SaveDataCenter
     public static CharacterData GetCharacterData(long UID)
     {
         return CharacterSave.GetData(_db.Find<CharacterSave>(UID));
+    }
+
+    public static AbilityBase GetCharacterAbilityData(string account)
+    {
+        var player = _db.Table<PlayerSave>().Where(x => x.Account == account).FirstOrDefault();
+        return GetCharacterAbilityData(player.UID);
+    }
+    public static AbilityBase GetCharacterAbilityData(long UID)
+    {
+        return CharacterAbilitySave.GetData(_db.Find<CharacterAbilitySave>(UID));
     }
 
     public static List<CharacterData> GetPartyMembers(long partyUID)
@@ -163,13 +193,12 @@ public static class SaveDataCenter
 
     public static List<BagItemData> GetEquips(long owner)
     {
-        var equips = _db.Table<EquipSave>().Where(x => x.Owner == owner).ToList();
-        var items = new List<BagItemData>();
-        foreach (var equip in equips)
-        {
-            items.Add(GetBagItemData(equip.UID));
-        }
-        return items;
+        return _db.Table<BagItemSave>().Where(x => x.Owner == owner && x.IsEquipped).Select(x => BagItemSave.GetData(x)).ToList();
+    }
+
+    public static List<BagItemData> GetBagItemDatas(long owner)
+    {
+        return _db.Table<BagItemSave>().Where(x => x.Owner == owner).Select(x => BagItemSave.GetData(x)).ToList();
     }
 
     public static BagItemData GetBagItemData(long UID)
@@ -177,23 +206,21 @@ public static class SaveDataCenter
         return BagItemSave.GetData(_db.Find<BagItemSave>(UID));
     }
 
-    public static PlayerSaveDataFormat CreateSaveData()
+    public static void RemoveMob(long UID)
     {
-        var saveData = new PlayerSaveDataFormat
-        {
-            version = GameData_Server.version,
-            Datas = Datas.CreateDefault()
-        };
-        // saveData.Datas.CharacterData.BagItems.Add(ItemDataCenter_Server.GetNewItemByItemID(1));
+        var mob = _db.Find<MobSave>(UID);
+        RemoveDataFromDB(_db.Find<CharacterSave>(UID));
+        RemoveDataFromDB(_db.Find<CharacterAbilitySave>(UID));
+        foreach (var item in _db.Table<BagItemSave>().Where(x => x.Owner == UID))
+            RemoveDataFromDB(item);
 
-        return saveData;
-    }
+        foreach (var skill in _db.Table<SkillSave>().Where(x => x.Owner == UID))
+            RemoveDataFromDB(skill);
 
-    public static void SaveData(string account)
-    {
-        var path = GameData_Server.PlayerSaveDataPath(account);
-        // Debug.Log($"儲存遊戲資料到 {path}");
-        File.WriteAllText(path, JsonConvert.SerializeObject(GameData_Server.NowPlayers[account]));
+        foreach (var effect in _db.Table<EffectSave>().Where(x => x.Owner == UID))
+            RemoveDataFromDB(effect);
+
+        RemoveDataFromDB(mob);
     }
 }
 

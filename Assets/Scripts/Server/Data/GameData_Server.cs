@@ -145,7 +145,7 @@ public static class GameData_Server
 
     public static Dictionary<string, PlayerSaveDataFormat> NowPlayers = new();
 
-    public static PlayerContextData GetPlayerData(string account) => NowPlayers[account].Datas.PlayerData;
-    public static CharacterData GetCharacterData(string account) => NowPlayers[account].Datas.CharacterData;
-    public static PartyData GetPartyData(string account) => NowPlayers[account].Datas.PartyData;
+    // public static PlayerContextData GetPlayerData(string account) => NowPlayers[account].Datas.PlayerData;
+    // public static CharacterData GetCharacterData(string account) => NowPlayers[account].Datas.CharacterData;
+    // public static PartyData GetPartyData(string account) => NowPlayers[account].Datas.PartyData;
 }

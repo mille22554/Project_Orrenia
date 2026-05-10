@@ -5,9 +5,21 @@ public class BagItemData : ItemData
 {
     public long UID;
     public long Owner;
+    public bool IsEquipped;
     public EQuality Quality = EQuality.Common;
     public List<int> Materials = new();
     public int Seed;
+
+    public static void SetInfo(ItemData itemData, BagItemData bagItemData)
+    {
+        bagItemData.ID = itemData.ID;
+        bagItemData.Name = itemData.Name;
+        bagItemData.Kind = itemData.Kind;
+        bagItemData.Description = itemData.Description;
+        bagItemData.Effects = itemData.Effects;
+        bagItemData.Skill = itemData.Skill;
+        bagItemData.Trait = itemData.Trait;
+    }
 
     public override void NetworkSerialize<T>(BufferSerializer<T> serializer)
     {
@@ -15,6 +27,7 @@ public class BagItemData : ItemData
 
         serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref Owner);
+        serializer.SerializeValue(ref IsEquipped);
         serializer.SerializeValue(ref Quality);
         serializer.SerializeValue(ref Seed);
 

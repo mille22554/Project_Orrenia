@@ -19,10 +19,11 @@ public class PlayerSave : IDBTable
     public int ForgeLevel { get; set; }
     public int CurrentForgeExp { get; set; }
 
-    public static PlayerSave Create(PlayerContextData data)
+    public static PlayerSave Create(PlayerData data)
     {
         var saveData = new PlayerSave
         {
+            UID = data.UID,
             Account = data.Account,
             Password = data.Password,
             Gold = data.Gold,
@@ -35,9 +36,9 @@ public class PlayerSave : IDBTable
         return saveData;
     }
 
-    public static PlayerContextData GetData(PlayerSave save)
+    public static PlayerData GetData(PlayerSave save)
     {
-        var data = new PlayerContextData
+        var data = new PlayerData
         {
             UID = save.UID,
             Account = save.Account,

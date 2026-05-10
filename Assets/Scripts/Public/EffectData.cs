@@ -3,6 +3,7 @@ using Unity.Netcode;
 
 public class EffectData : INetworkSerializable
 {
+    public long UID;
     public long Owner;
     public string Name = "";
     public EEffectID ID;

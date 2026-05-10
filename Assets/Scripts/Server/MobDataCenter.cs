@@ -66,6 +66,17 @@ public static class MobDataCenter
         }
     }
 
+    public static MobDataBase GetMobBaseData(int mobID)
+    {
+        if (_datas.TryGetValue(mobID, out var mob))
+            return mob;
+        else
+        {
+            Debug.LogError($"找不到怪物資料，ID: {mobID}");
+            return null;
+        }
+    }
+
     public static CharacterData GetRandomMob(int area, int deep, long partyUID)
     {
         var level = EnemySetting.GetEnemyLevel(area, deep);
@@ -74,7 +85,8 @@ public static class MobDataCenter
         var index = Random.Range(Mathf.Min(deepParam / 100, mobList.Count - 4), Mathf.Min(mobList.Count, deepParam / 100 + 3));
         var mobID = mobList.ElementAtOrDefault(index);
 
-        if (_datas.TryGetValue(mobID, out var mob))
+        var mob = GetMobBaseData(mobID);
+        if (mob != null)
         {
             var mobData = MobData.CreateDefault(partyUID, mob.ID);
             SaveDataCenter.NewDataToDB(MobSave.Create(mobData));
@@ -91,15 +103,16 @@ public static class MobDataCenter
             mobAbility.VIT_Point += mob.Ability.VIT_Point * level;
             mobAbility.AGI_Point += mob.Ability.AGI_Point * level;
             mobAbility.LUK_Point += mob.Ability.LUK_Point * level;
-            SaveDataCenter.NewDataToDB(CharaterAbilitySave.Create(mobAbility));
+            SaveDataCenter.NewDataToDB(CharacterAbilitySave.Create(mobAbility));
 
             CharacterDataCenter.InitCurrentData(characterData);
 
             foreach (var equipID in mob.Equips)
             {
                 var equip = ItemDataCenter_Server.GetNewItemByItemID(equipID, mobData.UID);
+                equip.IsEquipped = true;
                 SaveDataCenter.NewDataToDB(BagItemSave.Create(equip));
-                SaveDataCenter.NewDataToDB(EquipSave.Create(equip));
+                // SaveDataCenter.NewDataToDB(EquipSave.Create(equip));
             }
 
             foreach (var skillID in mob.Skills)

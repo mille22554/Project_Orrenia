@@ -86,6 +86,7 @@ public static class BattleSystem
         foreach (var unit in units)
         {
             unit.Value.CurrentTP = unit.Value.CurrentTP + unit.Key.SPD * minTime;
+            SaveDataCenter.SaveDataToDB(CharacterSave.Create(unit.Value));
         }
 
         var actMob = enemies.Find(x => x.UID == units[next].UID);
@@ -212,7 +213,7 @@ public static class BattleSystem
         var incapacitatedEffect = SaveDataCenter.GetEffects(actor.UID).Find(x => x.ID == EEffectID.Stun);
         if (incapacitatedEffect != null)
         {
-            battleResult.IsAttakerIncapacitated = true;
+            battleResult.IsAttackerIncapacitated = true;
             battleResult.IncapacitatedEffect = incapacitatedEffect.Name;
             return;
         }
@@ -295,7 +296,7 @@ public static class BattleSystem
         foreach (var (defender, target) in defenders)
         {
             var result = battleResult.Results.Find(x => x.Defenderer == defender.Name);
-            var counterEffect = target.Effects.Find(x => x.ID == EEffectID.Counter);
+            var counterEffect = SaveDataCenter.GetEffects(target.UID).Find(x => x.ID == EEffectID.Counter);
 
             var damageMulti = 1;
             var defenceMulti = 1;
@@ -340,12 +341,13 @@ public static class BattleSystem
             if (counterEffect != null && (skillData == null || skillData.SkillType == ESkillType.SinglePhysicsAttack))
             {
                 result.IsCounter = true;
-                result.BattleDamage = (decimal)(attackValue * CharacterDataCenter.ParamCalculate(defender, counterEffect.Value));
+                result.BattleDamage = attackValue * CharacterDataCenter.ParamCalculate(defender, counterEffect.Value);
 
                 if (DamageProcess(attacker, result.BattleDamage))
                 {
                     battleResult.IsAttackerDead = true;
-                    actor.Effects.Clear();
+                    foreach (var effect in SaveDataCenter.GetEffects(actor.UID))
+                        SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
                 }
 
                 battleResult.BreakEquips.AddRange(RunDurability(actor, defender.Role == ECharacterRole.Player));
@@ -386,9 +388,8 @@ public static class BattleSystem
 
                 if (skillData == null || skillData.SkillType == ESkillType.SinglePhysicsAttack)
                 {
-                    foreach (var equipUID in actor.Equips)
+                    foreach (var equip in SaveDataCenter.GetEquips(actor.UID))
                     {
-                        var equip = actor.BagItems.Find(x => x.UID == equipUID);
                         if (ItemDataCenter_Server.IsWeapon(equip.Kind))
                         {
                             if (equip.Trait != null)
@@ -406,7 +407,8 @@ public static class BattleSystem
                 if (DamageProcess(defender, result.BattleDamage * (attacker.Combo * 0.1m + 1)))
                 {
                     result.IsDefenderDead = true;
-                    target.Effects.Clear();
+                    foreach (var effect in SaveDataCenter.GetEffects(target.UID))
+                        SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
                 }
 
             }
@@ -423,7 +425,7 @@ public static class BattleSystem
         characterData.CurrentHP = (int)battleData.HP;
         characterData.CurrentMP = battleData.MP;
 
-        SaveDataCenter.SaveDataToDB(characterData);
+        SaveDataCenter.SaveDataToDB(CharacterSave.Create(characterData));
     }
 
     static bool LuckyEventCheck(BattleData actor, BattleData target, BattleResult.Result result)
@@ -503,11 +505,10 @@ public static class BattleSystem
     {
         var breakEquips = new List<string>();
 
-        var bagItems = characterData.BagItems;
+        var equips = SaveDataCenter.GetEquips(characterData.UID);
 
-        foreach (var equipUID in characterData.Equips.ToList())
+        foreach (var equip in equips)
         {
-            var equip = bagItems.Find(x => x.UID == equipUID);
             var kind = equip.Kind;
             var isWeapon = ItemDataCenter_Server.IsWeapon(kind);
 
@@ -516,8 +517,7 @@ public static class BattleSystem
                 equip.Durability--;
                 if (equip.Durability <= 0)
                 {
-                    characterData.Equips.Remove(equipUID);
-                    bagItems.Remove(equip);
+                    SaveDataCenter.RemoveDataFromDB(BagItemSave.Create(equip));
                     breakEquips.Add(equip.Name);
                 }
             }
@@ -526,31 +526,31 @@ public static class BattleSystem
         return breakEquips;
     }
 
-    public static void EnemyDeadProcess(MobData target, BattleResult.Result result, PartyData partyData, List<string> dropItems)
+    public static void EnemyDeadProcess(CharacterData target, BattleResult.Result result, PartyData partyData, List<string> dropItems)
     {
-        foreach (var member in partyData.Members)
+        foreach (var member in SaveDataCenter.GetPartyMembers(partyData.UID))
         {
-            var characterData = GameData_Server.GetCharacterData(member);
-            var playerData = GameData_Server.GetPlayerData(member);
+            var playerData = SaveDataCenter.GetPlayerData(member.UID);
 
-            characterData.CurrentExp += 1 << (target.CharacterData.Level - 1);
+            member.CurrentExp += 1 << (target.Level - 1);
 
-            var maxExp = PublicFunc.GetExp(characterData.Level);
-            if (characterData.CurrentExp >= maxExp)
+            var maxExp = PublicFunc.GetExp(member.Level);
+            if (member.CurrentExp >= maxExp)
             {
-                result.LevelUpUnits.Add(characterData.Name);
-                characterData.Level += 1;
-                characterData.CurrentExp -= maxExp;
+                result.LevelUpUnits.Add(member.Name);
+                member.Level += 1;
+                member.CurrentExp -= maxExp;
                 playerData.SkillPoint += 1;
-                CharacterDataCenter.InitCurrentData(characterData);
+                CharacterDataCenter.InitCurrentData(member);
             }
 
-            foreach (var drop in target.DropItems)
+            var mobData = MobDataCenter.GetMobBaseData(SaveDataCenter.GetMobs(partyData.UID).Find(x => x.UID == target.UID).ID);
+            foreach (var drop in mobData?.DropItems)
             {
                 if (PublicFunc.Dice(1, 100) > drop.Prop)
                     continue;
 
-                var bagItems = characterData.BagItems;
+                var bagItems = SaveDataCenter.GetBagItemDatas(member.UID);
                 var existing = bagItems.Find(item => item.ID == drop.Item);
                 var itemData = ItemDataCenter_Server.GetItemData(drop.Item);
 
@@ -558,7 +558,7 @@ public static class BattleSystem
 
                 dropItems.Add(itemData.Name);
 
-                void EquipCallBack() => bagItems.Add(ItemDataCenter_Server.GetNewItem(itemData));
+                void EquipCallBack() => SaveDataCenter.NewDataToDB(BagItemSave.Create(ItemDataCenter_Server.GetNewItem(itemData, member.UID)));
 
                 void OtherCallBack()
                 {
@@ -569,11 +569,18 @@ public static class BattleSystem
                     else
                     {
                         existing.Count++;
+                        SaveDataCenter.SaveDataToDB(BagItemSave.Create(existing));
                     }
                 }
             }
         }
 
-        partyData.Enemies.Remove(target);
+        SaveDataCenter.RemoveDataFromDB(MobSave.Create(SaveDataCenter.GetMobs(partyData.UID).Find(x => x.UID == target.UID)));
+        SaveDataCenter.RemoveDataFromDB(CharacterSave.Create(target));
+        foreach (var effect in SaveDataCenter.GetEffects(target.UID))
+            SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
+
+        foreach (var item in SaveDataCenter.GetEquips(target.UID))
+            SaveDataCenter.RemoveDataFromDB(BagItemSave.Create(item));
     }
 }

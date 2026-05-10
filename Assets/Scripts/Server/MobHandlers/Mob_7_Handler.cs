@@ -7,16 +7,17 @@ public class Mob_7_Handler : IMobHandler
 
     public SkillData Handler(CharacterData mob)
     {
-        var skillList = mob.Skills;
+        var skillList = SaveDataCenter.GetSkills(mob.UID);
+        var effects = SaveDataCenter.GetEffects(mob.UID);
 
-        if (!mob.Effects.Any(x => x.ID == EEffectID.SPD_UP) || !mob.Effects.Any(x => x.ID == EEffectID.DEX_UP))
+        if (!effects.Any(x => x.ID == EEffectID.SPD_UP) || !effects.Any(x => x.ID == EEffectID.DEX_UP))
         {
-            skillList.TryGetValue(ESkillID.響尾, out var skill);
+            var skill = skillList.Find(x => x.ID == ESkillID.響尾);
             return skill;
         }
         else
         {
-            var attackSkillList = skillList.Values.Where(x =>
+            var attackSkillList = skillList.Where(x =>
                 (x.SkillType == ESkillType.SinglePhysicsAttack || x.SkillType == ESkillType.SingleMagicAttack) && x.CurrentCD == 0 && x.Cost <= mob.CurrentMP
             ).ToList();
 

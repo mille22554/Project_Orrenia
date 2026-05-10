@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class ItemEnemy : MonoBehaviour
 {
     [NonSerialized] public Toggle Toggle;
-    [NonSerialized] public MobData Info;
+    [NonSerialized] public CharacterData Info;
 
     [SerializeField] Text enemyName;
     [SerializeField] Text level;
@@ -20,12 +20,12 @@ public class ItemEnemy : MonoBehaviour
         Toggle.onValueChanged.AddListener(SetToggle);
     }
 
-    public void SetData(MobData data)
+    public void SetData(CharacterData data)
     {
         Info = data;
-        enemyName.text = data.CharacterData.Name;
-        level.text = $"Lv {data.CharacterData.Level}";
-        hp.text = $"HP {data.CharacterData.CurrentHP:0}";
+        enemyName.text = data.Name;
+        level.text = $"Lv {data.Level}";
+        hp.text = $"HP {data.CurrentHP:0}";
     }
 
     public void SetToggle(bool isOn)
@@ -35,10 +35,10 @@ public class ItemEnemy : MonoBehaviour
 
     public void GetDamage(decimal damage)
     {
-        CharacterData.ChangeHP(Info.CharacterData, damage);
-        if (Info.CharacterData.CurrentHP < 0)
-            Info.CharacterData.CurrentHP = 0;
+        CharacterData.ChangeHP(Info, damage);
+        if (Info.CurrentHP < 0)
+            Info.CurrentHP = 0;
 
-        hp.text = $"HP {Info.CharacterData.CurrentHP:0}";
+        hp.text = $"HP {Info.CurrentHP:0}";
     }
 }

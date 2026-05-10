@@ -66,16 +66,16 @@ public partial class APIController
     {
         try
         {
-            var account = requestData.Account;
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+            var uid = requestData.UID;
+            var characterData = SaveDataCenter.GetCharacterData(uid);
+            var playerData = SaveDataCenter.GetPlayerData(uid);
+            var partyData = SaveDataCenter.GetPartyData(playerData.PartyUID);
 
             var responseData = new SetTradeActionResponse
             {
                 Code = EErrorCode.None,
                 Gold = playerData.Gold,
-                SelledItemSurplus = -1
+                SealedItemSurplus = -1
             };
             var itemData = ItemDataCenter_Server.GetItemData(requestData.ItemID);
 
@@ -85,11 +85,11 @@ public partial class APIController
                     OnBuy(itemData, characterData, playerData, requestData.TradeNum);
                     break;
                 case ETradeActionType.Sell:
-                    OnSell(itemData, requestData.TradeNum, requestData.SelledItemUID, characterData, playerData, responseData);
+                    OnSell(itemData, requestData.TradeNum, requestData.SealedItemUID, characterData, playerData, responseData);
                     break;
             }
 
-            SaveDataCenter.SaveData(account);
+            // SaveDataCenter.SaveData(account);
 
             return responseData;
         }
@@ -106,42 +106,43 @@ public partial class APIController
         }
     }
 
-    public void OnBuy(ItemData itemData, CharacterData characterData, PlayerContextData playerData, int tradeNum)
+    public void OnBuy(ItemData itemData, CharacterData characterData, PlayerData playerData, int tradeNum)
     {
         if (playerData.Gold >= itemData.Price * tradeNum)
         {
             playerData.Gold -= itemData.Price * tradeNum;
 
-            var existing = characterData.BagItems.Find(item => item.ID == itemData.ID);
+            var existing = SaveDataCenter.GetBagItemDatas(characterData.UID).Find(item => item.ID == itemData.ID);
 
             ItemDataCenter_Server.DoActionAccordingToCategory(itemData.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
             void EquipCallBack()
             {
                 for (int i = 0; i < tradeNum; i++)
-                    characterData.BagItems.Add(ItemDataCenter_Server.GetNewItem(itemData));
+                    SaveDataCenter.NewDataToDB(BagItemSave.Create(ItemDataCenter_Server.GetNewItem(itemData, characterData.UID)));
             }
 
             void OtherCallBack()
             {
                 if (existing == null)
                 {
-                    var buyItem = ItemDataCenter_Server.GetNewItem(itemData);
+                    var buyItem = ItemDataCenter_Server.GetNewItem(itemData, characterData.UID);
                     buyItem.Count = tradeNum;
-                    characterData.BagItems.Add(buyItem);
+                    SaveDataCenter.NewDataToDB(BagItemSave.Create(buyItem));
                 }
                 else
                 {
                     existing.Count += tradeNum;
+                    SaveDataCenter.SaveDataToDB(BagItemSave.Create(existing));
                 }
             }
         }
     }
 
-    public void OnSell(ItemData itemData, int tradeNum, long sellItemUID, CharacterData characterData, PlayerContextData playerData, SetTradeActionResponse response)
+    public void OnSell(ItemData itemData, int tradeNum, long sellItemUID, CharacterData characterData, PlayerData playerData, SetTradeActionResponse response)
     {
-        var existing = characterData.BagItems.Find(item => item.UID == sellItemUID);
-        response.SelledItemSurplus = existing.Count;
+        var existing = SaveDataCenter.GetBagItemDatas(characterData.UID).Find(item => item.UID == sellItemUID);
+        response.SealedItemSurplus = existing.Count;
 
         if (existing != null && existing.Count >= tradeNum)
         {
@@ -152,16 +153,18 @@ public partial class APIController
 
             void EquipCallBack()
             {
-                characterData.BagItems.Remove(existing);
-                response.SelledItemSurplus = 0;
+                SaveDataCenter.RemoveDataFromDB(BagItemSave.Create(existing));
+                response.SealedItemSurplus = 0;
             }
 
             void OtherCallBack()
             {
-                response.SelledItemSurplus = existing.Count;
+                response.SealedItemSurplus = existing.Count;
 
-                if (response.SelledItemSurplus == 0)
-                    characterData.BagItems.Remove(existing);
+                if (response.SealedItemSurplus == 0)
+                    SaveDataCenter.RemoveDataFromDB(BagItemSave.Create(existing));
+                else
+                    SaveDataCenter.SaveDataToDB(BagItemSave.Create(existing));
             }
         }
     }
@@ -170,19 +173,19 @@ public partial class APIController
 
 public class SetTradeActionRequest : INetworkSerializable
 {
-    public string Account = "";
+    public long UID;
     public ETradeActionType TradeActionType;
     public int ItemID;
     public int TradeNum;
-    public long SelledItemUID;
+    public long SealedItemUID;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref Account);
+        serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref TradeActionType);
         serializer.SerializeValue(ref ItemID);
         serializer.SerializeValue(ref TradeNum);
-        serializer.SerializeValue(ref SelledItemUID);
+        serializer.SerializeValue(ref SealedItemUID);
     }
 }
 
@@ -191,13 +194,13 @@ public class SetTradeActionResponse : INetworkSerializable
     public EErrorCode Code;
     public string ErrorMessage = "";
     public int Gold;
-    public int SelledItemSurplus;
+    public int SealedItemSurplus;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
         serializer.SerializeValue(ref Gold);
-        serializer.SerializeValue(ref SelledItemSurplus);
+        serializer.SerializeValue(ref SealedItemSurplus);
     }
 }

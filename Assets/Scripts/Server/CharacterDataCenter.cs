@@ -76,14 +76,15 @@ public static class CharacterDataCenter
 
     public static FullAbilityBase GetCharacterAbility(CharacterData data)
     {
+        var abilityBase = SaveDataCenter.GetCharacterAbilityData(data.UID);
         var ability = new FullAbilityBase
         {
-            STR = data.Ability.STR_Point,
-            VIT = data.Ability.VIT_Point,
-            DEX = data.Ability.DEX_Point,
-            INT = data.Ability.INT_Point,
-            AGI = data.Ability.AGI_Point,
-            LUK = data.Ability.LUK_Point
+            STR = abilityBase.STR_Point,
+            VIT = abilityBase.VIT_Point,
+            DEX = abilityBase.DEX_Point,
+            INT = abilityBase.INT_Point,
+            AGI = abilityBase.AGI_Point,
+            LUK = abilityBase.LUK_Point
         };
 
         ability.HP = (int)(ability.VIT * 10 + ability.STR * 5 + 85);
@@ -100,8 +101,8 @@ public static class CharacterDataCenter
         ability.CRIT = ability.AGI * 2 + ability.LUK;
         ability.SPD = ability.DEX;
 
-        CalculateEquipAbility(ability, data);
-        CalculateEffectAbility(ability, data.Effects, out var afterAbility);
+        CalculateEquipAbility(ability, SaveDataCenter.GetEquips(data.UID));
+        CalculateEffectAbility(ability, SaveDataCenter.GetEffects(data.UID), out var afterAbility);
 
         if (data.Role == ECharacterRole.Mob)
             afterAbility.HP /= 10;
@@ -111,19 +112,29 @@ public static class CharacterDataCenter
         return afterAbility;
     }
 
-    static void CalculateEquipAbility(FullAbilityBase data, CharacterData characterData)
+
+
+    public static int GetAbilityPoint(CharacterData data) => GetAbilityPoint(data, null);
+    public static int GetAbilityPoint(CharacterData data, AbilityBase ability)
     {
-        foreach (var equipUID in characterData.Equips)
+        ability ??= SaveDataCenter.GetCharacterAbilityData(data.UID);
+        var totalUsedPoint = ability.STR_Point + ability.AGI_Point + ability.DEX_Point + ability.INT_Point + ability.LUK_Point + ability.VIT_Point;
+
+        return (data.Level + 1) * 6 - totalUsedPoint;
+    }
+
+    static void CalculateEquipAbility(FullAbilityBase data, List<BagItemData> equips)
+    {
+        foreach (var equip in equips)
         {
-            var item = characterData.BagItems.Find(x => x.UID == equipUID);
-            var ability = ItemDataCenter_Server.FinalAbilityProcess(item);
+            var ability = ItemDataCenter_Server.FinalAbilityProcess(equip);
             var fields = typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance);
             foreach (var field in fields)
             {
-                var valueB = (decimal)field.GetValue(ability);
+                var valueB = Convert.ToDecimal(field.GetValue(ability));
                 if (valueB != 0)
                 {
-                    var valueA = (decimal)field.GetValue(data);
+                    var valueA = Convert.ToDecimal(field.GetValue(data));
                     field.SetValue(data, valueA + valueB);
                 }
             }
@@ -206,7 +217,7 @@ public static class CharacterDataCenter
             CharacterName = characterData.Name
         };
 
-        foreach (var effect in characterData.Effects.ToList())
+        foreach (var effect in SaveDataCenter.GetEffects(characterData.UID))
         {
             if (_effectHandlers.TryGetValue(effect.ID, out var effectHandler))
             {
@@ -232,19 +243,22 @@ public static class CharacterDataCenter
             if (characterData.CurrentSTA > fullAbility.STA)
                 characterData.CurrentSTA = fullAbility.STA;
 
-            if (_effectDatas.TryGetValue(EEffectID.Exhausted, out var effect) && characterData.Effects.Contains(effect))
+            if (_effectDatas.TryGetValue(EEffectID.Exhausted, out var effect) && SaveDataCenter.GetEffects(characterData.UID).Contains(effect))
             {
-                characterData.Effects.Remove(effect);
+                SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
             }
         }
     }
 
     static void SkillCDProcess(CharacterData characterData)
     {
-        foreach (var skill in characterData.Skills.Values)
+        foreach (var skill in SaveDataCenter.GetSkills(characterData.UID))
         {
             if (skill.CurrentCD > 0)
+            {
                 skill.CurrentCD--;
+                SaveDataCenter.SaveDataToDB(SkillSave.Create(skill));
+            }
         }
     }
 
@@ -259,7 +273,8 @@ public static class CharacterDataCenter
         if (characterData.CurrentHP <= 0)
         {
             result.IsDead = true;
-            characterData.Effects.Clear();
+            foreach (var effect in SaveDataCenter.GetEffects(characterData.UID))
+                SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effect));
         }
 
         SkillCDProcess(characterData);
@@ -273,11 +288,9 @@ public static class CharacterDataCenter
     {
         if (_effectDatas.TryGetValue(effectID, out var effect))
         {
-            var exist = characterData.Effects.Find(x => x.ID == effect.ID);
+            var exist = SaveDataCenter.GetEffects(characterData.UID).Find(x => x.ID == effect.ID);
 
-            if (exist != null)
-            {
-                if (exist.Value.Count == effectValue.Count &&
+            if (exist != null && exist.Value.Count == effectValue.Count &&
                     exist.Value
                         .GroupBy(x => x)
                         .ToDictionary(g => g.Key, g => g.Count())
@@ -286,23 +299,26 @@ public static class CharacterDataCenter
                                 .GroupBy(x => x)
                                 .ToDictionary(g => g.Key, g => g.Count())
                         )
-                    )
-                    exist.Times += effectTimes;
+                )
+            {
+                exist.Times += effectTimes;
+                SaveDataCenter.SaveDataToDB(EffectSave.Create(exist));
             }
             else
             {
-                characterData.Effects.Add(new()
+                SaveDataCenter.NewDataToDB(EffectSave.Create(new()
                 {
                     Name = effect.Name,
                     ID = effect.ID,
                     Value = effectValue,
-                    Times = effectTimes
-                });
+                    Times = effectTimes,
+                    Owner = characterData.UID
+                }));
             }
         }
     }
 
-    public static void MotifyCurrentAbility(CharacterData characterData, FullAbilityBase ability)
+    public static void ModifyCurrentAbility(CharacterData characterData, FullAbilityBase ability)
     {
         if (ability == null)
             return;

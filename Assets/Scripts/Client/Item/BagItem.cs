@@ -22,7 +22,7 @@ public class BagItem : MonoBehaviour
         _toggle.onValueChanged.AddListener(OnToggleValueChange);
     }
 
-    public void SetInfo(BagItemData data, ToggleGroup group, Action<BagItem, bool> refreshBagInfo,bool isEquiped)
+    public void SetInfo(BagItemData data, ToggleGroup group, Action<BagItem, bool> refreshBagInfo, bool isEquipped)
     {
         Info = data;
 
@@ -33,7 +33,7 @@ public class BagItem : MonoBehaviour
 
         DataCenter.DoActionAccordingToCategory(data.Kind, EquipCallBack, OtherCallBack, OtherCallBack);
 
-        IconEquip.SetActive(isEquiped);
+        IconEquip.SetActive(isEquipped);
 
         void EquipCallBack() => _count.text = data.Durability.ToString();
         void OtherCallBack() => _count.text = data.Count.ToString();

@@ -75,7 +75,7 @@ public class MainController : MonoBehaviour
         CurrentPage = page;
     }
 
-    public void RefreshUI(GetSaveDataResponse response)
+    public void RefreshUI(GetPlayerInfoResponse response)
     {
         var data = RefreshInfoData.Create(response);
         _panelInfo.RefreshInfo(data);

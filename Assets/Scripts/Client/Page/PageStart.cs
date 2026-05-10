@@ -27,20 +27,20 @@ public class PageStart : MonoBehaviour
             return;
         }
 
-        DataCenter.Account = _inputUserAccount.text;
-
         PanelLoading.Create(PanelLoading.BGType.Full);
-        var requestData = new GetSaveDataRequest
+        var requestData = new CheckIsNewAccountRequest
         {
-            Account = DataCenter.Account,
+            Account = _inputUserAccount.text,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(CheckIsNewAccountResponse response)
         {
             if (response.Code == 0)
             {
-                if (string.IsNullOrEmpty(response.CharacterData.Name))
+                DataCenter.UID = response.UID;
+
+                if (response.IsNewAccount)
                     PageRegister.Create();
                 else
                     MainController.Instance.Login();

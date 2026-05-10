@@ -47,18 +47,18 @@ public class PanelSkill : MonoBehaviour
         RefreshUI(null);
 
         PanelLoading.Create(PanelLoading.BGType.None);
-        var requestData = new GetSaveDataRequest
+        var requestData = new GetPlayerSkillRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(GetPlayerSkillResponse response)
         {
             if (response.Code == 0)
             {
-                var skills = response.CharacterData.Skills;
-                foreach (var skill in skills.Values)
+                var skills = response.Skills;
+                foreach (var skill in skills)
                 {
                     var item = ObjectPool.Get(_skillItem, ToggleGroup.transform);
                     item.SetInfo(skill, ToggleGroup, RefreshUI);

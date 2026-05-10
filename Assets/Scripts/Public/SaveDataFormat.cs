@@ -4,34 +4,34 @@ using Unity.Netcode;
 public class PlayerSaveDataFormat
 {
     public string version = "";
-    public Datas Datas = new();
+    // public Datas Datas = new();
 }
 
-public class Datas : INetworkSerializable
-{
-    public PlayerContextData PlayerData = new();
-    public CharacterData CharacterData = new();
-    public PartyData PartyData = new();
+// public class Datas : INetworkSerializable
+// {
+//     public PlayerContextData PlayerData = new();
+//     public CharacterData CharacterData = new();
+//     public PartyData PartyData = new();
 
-    public static Datas CreateDefault()
-    {
-        var datas = new Datas
-        {
-            PlayerData = PlayerContextData.CreateDefault(),
-            CharacterData = CharacterData.CreateDefault(),
-            PartyData = PartyData.CreateDefault(),
-        };
+//     public static Datas CreateDefault()
+//     {
+//         var datas = new Datas
+//         {
+//             PlayerData = PlayerContextData.CreateDefault(),
+//             CharacterData = CharacterData.CreateDefault(),
+//             PartyData = PartyData.CreateDefault(),
+//         };
 
-        return datas;
-    }
+//         return datas;
+//     }
 
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-    {
-        serializer.SerializeValue(ref PlayerData);
-        serializer.SerializeValue(ref CharacterData);
-        serializer.SerializeValue(ref PartyData);
-    }
-}
+//     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+//     {
+//         serializer.SerializeValue(ref PlayerData);
+//         serializer.SerializeValue(ref CharacterData);
+//         serializer.SerializeValue(ref PartyData);
+//     }
+// }
 
 public class PartySaveDataFormat
 {

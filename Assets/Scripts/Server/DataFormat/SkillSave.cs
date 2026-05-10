@@ -15,6 +15,7 @@ public class SkillSave : IDBTable
     {
         var saveData = new SkillSave
         {
+            UID = data.UID,
             Owner = data.Owner,
             ID = data.ID,
             CurrentCD = data.CurrentCD
@@ -27,6 +28,7 @@ public class SkillSave : IDBTable
     {
         var data = new SkillData
         {
+            UID = save.UID,
             Owner = save.Owner,
             ID = save.ID,
             CurrentCD = save.CurrentCD

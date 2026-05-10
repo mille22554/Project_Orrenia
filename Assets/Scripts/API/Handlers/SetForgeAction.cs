@@ -66,20 +66,17 @@ public partial class APIController
     {
         try
         {
-            var account = requestData.Account;
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+            var uid = requestData.UID;
+            var characterData = SaveDataCenter.GetCharacterData(uid);
+            var playerData = SaveDataCenter.GetPlayerData(uid);
 
             var responseData = new SetForgeActionResponse
             {
                 Code = EErrorCode.None,
-                BagItemDatas = characterData.BagItems
+                BagItemDatas = SaveDataCenter.GetBagItemDatas(characterData.UID)
             };
 
             DoAction(requestData, characterData, playerData);
-
-            SaveDataCenter.SaveData(account);
 
             return responseData;
         }
@@ -96,7 +93,7 @@ public partial class APIController
         }
     }
 
-    void DoAction(SetForgeActionRequest request, CharacterData characterData, PlayerContextData playerData)
+    void DoAction(SetForgeActionRequest request, CharacterData characterData, PlayerData playerData)
     {
         var baseParam = CheckMaterial(request.ItemKind, request.Materials.Count);
         if (baseParam == -1)
@@ -108,12 +105,12 @@ public partial class APIController
         newItem.Durability = baseParam * 20;
         newItem.Count = 1;
 
-        var newBagItem = ItemDataCenter_Server.GetNewItem(newItem);
+        var newBagItem = ItemDataCenter_Server.GetNewItem(newItem, characterData.UID);
         newBagItem.Seed = GetStableHashCode($"{DateTime.Now:yyyyMMdd}_{newItem.Name}");
 
         foreach (var material in request.Materials)
         {
-            var bagItem = characterData.BagItems.Find(x => x.UID == material);
+            var bagItem = SaveDataCenter.GetBagItemDatas(characterData.UID).Find(x => x.UID == material);
 
             newBagItem.Materials.Add(bagItem.ID);
 
@@ -124,12 +121,14 @@ public partial class APIController
 
             bagItem.Count--;
             if (bagItem.Count == 0)
-                characterData.BagItems.Remove(bagItem);
+                SaveDataCenter.GetBagItemDatas(characterData.UID).Remove(bagItem);
+            else
+                SaveDataCenter.SaveDataToDB(BagItemSave.Create(bagItem));
         }
 
         SetQuality(newBagItem);
 
-        characterData.BagItems.Add(newBagItem);
+        SaveDataCenter.NewDataToDB(BagItemSave.Create(newBagItem));
 
         ForgeExpProcess(playerData);
     }
@@ -164,7 +163,7 @@ public partial class APIController
             return -1;
     }
 
-    ItemData CreateItem(EItemKind kind, int baseParam, PlayerContextData playerData)
+    ItemData CreateItem(EItemKind kind, int baseParam, PlayerData playerData)
     {
         var item = new ItemData
         {
@@ -418,7 +417,7 @@ public partial class APIController
         }
     }
 
-    void ForgeExpProcess(PlayerContextData playerData)
+    void ForgeExpProcess(PlayerData playerData)
     {
         playerData.CurrentForgeExp++;
 
@@ -434,14 +433,14 @@ public partial class APIController
 
 public class SetForgeActionRequest : INetworkSerializable
 {
-    public string Account = "";
+    public long UID;
     public string ItemName = "";
     public EItemKind ItemKind;
     public List<long> Materials = new();
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref Account);
+        serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref ItemName);
         serializer.SerializeValue(ref ItemKind);
 

@@ -8,7 +8,7 @@ using Color = UnityEngine.Color;
 
 public static class DataCenter
 {
-    public static string Account;
+    public static long UID;
     public static Dictionary<EItemKind, ItemKind> ItemKind => _itemKind;
     public static List<int> GameShopItem => _gameShopItem;
 
@@ -66,8 +66,6 @@ public static class DataCenter
     public static void DoActionAccordingToCategory(EItemKind kind, Action equipCallBack, Action useCallBack, Action materialCallBack)
         => PublicFunc.DoActionAccordingToCategory(GetItemKind(kind).Category, equipCallBack, useCallBack, materialCallBack);
 
-
-
     public static QualityData GetQualityData(EQuality quality) => _qualityData.ElementAtOrDefault((int)quality);
 
     public static string GetDamageType(ESkillType damageType)
@@ -89,7 +87,7 @@ public static class DataCenter
         // 用反射抓 AbilityBase 的欄位
         foreach (var field in typeof(FullAbilityBase).GetFields(BindingFlags.Public | BindingFlags.Instance))
         {
-            var value = (decimal)field.GetValue(ability);
+            var value = Convert.ToDecimal(field.GetValue(ability));
             var color = ColorUtility.ToHtmlStringRGB(Color.white);
 
             if (nameRandom != null)

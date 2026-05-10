@@ -7,7 +7,7 @@ public class Mob_6_Handler : IMobHandler
 
     public SkillData Handler(CharacterData mob)
     {
-        var attackSkillList = mob.Skills.Values.Where(x =>
+        var attackSkillList = SaveDataCenter.GetSkills(mob.UID).Where(x =>
             (x.SkillType == ESkillType.SinglePhysicsAttack || x.SkillType == ESkillType.SingleMagicAttack) && x.CurrentCD == 0 && x.Cost <= mob.CurrentMP
         ).ToList();
 

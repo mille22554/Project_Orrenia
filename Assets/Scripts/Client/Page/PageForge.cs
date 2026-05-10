@@ -130,17 +130,17 @@ public class PageForge : MonoBehaviour
     void OnEnable()
     {
         PanelLoading.Create(PanelLoading.BGType.Full);
-        var requestData = new GetSaveDataRequest
+        var requestData = new GetBagInfoRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(GetBagInfoResponse response)
         {
             if (response.Code == 0)
             {
-                InitPage(response.CharacterData.BagItems);
+                InitPage(response.BagItems);
             }
 
             PanelLoading.Close();
@@ -154,8 +154,7 @@ public class PageForge : MonoBehaviour
 
         foreach (var bagItemData in bagItemDatas)
         {
-            var kind = bagItemData.Kind;
-            DataCenter.DoActionAccordingToCategory(kind, null, null, MaterialCallBack);
+            DataCenter.DoActionAccordingToCategory(bagItemData.Kind, null, null, MaterialCallBack);
 
             void MaterialCallBack()
             {
@@ -225,7 +224,7 @@ public class PageForge : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.Half);
         var requestData = new SetForgeActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             ItemName = _inputItemName.text,
             ItemKind = _nowSelectedKind,
             Materials = materials

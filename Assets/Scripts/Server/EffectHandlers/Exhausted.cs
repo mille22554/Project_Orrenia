@@ -20,12 +20,16 @@ public class Exhausted : IEffectHandler
     {
         if (characterData.CurrentSTA != 0)
         {
-            characterData.Effects.Remove(effectData);
+            SaveDataCenter.RemoveDataFromDB(EffectSave.Create(effectData));
             result.Infos.Add(new()
             {
                 EffectName = effectData.Name,
                 IsTimeUp = true,
             });
+        }
+        else
+        {
+            SaveDataCenter.SaveDataToDB(EffectSave.Create(effectData));
         }
     }
 }

@@ -68,26 +68,27 @@ public partial class APIController
     {
         try
         {
-            var account = requestData.Account.ToString();
-            var characterData = GameData_Server.GetCharacterData(account);
-            var playerData = GameData_Server.GetPlayerData(account);
-            var partyData = GameData_Server.GetPartyData(playerData.NowPartyLeader);
+            var uid = requestData.UID;
+            var playerData = SaveDataCenter.GetPlayerData(uid);
+            var partyData = SaveDataCenter.GetPartyData(playerData.PartyUID);
+            var characterData = SaveDataCenter.GetCharacterData(uid);
 
             var responseData = new SetAdventureActionResponse
             {
                 Code = EErrorCode.None,
             };
 
-            if (account == playerData.NowPartyLeader)
+            if (playerData.UID == playerData.PartyUID)
             {
                 responseData.IsLeader = true;
-                responseData.Datas = GameData_Server.NowPlayers[account].Datas;
                 responseData.PartyData = partyData;
+                responseData.PlayerData = playerData;
+                responseData.CharacterData = characterData;
                 responseData.FullAbility = CharacterDataCenter.GetCharacterAbility(characterData);
 
-                DoAction(requestData, responseData.ActionResult, partyData, characterData);
+                DoAction(requestData, responseData.ActionResult, partyData);
 
-                SaveDataCenter.SaveData(account);
+                // SaveDataCenter.SaveData(account);
             }
 
             return responseData;
@@ -105,7 +106,7 @@ public partial class APIController
         }
     }
 
-    void DoAction(SetAdventureActionRequest data, ActionResult actionResult, PartyData partyData, CharacterData characterData)
+    void DoAction(SetAdventureActionRequest data, ActionResult actionResult, PartyData partyData)
     {
         switch (data.AdventureAction)
         {
@@ -113,10 +114,10 @@ public partial class APIController
                 OnIntoArea(data, partyData);
                 break;
             case EAdventureActionType.GoAhead:
-                OnGoAhead(characterData, partyData, actionResult);
+                OnGoAhead(partyData, actionResult);
                 break;
             case EAdventureActionType.Rest:
-                OnRest(characterData, partyData, actionResult);
+                OnRest(partyData, actionResult);
                 break;
             case EAdventureActionType.Leave:
                 OnGoHome(partyData);
@@ -130,11 +131,12 @@ public partial class APIController
         partyData.Deep = 1;
     }
 
-    void OnGoAhead(CharacterData characterData, PartyData partyData, ActionResult actionResult)
+    void OnGoAhead(PartyData partyData, ActionResult actionResult)
     {
-        ActionEndProcess(partyData, false, actionResult.EffectResult.Results);
+        foreach (var member in SaveDataCenter.GetPartyMembers(partyData.UID))
+            ActionEndProcess(member, false, actionResult.EffectResult.Results);
 
-        if (!partyData.Members.Any(x => GameData_Server.GetCharacterData(x).CurrentHP > 0))
+        if (!SaveDataCenter.GetPartyMembers(partyData.UID).Any(x => x.CurrentHP > 0))
         {
             OnGoHome(partyData);
             return;
@@ -149,40 +151,46 @@ public partial class APIController
         }
     }
 
-    void OnRest(CharacterData characterData, PartyData partyData, ActionResult actionResult)
+    void OnRest(PartyData partyData, ActionResult actionResult)
     {
-        var fullAbility = CharacterDataCenter.GetCharacterAbility(characterData);
+        var members = SaveDataCenter.GetPartyMembers(partyData.UID);
+        var restResult = actionResult.RestResult;
 
-        int prop;
-        while (characterData.CurrentHP < fullAbility.HP || characterData.CurrentMP < fullAbility.MP || characterData.CurrentSTA < fullAbility.STA)
+        while (true)
         {
-            if (characterData.CurrentHP < fullAbility.HP)
-            {
-                actionResult.RestResult.RecoverHP++;
-                characterData.CurrentHP++;
-            }
+            // 1. 找出第一個需要治療的成員，同時取得他的能力值
+            var target = members
+                .Select(m => new { Data = m, Max = CharacterDataCenter.GetCharacterAbility(m) })
+                .FirstOrDefault(x => x.Data.CurrentHP < x.Max.HP || x.Data.CurrentMP < x.Max.MP || x.Data.CurrentSTA < x.Max.STA);
 
-            if (characterData.CurrentMP < fullAbility.MP)
-            {
-                actionResult.RestResult.RecoverMP++;
-                characterData.CurrentMP++;
-            }
+            // 如果沒人需要治療，跳出迴圈
+            if (target == null)
+                break;
 
-            if (characterData.CurrentSTA < fullAbility.STA)
-            {
-                actionResult.RestResult.RecoverSTA++;
-                characterData.CurrentSTA++;
-            }
+            var m = target.Data;
+            var max = target.Max;
 
-            ActionEndProcess(partyData, true, actionResult.EffectResult.Results);
+            if (m.CurrentHP < max.HP)
+                m.CurrentHP++; restResult.RecoverHP++;
 
-            prop = PublicFunc.Dice(1, 100);
-            if (prop <= 3)
+            if (m.CurrentMP < max.MP)
+                m.CurrentMP++; restResult.RecoverMP++;
+
+            if (m.CurrentSTA < max.STA)
+                m.CurrentSTA++; restResult.RecoverSTA++;
+
+            ActionEndProcess(m, true, actionResult.EffectResult.Results);
+
+            // 2. 機率性遇敵
+            if (PublicFunc.Dice(1, 100) <= 3)
             {
                 OnEnemyAppear(partyData);
                 break;
             }
         }
+
+        foreach (var member in members)
+            SaveDataCenter.SaveDataToDB(CharacterSave.Create(member));
     }
 
     void OnEnemyAppear(PartyData partyData)
@@ -190,28 +198,24 @@ public partial class APIController
         BattleSystem.InitNewBattle(partyData);
     }
 
-    void ActionEndProcess(PartyData partyData, bool isRest, List<EffectResult.Result> results)
+    void ActionEndProcess(CharacterData characterData, bool isRest, List<EffectResult.Result> results)
     {
-        foreach (var member in partyData.Members)
-        {
-            var characterData = GameData_Server.GetCharacterData(member);
-            var playerEffectResult = CharacterDataCenter.ActionEndProcess(characterData, isRest);
-            if (playerEffectResult.Infos.Count > 0)
-                results.Add(playerEffectResult);
-        }
+        var playerEffectResult = CharacterDataCenter.ActionEndProcess(characterData, isRest);
+        if (playerEffectResult.Infos.Count > 0)
+            results.Add(playerEffectResult);
     }
     #endregion
 }
 
 public class SetAdventureActionRequest : INetworkSerializable
 {
-    public string Account = "";
+    public long UID;
     public EAdventureActionType AdventureAction;
     public int GameArea;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref Account);
+        serializer.SerializeValue(ref UID);
         serializer.SerializeValue(ref AdventureAction);
         serializer.SerializeValue(ref GameArea);
     }
@@ -222,8 +226,10 @@ public class SetAdventureActionResponse : INetworkSerializable
     public EErrorCode Code;
     public string ErrorMessage = "";
     public bool IsLeader;
-    public Datas Datas = new();
+    public PlayerData PlayerData = new();
+    public CharacterData CharacterData = new();
     public PartyData PartyData = new();
+    public List<CharacterData> Enemies = new();
     public ActionResult ActionResult = new();
     public FullAbilityBase FullAbility = new();
 
@@ -232,9 +238,12 @@ public class SetAdventureActionResponse : INetworkSerializable
         serializer.SerializeValue(ref Code);
         serializer.SerializeValue(ref ErrorMessage);
         serializer.SerializeValue(ref IsLeader);
-        serializer.SerializeValue(ref Datas);
+        serializer.SerializeValue(ref PlayerData);
+        serializer.SerializeValue(ref CharacterData);
         serializer.SerializeValue(ref PartyData);
         serializer.SerializeValue(ref ActionResult);
         serializer.SerializeValue(ref FullAbility);
+
+        PublicFunc.SerializeClassList(serializer, ref Enemies);
     }
 }

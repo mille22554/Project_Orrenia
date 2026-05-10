@@ -64,17 +64,18 @@ public class PageBattle : MonoBehaviour
         _canvasGroup.alpha = 0;
 
         PanelLoading.Create(PanelLoading.BGType.Full);
-        var requestData = new GetSaveDataRequest
+        var requestData = new GetAdventureInfoRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
-        void CallBack(GetSaveDataResponse response)
+        void CallBack(GetAdventureInfoResponse response)
         {
             if (response.Code == 0)
             {
                 var partyData = response.PartyData;
+                var enemies = response.Enemies;
 
                 panelShop.gameObject.SetActive(false);
                 var area = DataCenter.GetAreaData(partyData.Area);
@@ -97,9 +98,9 @@ public class PageBattle : MonoBehaviour
                     btnInto.gameObject.SetActive(false);
                     btnShop.gameObject.SetActive(false);
 
-                    if (partyData.Enemies != null && partyData.Enemies.Count > 0)
+                    if (enemies != null && enemies.Count > 0)
                     {
-                        foreach (var enemy in partyData.Enemies)
+                        foreach (var enemy in enemies)
                         {
                             var obj = Instantiate(itemEnemy, _enemies.transform);
                             obj.Toggle.group = _enemies;
@@ -145,7 +146,7 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.Half);
         var requestData = new SetAdventureActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             AdventureAction = EAdventureActionType.IntoArea,
             GameArea = 2
         };
@@ -170,7 +171,7 @@ public class PageBattle : MonoBehaviour
 
                 deep.text = "深度 " + partyData.Deep;
 
-                MainController.Instance.RefreshUI(response.Datas.CharacterData, response.FullAbility);
+                MainController.Instance.RefreshUI(response.CharacterData, response.FullAbility);
             }
         }
     }
@@ -193,7 +194,7 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.Half);
         var requestData = new SetAdventureActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             AdventureAction = EAdventureActionType.GoAhead
         };
         APIController.Ins.Send(requestData, x => LeaderCheck(x, CallBack));
@@ -202,13 +203,12 @@ public class PageBattle : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                var fullAbility = response.FullAbility;
+                var partyData = response.PartyData;
                 var actionResult = response.ActionResult;
                 var effectResult = actionResult.EffectResult;
-                var datas = response.Datas;
-                var partyData = response.PartyData;
-                var characterData = datas.CharacterData;
-                var enemies = partyData.Enemies;
+                var characterData = response.CharacterData;
+                var enemies = response.Enemies;
+                var fullAbility = response.FullAbility;
 
                 deep.text = "深度 " + partyData.Deep;
 
@@ -218,7 +218,7 @@ public class PageBattle : MonoBehaviour
                     ShowEffectLog(playerEffectResult);
                     if (playerEffectResult.IsDead)
                     {
-                        LeaveDungon(partyData.Area, characterData, fullAbility);
+                        LeaveDungeon(partyData.Area, characterData, fullAbility);
                         return;
                     }
                 }
@@ -226,12 +226,12 @@ public class PageBattle : MonoBehaviour
                 if (enemies.Count != 0)
                     OnEnemyAppear(enemies);
 
-                RunBattleVisuals(actionResult.BattleResult, effectResult, datas, fullAbility);
+                RunBattleVisuals(actionResult.BattleResult, effectResult, partyData, characterData, fullAbility);
             }
         }
     }
 
-    void OnEnemyAppear(List<MobData> enemies)
+    void OnEnemyAppear(List<CharacterData> enemies)
     {
         panelLog.SetLine();
         foreach (var enemy in enemies)
@@ -241,7 +241,7 @@ public class PageBattle : MonoBehaviour
             obj.Toggle.isOn = true;
             obj.SetData(enemy);
             enemyList.Add(obj);
-            panelLog.SetLog(enemy.CharacterData.Name + " 出現了！");
+            panelLog.SetLog(enemy.Name + " 出現了！");
         }
         var firstEnemy = enemyList.FirstOrDefault();
         if (firstEnemy != null)
@@ -259,7 +259,7 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new GetBattleStatusRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
         };
         APIController.Ins.Send(requestData, CallBack);
 
@@ -267,41 +267,41 @@ public class PageBattle : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                var datas = response.SaveData;
                 var battleResult = response.ActionResult.BattleResult;
                 var effectResult = response.ActionResult.EffectResult;
 
-                RunBattleVisuals(battleResult, effectResult, datas);
+                RunBattleVisuals(battleResult, effectResult, response.PartyData, response.CharacterData);
             }
 
             PanelLoading.Close();
         }
     }
 
-    void RunBattleVisuals(BattleResult battleResult, EffectResult effectResult, Datas datas) => RunBattleVisuals(battleResult, effectResult, datas, null);
-    void RunBattleVisuals(BattleResult battleResult, EffectResult effectResult, Datas datas, FullAbilityBase fullAbility)
+    void RunBattleVisuals(BattleResult battleResult, EffectResult effectResult, PartyData partyData, CharacterData characterData)
+        => RunBattleVisuals(battleResult, effectResult, partyData, characterData, null);
+    void RunBattleVisuals(BattleResult battleResult, EffectResult effectResult, PartyData partyData, CharacterData characterData, FullAbilityBase fullAbility)
     {
-        MainController.Instance.RefreshUI(datas.CharacterData, fullAbility);
+        MainController.Instance.RefreshUI(characterData, fullAbility);
 
         if (battleResult != null && battleResult.Results.Count > 0)
         {
-            ShowBattleLog(battleResult, datas.CharacterData);
+            ShowBattleLog(battleResult, characterData);
             var attackerEffectResult = effectResult.Results.Find(x => x.CharacterName == battleResult.Attacker);
             ShowEffectLog(attackerEffectResult);
 
             foreach (var result in battleResult.Results)
             {
-                var targetMob = battleResult.Attacker != datas.CharacterData.Name ? battleResult.Attacker : result.Defenderer;
-                var target = enemyList.Find(x => x.Info.CharacterData.Name == targetMob);
+                var targetMob = battleResult.Attacker != characterData.Name ? battleResult.Attacker : result.Defenderer;
+                var target = enemyList.Find(x => x.Info.Name == targetMob);
 
                 MobDeadCheck(battleResult, attackerEffectResult, target);
             }
 
-            if (battleResult.IsAttackerDead && datas.CharacterData.Name == battleResult.Attacker ||
-                battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == datas.CharacterData.Name) ||
-                (attackerEffectResult != null && attackerEffectResult.IsDead && datas.CharacterData.Name == attackerEffectResult.CharacterName))
+            if (battleResult.IsAttackerDead && characterData.Name == battleResult.Attacker ||
+                battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == characterData.Name) ||
+                (attackerEffectResult != null && attackerEffectResult.IsDead && characterData.Name == attackerEffectResult.CharacterName))
             {
-                LeaveDungon(datas.PartyData.Area, datas.CharacterData, fullAbility);
+                LeaveDungeon(partyData.Area, characterData, fullAbility);
             }
             else
             {
@@ -315,7 +315,7 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.Half);
         var requestData = new SetAdventureActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             AdventureAction = EAdventureActionType.Leave
         };
         APIController.Ins.Send(requestData, x => LeaderCheck(x, CallBack));
@@ -324,13 +324,12 @@ public class PageBattle : MonoBehaviour
         {
             if (response.Code == 0)
             {
-                var datas = response.Datas;
-                LeaveDungon(response.PartyData.Area, datas.CharacterData, response.FullAbility);
+                LeaveDungeon(response.PartyData.Area, response.CharacterData, response.FullAbility);
             }
         }
     }
 
-    void LeaveDungon(int areaID, CharacterData characterData, FullAbilityBase fullAbility)
+    void LeaveDungeon(int areaID, CharacterData characterData, FullAbilityBase fullAbility)
     {
         btnInto.gameObject.SetActive(true);
         btnShop.gameObject.SetActive(true);
@@ -351,7 +350,7 @@ public class PageBattle : MonoBehaviour
         panelLog.ClearBattleLog();
         panelLog.SetLog("離開迷宮，回到 " + _area.text);
 
-        MainController.Instance.RefreshUI(characterData, fullAbility);
+        // MainController.Instance.RefreshUI(characterData, fullAbility);
     }
 
     void OnRest()
@@ -359,7 +358,7 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.Half);
         var requestData = new SetAdventureActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             AdventureAction = EAdventureActionType.Rest
         };
         APIController.Ins.Send(requestData, x => LeaderCheck(x, CallBack));
@@ -369,9 +368,8 @@ public class PageBattle : MonoBehaviour
             if (response.Code == 0)
             {
                 var partyData = response.PartyData;
-                var enemies = partyData.Enemies;
-                var datas = response.Datas;
-                var characterData = datas.CharacterData;
+                var enemies = response.Enemies;
+                var characterData = response.CharacterData;
                 var actionResult = response.ActionResult;
                 var restResult = actionResult.RestResult;
 
@@ -387,7 +385,7 @@ public class PageBattle : MonoBehaviour
 
                         if (result.IsDead)
                         {
-                            LeaveDungon(partyData.Area, datas.CharacterData, response.FullAbility);
+                            LeaveDungeon(partyData.Area, characterData, response.FullAbility);
                             return;
                         }
                     }
@@ -396,7 +394,7 @@ public class PageBattle : MonoBehaviour
                 if (enemies.Count != 0)
                     OnEnemyAppear(enemies);
 
-                RunBattleVisuals(actionResult.BattleResult, actionResult.EffectResult, datas, response.FullAbility);
+                RunBattleVisuals(actionResult.BattleResult, actionResult.EffectResult, response.PartyData, characterData, response.FullAbility);
             }
         }
     }
@@ -410,9 +408,9 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetBattleActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             BattleAction = EBattleActionType.Attack,
-            ActionTarget = new() { selectedEnemy.Info.CharacterData }
+            ActionTarget = new() { selectedEnemy.Info }
         };
         APIController.Ins.Send(requestData, CallBack);
 
@@ -424,7 +422,7 @@ public class PageBattle : MonoBehaviour
                 var battleResult = actionResult.BattleResult;
                 var effectResult = actionResult.EffectResult;
 
-                RunBattleVisuals(battleResult, effectResult, response.SaveData, response.FullAbility);
+                RunBattleVisuals(battleResult, effectResult, response.PartyData, response.CharacterData, response.FullAbility);
             }
 
             PanelLoading.Close();
@@ -440,9 +438,9 @@ public class PageBattle : MonoBehaviour
         PanelLoading.Create(PanelLoading.BGType.None);
         var requestData = new SetBattleActionRequest
         {
-            Account = DataCenter.Account,
+            UID = DataCenter.UID,
             BattleAction = EBattleActionType.Attack,
-            ActionTarget = new() { selectedEnemy.Info.CharacterData },
+            ActionTarget = new() { selectedEnemy.Info },
             SkillID = skillID
         };
         APIController.Ins.Send(requestData, CallBack);
@@ -455,7 +453,7 @@ public class PageBattle : MonoBehaviour
                 var battleResult = actionResult.BattleResult;
                 var effectResult = actionResult.EffectResult;
 
-                RunBattleVisuals(battleResult, effectResult, response.SaveData, response.FullAbility);
+                RunBattleVisuals(battleResult, effectResult, response.PartyData, response.CharacterData, response.FullAbility);
             }
 
             PanelLoading.Close();
@@ -467,9 +465,9 @@ public class PageBattle : MonoBehaviour
         if (battleResult == null || effectResult == null || enemy == null)
             return;
 
-        if (battleResult.IsAttackerDead && enemy.Info.CharacterData.Name == battleResult.Attacker ||
-            battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == enemy.Info.CharacterData.Name) ||
-            effectResult.IsDead && enemy.Info.CharacterData.Name == effectResult.CharacterName)
+        if (battleResult.IsAttackerDead && enemy.Info.Name == battleResult.Attacker ||
+            battleResult.Results.Any(x => x.IsDefenderDead && x.Defenderer == enemy.Info.Name) ||
+            effectResult.IsDead && enemy.Info.Name == effectResult.CharacterName)
         {
             enemyList.Remove(enemy);
             ObjectPool.Put(enemy);
@@ -491,15 +489,15 @@ public class PageBattle : MonoBehaviour
             {
                 if (result.IsLuckyEventTrigger)
                 {
-                    if (result.LuckyEventTarget == enemy.Info.CharacterData.Name)
+                    if (result.LuckyEventTarget == enemy.Info.Name)
                         enemy.GetDamage(result.LuckyEventDamage);
                 }
 
-                if (result.Defenderer == enemy.Info.CharacterData.Name)
+                if (result.Defenderer == enemy.Info.Name)
                     enemy.GetDamage(result.BattleDamage);
             }
 
-            if (effectResult.CharacterName == enemy.Info.CharacterData.Name)
+            if (effectResult.CharacterName == enemy.Info.Name)
             {
                 foreach (var info in effectResult.Infos)
                 {
@@ -518,7 +516,7 @@ public class PageBattle : MonoBehaviour
         panelLog.SetLine();
         var commonColor = battleResult.Attacker == characterData.Name ? Color.white : Color.gray;
 
-        if (battleResult.IsAttakerIncapacitated)
+        if (battleResult.IsAttackerIncapacitated)
             panelLog.SetLog($"{battleResult.Attacker}因{battleResult.IncapacitatedEffect}而無法行動!", commonColor);
 
         if (battleResult.Results.Count == 0)
